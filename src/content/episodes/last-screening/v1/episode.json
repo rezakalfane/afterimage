@@ -1,0 +1,198 @@
+{
+  "id": "last-screening",
+  "version": 1,
+  "title": "La dernière séance",
+  "locale": "fr-FR",
+  "dates": {
+    "past": "1996-11-15T21:10:00+01:00",
+    "future": "2026-11-15T21:10:00+01:00"
+  },
+  "premise": "Relier Jeanne, projectionniste en 1996, et Malik, archiviste en 2026, pour préserver un film et décider comment respecter la volonté de sa réalisatrice.",
+  "canon": {
+    "cinema": "Le Régina",
+    "film": "Les lumières du Régina",
+    "filmmaker": "Alice Mercier",
+    "truth": "Alice a autorisé la projection du film uniquement sans son épilogue privé. Jeanne a annulé la séance parce que la copie complète était la seule disponible. Elle a préféré protéger sa promesse plutôt que se justifier publiquement.",
+    "temporalRule": "Une action confirmée en 1996 modifie uniquement les objets conservés jusqu'en 2026. Les interlocuteurs restent conscients de leur époque. Le joueur conserve les informations découvertes. Aucun voyage de personnes, aucune réécriture globale de souvenirs.",
+    "keyLocation": "Sous le siège G7 en 1996",
+    "flood": "Une fuite en 2008 a endommagé les objets restés au niveau du bureau ; l'étagère haute de l'armoire est restée sèche.",
+    "storage": "Étagère haute de l'armoire au croissant ; la clé est replacée derrière le projecteur en 1996 après fermeture.",
+    "permission": "Projection autorisée du corps du film ; conserver l'épilogue privé sous scellés.",
+    "endings": [
+      "public_cut",
+      "sealed_archive",
+      "broken_promise"
+    ]
+  },
+  "documents": {
+    "photoBack": "Pour retrouver la clé du dernier soir : G7. — J.",
+    "programme": "Le Régina — Vendredi 15 novembre 1996, 21 h 30. Les lumières du Régina, un film d’Alice Mercier. Projection annulée.",
+    "letter": "Jeanne, tu peux montrer le film, mais pas les dernières images. L’épilogue appartient à ma famille. Sépare-le de la projection et conserve-le sous enveloppe. Je te fais confiance. Alice — 14 novembre 1996.",
+    "archiveReport": "Rapport de conservation, 2008 : infiltration jusqu’au niveau du bureau. L’étagère haute de l’armoire au croissant reste hors d’eau.",
+    "defaultMessage": "Les étoiles restent allumées.",
+    "closingPublic": "La salle se rallume. Le nom d’Alice retrouve l’affiche, et son épilogue reste privé.",
+    "closingArchive": "Le film est sauvé, accompagné de la lettre d’Alice. La séance attendra ; la promesse, elle, a traversé les années.",
+    "closingBreach": "Le film a été montré intégralement. Le public connaît désormais les images qu’Alice avait demandé de protéger. Jeanne ne peut plus retirer sa confiance d’hier, mais Malik comprend le prix de ce choix."
+  },
+  "objects": [
+    {
+      "id": "photo",
+      "asset": "cinema-photo",
+      "era": 2026,
+      "location": "desk",
+      "textKey": "photoBack",
+      "action": "inspect_photo",
+      "purpose": "Révèle G7 ; photo transférable seulement comme information."
+    },
+    {
+      "id": "key",
+      "asset": "brass-key",
+      "era": 1996,
+      "location": "seat_g7",
+      "action": "retrieve_key",
+      "purpose": "Ouvre l'armoire ; replacée derrière le projecteur lors de la conservation."
+    },
+    {
+      "id": "programme",
+      "asset": "screening-programme",
+      "era": 1996,
+      "location": "desk",
+      "textKey": "programme",
+      "action": "inspect_programme",
+      "purpose": "Établit le film, la date et l'annulation."
+    },
+    {
+      "id": "letter",
+      "asset": "consent-letter",
+      "era": 1996,
+      "location": "cabinet",
+      "textKey": "letter",
+      "action": "read_letter",
+      "purpose": "Débloque la promesse et explique le refus de Jeanne."
+    },
+    {
+      "id": "reel",
+      "asset": "film-canister",
+      "era": 1996,
+      "location": "cabinet",
+      "action": "preserve_cache",
+      "purpose": "Objet causal essentiel ; la copie est sauvée sur l'étagère haute."
+    },
+    {
+      "id": "message",
+      "asset": "message-paper",
+      "era": 1996,
+      "location": "player_composed",
+      "action": "write_message",
+      "purpose": "Texte personnel exact, 1–240 caractères Unicode après normalisation, rendu en DOM."
+    },
+    {
+      "id": "envelope",
+      "asset": "sealed-envelope",
+      "era": 1996,
+      "location": "cabinet",
+      "purpose": "Reçoit la lettre et, dans la fin autorisée, l'épilogue privé."
+    },
+    {
+      "id": "vhs",
+      "asset": "vhs-cassette",
+      "era": 2026,
+      "location": "cabinet_after_preservation",
+      "optional": true,
+      "purpose": "Enregistrement personnalisé seulement si capacité validée ; n'entre dans aucun prérequis."
+    },
+    {
+      "id": "waterline",
+      "asset": null,
+      "era": 2026,
+      "location": "cabinet_base",
+      "textKey": "archiveReport",
+      "action": "inspect_waterline",
+      "purpose": "Indice DOM/zone du décor, aucun asset supplémentaire requis."
+    }
+  ],
+  "puzzles": [
+    {
+      "id": "p1",
+      "name": "La clé d’un autre temps",
+      "steps": [
+        "inspect_photo",
+        "relay_key_location",
+        "retrieve_key",
+        "open_cabinet"
+      ]
+    },
+    {
+      "id": "p2",
+      "name": "La promesse et la trace",
+      "steps": [
+        "inspect_programme",
+        "read_letter",
+        "acknowledge_permission",
+        "inspect_waterline",
+        "relay_flood_warning",
+        "write_message",
+        "confirm_message",
+        "preserve_cache"
+      ]
+    },
+    {
+      "id": "p3",
+      "name": "La dernière séance",
+      "steps": [
+        "recover_cache",
+        "read_message",
+        "read_future_letter",
+        "choose_ending"
+      ]
+    }
+  ],
+  "initialState": {
+    "schemaVersion": 1,
+    "revision": 0,
+    "activeEra": 2026,
+    "phase": "investigate",
+    "flags": [],
+    "messageDraft": null,
+    "message": null,
+    "storage": null,
+    "ending": null,
+    "hintsUsed": 0
+  },
+  "requiredFlags": [
+    "photo_seen",
+    "key_location_shared",
+    "key_found",
+    "cabinet_open",
+    "programme_seen",
+    "letter_read",
+    "permission_acknowledged",
+    "waterline_seen",
+    "flood_warning_shared",
+    "message_confirmed",
+    "cache_preserved",
+    "cache_recovered",
+    "message_read",
+    "future_letter_read"
+  ],
+  "endings": [
+    {
+      "id": "public_cut",
+      "label": "Projeter la version autorisée",
+      "consequence": "Film public sans épilogue ; promesse tenue",
+      "confirmation": "Je confirme : l’épilogue restera privé."
+    },
+    {
+      "id": "sealed_archive",
+      "label": "Confier le film aux archives",
+      "consequence": "Préservation sans projection ; promesse tenue",
+      "confirmation": "Je confirme : conserver le film sous scellés."
+    },
+    {
+      "id": "broken_promise",
+      "label": "Tout projeter malgré la lettre",
+      "consequence": "Projection complète dans la fiction ; promesse rompue",
+      "confirmation": "Je comprends que ce choix trahit la demande d’Alice."
+    }
+  ]
+}

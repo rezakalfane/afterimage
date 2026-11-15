@@ -1,7 +1,0 @@
-{
-  "default": "fr",
-  "locales": {
-    "fr": { "name": "Français", "speak": "français" },
-    "en": { "name": "English", "speak": "English" }
-  }
-}

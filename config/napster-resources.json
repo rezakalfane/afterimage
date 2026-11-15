@@ -1,0 +1,41 @@
+{
+  "_comment": "Napster resources of the AFTERIMAGE organization. IDs only (not secrets). Updated by `npm run provision:napster`. See docs/NAPSTER_ACCESS_REPORT.md for roles.",
+  "organization": "9ee272fc-807e-4bb8-8cd1-2225039e30ba",
+  "companions": {
+    "jeanne": {
+      "id": "67fe225a-5533-4c43-985c-81c9ccf2bc75",
+      "kind": "stock",
+      "note": "Catalog companion used as a stand-in. The kit portrait is artwork only."
+    },
+    "malik": {
+      "id": "49a2b67d-1e38-4344-b41b-d94818949043",
+      "kind": "stock",
+      "note": "Catalog companion used as a stand-in. The kit portrait is artwork only."
+    }
+  },
+  "agents": {
+    "jeanne": {
+      "fr": "5f23083f-0700-4bae-b446-05af622a2a06",
+      "en": "5ef3814f-e9f3-4c29-a2fe-2d8eaf73b8b1"
+    },
+    "malik": {
+      "fr": "41ff2adc-9698-48b7-9735-5a2fe921722d",
+      "en": "3c823040-212a-4522-90c8-d2160218aa6e"
+    }
+  },
+  "roles": {
+    "jeanne.fr": "P0 Jeanne (1996), French. Shared by local, staging and production; global config immutable during play.",
+    "malik.fr": "P0 Malik (2026), French. Shared by local, staging and production; global config immutable during play.",
+    "jeanne.en": "Reserved for P1 English. Still holds the earlier prototype configuration; not used by the app until the English pass.",
+    "malik.en": "Reserved for P1 English. Still holds the earlier prototype configuration; not used by the app until the English pass."
+  },
+  "functions": {
+    "jeanne_examine": "jeanne_examine",
+    "jeanne_use_clue": "jeanne_use_clue",
+    "jeanne_act": "jeanne_act",
+    "jeanne_draft_message": "jeanne_draft_message",
+    "malik_examine": "malik_examine",
+    "malik_act": "malik_act",
+    "world_request_hint": "world_request_hint"
+  }
+}

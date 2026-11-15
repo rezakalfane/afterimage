@@ -1,0 +1,176 @@
+{
+  "version": 1,
+  "generatedAt": "2026-11-15",
+  "assets": [
+    {
+      "id": "jeanne-reference",
+      "path": "assets/characters/jeanne-reference.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 1882142,
+      "alphaChannel": false,
+      "sha256": "675c0c14d627cf1ca0ad33e76017db95c4af0d62f997007dc36584bb0ff70bae",
+      "purpose": "characters"
+    },
+    {
+      "id": "malik-reference",
+      "path": "assets/characters/malik-reference.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2124383,
+      "alphaChannel": false,
+      "sha256": "7ab3e028390d6c14a08b2857f7661b36732e4c8ffe7633ca97205b84cfe8ccd0",
+      "purpose": "characters"
+    },
+    {
+      "id": "brass-key",
+      "path": "assets/objects/brass-key.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 631920,
+      "alphaChannel": true,
+      "sha256": "56c4c96c1b85f443acd3fb32aa90d6326731eeecd890c7f00dccb6e97cff70a4",
+      "purpose": "objects"
+    },
+    {
+      "id": "cinema-photo",
+      "path": "assets/objects/cinema-photo.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2792099,
+      "alphaChannel": true,
+      "sha256": "9a21cbea070c55257c6d798ef8683b1b66ea3d5bb72475ecbc6d510b8ea605a1",
+      "purpose": "objects"
+    },
+    {
+      "id": "consent-letter",
+      "path": "assets/objects/consent-letter.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2875660,
+      "alphaChannel": true,
+      "sha256": "058f06c80197d869dab305a646f42418e839d29540933b03ba0930f94d76a0eb",
+      "purpose": "objects"
+    },
+    {
+      "id": "film-canister",
+      "path": "assets/objects/film-canister.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1595267,
+      "alphaChannel": true,
+      "sha256": "27c781071a1fabb1da51e81e23796deb30cec992a2b45e68347573f5a2309de4",
+      "purpose": "objects"
+    },
+    {
+      "id": "message-paper",
+      "path": "assets/objects/message-paper.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 2393403,
+      "alphaChannel": true,
+      "sha256": "eac0b5a5711f741cbcf93ad11e83b16b0538ea3491fb7e15c7eddfe3f30525b8",
+      "purpose": "objects"
+    },
+    {
+      "id": "screening-programme",
+      "path": "assets/objects/screening-programme.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1948414,
+      "alphaChannel": true,
+      "sha256": "1488addaea48fd31563630c1105734101ce82dc3149c1e24bce62e4918468dd3",
+      "purpose": "objects"
+    },
+    {
+      "id": "sealed-envelope",
+      "path": "assets/objects/sealed-envelope.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1724414,
+      "alphaChannel": true,
+      "sha256": "9c3cb515ae9df3653badb4eaff74c056f3f425ef7108cbfd28a4a32741f4396c",
+      "purpose": "objects"
+    },
+    {
+      "id": "vhs-cassette",
+      "path": "assets/objects/vhs-cassette.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1675683,
+      "alphaChannel": true,
+      "sha256": "5f472ddb14cae9d75b83d49eb11966cca72770a0d6a8613f753806839a2166e0",
+      "purpose": "objects"
+    },
+    {
+      "id": "ui-1996-reference",
+      "path": "assets/reference/ui-1996-reference.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2138760,
+      "alphaChannel": false,
+      "sha256": "4546800f4ffc5218f7b4e431d6f960be767321eaa5a73f8a824435ba2d757fcb",
+      "purpose": "reference-only"
+    },
+    {
+      "id": "ui-2026-reference",
+      "path": "assets/reference/ui-2026-reference.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2232104,
+      "alphaChannel": false,
+      "sha256": "c7a879d0bcb9d4956355cc5b68a9fb1f9f8326927e673e2752ef84a8d4543baf",
+      "purpose": "reference-only"
+    },
+    {
+      "id": "cinema-exterior",
+      "path": "assets/scenes/cinema-exterior.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2459114,
+      "alphaChannel": false,
+      "sha256": "40370cebcc2e2f4ade45e24fbcf4fcde771b7aef574bed71c5d2f3e357fc7b62",
+      "purpose": "scenes"
+    },
+    {
+      "id": "scene-1996-closed",
+      "path": "assets/scenes/scene-1996-closed.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2313408,
+      "alphaChannel": false,
+      "sha256": "d446e8516574db108a0a4e73a37c21ecfb1031531c538dae01dabe8cc9c82a4b",
+      "purpose": "scenes"
+    },
+    {
+      "id": "scene-1996-open",
+      "path": "assets/scenes/scene-1996-open.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2118341,
+      "alphaChannel": false,
+      "sha256": "47e92ea782c3a7784c60ecd6892742f8de6e5d4662423baa05a73fd23443ea1d",
+      "purpose": "scenes"
+    },
+    {
+      "id": "scene-2026-closed",
+      "path": "assets/scenes/scene-2026-closed.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2511167,
+      "alphaChannel": false,
+      "sha256": "d7b72502ef5941bb77a13f8ac91cef366c0ea5c63e64012165c9544d81c5c78b",
+      "purpose": "scenes"
+    },
+    {
+      "id": "scene-2026-open",
+      "path": "assets/scenes/scene-2026-open.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2247075,
+      "alphaChannel": false,
+      "sha256": "b3072effc1d2158de8485ad07a65e166f52853c037e982121e8568311b4eafcb",
+      "purpose": "scenes"
+    }
+  ]
+}

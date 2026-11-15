@@ -1,0 +1,83 @@
+{
+  "tool": "built-in image_gen",
+  "created": "2026-11-15",
+  "assets": [
+    {
+      "id": "scene-1996-closed",
+      "folder": "scenes",
+      "prompt": "Original visual assets for AFTERIMAGE — La dernière séance, a cinematic mystery set in a small French art-house cinema named Le Régina in 1996 and 2026. Premium photographic cinema realism, tactile analog materials, fine natural film grain, restrained warm amber and cool petrol palette. No watermark, no logo, no UI, no generated captions. Wide 16:9 photorealistic game environment plate. Empty 1996 projection booth at night. Locked-off eye-level wide camera. Left third massive old 35mm projector, back wall window reveals red velvet auditorium seats, on right third tall dark walnut cabinet with closed door and distinctive crescent-shaped brass handle. Center wooden workbench and brass desk lamp, lower central workbench space clear for game object overlays. Shelves of film cans. Lit amber tungsten, intimate, beautiful, legible shadow detail. No people. Important readable geometry for clickable hotspots. Entire cabinet visible, entire frame architectural. No object labels or writing."
+    },
+    {
+      "id": "jeanne-reference",
+      "folder": "characters",
+      "prompt": "Original visual assets for AFTERIMAGE — La dernière séance, a cinematic mystery set in a small French art-house cinema named Le Régina in 1996 and 2026. Premium photographic cinema realism, tactile analog materials, fine natural film grain, restrained warm amber and cool petrol palette. No watermark, no logo, no UI, no generated captions. Single fictional woman Jeanne, 35 in 1996, short chestnut wavy bob, thoughtful hazel eyes, ivory blouse and burgundy waistcoat, approachable composed face. Straight-on eye-level head to waist portrait in wide 16:9 format, looking exactly into camera, neutral gentle expression, mouth naturally closed, shoulders level, no hands raised. Even soft frontal key light for avatar generation, no dramatic shadow over face, natural skin texture. Uncluttered softly blurred warm projection booth backdrop, no other faces, no props covering body. Human photographic character reference, not an illustration."
+    },
+    {
+      "id": "malik-reference",
+      "folder": "characters",
+      "prompt": "Original visual assets for AFTERIMAGE — La dernière séance, a cinematic mystery set in a small French art-house cinema named Le Régina in 1996 and 2026. Premium photographic cinema realism, tactile analog materials, fine natural film grain, restrained warm amber and cool petrol palette. No watermark, no logo, no UI, no generated captions. Single fictional man Malik, 32 in 2026, short dark curly hair, trimmed short beard, warm brown eyes, olive corduroy overshirt over charcoal tee. Straight-on eye-level head to waist portrait in wide 16:9 format, looking exactly into camera, neutral attentive expression, mouth naturally closed, shoulders level, no hands raised. Even soft frontal key light for avatar generation, natural skin texture. Uncluttered softly blurred cool old projection booth backdrop, no other faces, no props covering body. Human photographic character reference, not illustration."
+    },
+    {
+      "id": "film-canister",
+      "folder": "objects",
+      "prompt": "Original visual assets for AFTERIMAGE — La dernière séance, a cinematic mystery set in a small French art-house cinema named Le Régina in 1996 and 2026. Premium photographic cinema realism, tactile analog materials, fine natural film grain, restrained warm amber and cool petrol palette. No watermark, no logo, no UI, no generated captions. One isolated circular vintage 35mm steel film canister, lid slightly ajar revealing tightly wound amber film, warm brushed metal, blank small aged paper label, centered three-quarter product photograph, whole object fully inside image, generous margin, subtle natural contact shadow. Square composition. Genuinely transparent background, no floor or backdrop. No lettering."
+    },
+    {
+      "id": "brass-key",
+      "folder": "objects",
+      "prompt": "Original visual assets for AFTERIMAGE — La dernière séance, a cinematic mystery set in a small French art-house cinema named Le Régina in 1996 and 2026. Premium photographic cinema realism, tactile analog materials, fine natural film grain, restrained warm amber and cool petrol palette. No watermark, no logo, no UI, no generated captions. One isolated antique brass cabinet key with distinctive crescent moon bow, elegant small metal key, aged brass, realistic worn edges, centered three-quarter product photography, fully visible, square composition generous margins. Genuinely transparent background, no lettering, no other objects."
+    },
+    {
+      "id": "vhs-cassette",
+      "folder": "objects",
+      "prompt": "Original visual assets for AFTERIMAGE — La dernière séance, a cinematic mystery set in a small French art-house cinema named Le Régina in 1996 and 2026. Premium photographic cinema realism, tactile analog materials, fine natural film grain, restrained warm amber and cool petrol palette. No watermark, no logo, no UI, no generated captions. One isolated 1990s black VHS video cassette, transparent spool windows and completely BLANK ivory center label with broad space for later text overlay, centered three-quarter product photography, square composition, full object generous margin. Genuinely transparent background. No existing commercial branding or lettering."
+    },
+    {
+      "id": "message-paper",
+      "folder": "objects",
+      "prompt": "Original visual assets for AFTERIMAGE — La dernière séance, a cinematic mystery set in a small French art-house cinema named Le Régina in 1996 and 2026. Premium photographic cinema realism, tactile analog materials, fine natural film grain, restrained warm amber and cool petrol palette. No watermark, no logo, no UI, no generated captions. One isolated rectangular aged ivory handwritten-message paper but COMPLETELY BLANK, lightly foxed edges and one soft fold, broad empty clean center for later exact dynamic text, straight-on front view with minimal perspective, square composition generous margins. Real paper texture. Genuinely transparent background. No writing, no symbols, no shadows across center."
+    },
+    {
+      "id": "consent-letter",
+      "folder": "objects",
+      "prompt": "Original visual assets for AFTERIMAGE — La dernière séance, a cinematic mystery set in a small French art-house cinema named Le Régina in 1996 and 2026. Premium photographic cinema realism, tactile analog materials, fine natural film grain, restrained warm amber and cool petrol palette. No watermark, no logo, no UI, no generated captions. One isolated blank folded cream correspondence sheet, unfolded with two horizontal fold lines, tiny burgundy wax seal resting at lower right edge, blank broad central area for later exact document text. Straight-on front view, square composition, photographic paper fibers, fully visible generous margins. Genuinely transparent background, absolutely no writing or letters."
+    },
+    {
+      "id": "cinema-photo",
+      "folder": "objects",
+      "prompt": "Original visual assets for AFTERIMAGE — La dernière séance, a cinematic mystery set in a small French art-house cinema named Le Régina in 1996 and 2026. Premium photographic cinema realism, tactile analog materials, fine natural film grain, restrained warm amber and cool petrol palette. No watermark, no logo, no UI, no generated captions. One isolated old 1970s black and white photographic print with narrow cream scalloped border, square composition. Photo depicts small charming French neighborhood cinema facade, art deco curved canopy, glass doors, blank marquee, NO people. Photograph slightly aged and curled at corner, seen straight on, fully visible with margins. Genuinely transparent background outside the physical photographic print. No legible lettering."
+    },
+    {
+      "id": "screening-programme",
+      "folder": "objects",
+      "prompt": "Original visual assets for AFTERIMAGE — La dernière séance, a cinematic mystery set in a small French art-house cinema named Le Régina in 1996 and 2026. Premium photographic cinema realism, tactile analog materials, fine natural film grain, restrained warm amber and cool petrol palette. No watermark, no logo, no UI, no generated captions. One isolated small vintage burgundy cinema programme booklet, closed cover with elegant thin muted gold decorative frame and completely blank center for typeset title later, realistic paper stock lightly worn. Front-on view near-orthographic, square composition, entire object visible generous margin, genuine transparent background. No letters, no text, no logo."
+    },
+    {
+      "id": "sealed-envelope",
+      "folder": "objects",
+      "prompt": "Original visual assets for AFTERIMAGE — La dernière séance, a cinematic mystery set in a small French art-house cinema named Le Régina in 1996 and 2026. Premium photographic cinema realism, tactile analog materials, fine natural film grain, restrained warm amber and cool petrol palette. No watermark, no logo, no UI, no generated captions. One isolated aged ivory envelope sealed with a deep burgundy wax seal, three-quarter top view with back flap visible, realistic paper creases and wax texture, no handwriting, fully visible square composition generous margin. Genuinely transparent background."
+    },
+    {
+      "id": "cinema-exterior",
+      "folder": "scenes",
+      "prompt": "Original visual assets for AFTERIMAGE — La dernière séance, a cinematic mystery set in a small French art-house cinema named Le Régina in 1996 and 2026. Premium photographic cinema realism, tactile analog materials, fine natural film grain, restrained warm amber and cool petrol palette. No watermark, no logo, no UI, no generated captions. Wide 16:9 cinematic evening exterior of a small French neighborhood cinema, art deco facade with a gently curved maroon canopy and beautiful blank cream marquee reserved for later typeset lettering, warm glass doors, wet cobblestones, subtle amber streetlights, blue hour sky. Empty street no people or vehicles. Frontal symmetrical composition with slight human-scale perspective, rich photographic mood, realistic architecture, no readable text. Suitable title-screen background with quiet dark space at edges."
+    }
+  ],
+  "variants": [
+    {
+      "id": "scene-1996-open",
+      "folder": "scenes",
+      "prompt": "Edit this exact game background. Maintain exact same wide dimensions, camera, geometry, projector, table, window, lighting. ONLY change the tall walnut cabinet at far right: open its door toward right revealing empty wooden shelves, one upper shelf at chest height, clearly usable as an overlay location. Nothing in the cabinet. No text, people, UI. Photorealistic cinema adventure game background."
+    },
+    {
+      "id": "scene-2026-closed",
+      "folder": "scenes",
+      "prompt": "Edit this exact game background to the SAME projection booth thirty years later, 2026. Preserve exact wide framing and geometry, position of projector left, table center, window, cabinet right closed with crescent handle. Cool muted blue evening light replaces warm lighting, old lamp is off, dusty patina, faded seats, subtle water damage horizontal tide mark low on cabinet below the tabletop and at base of wall. No extreme ruin; still beautiful cinematic richly detailed. Empty center tabletop for game overlays. No people, text, UI. Same room unmistakably."
+    },
+    {
+      "id": "scene-2026-open",
+      "folder": "scenes",
+      "prompt": "Edit this exact game background, preserving exact wide dimensions, camera, geometry, cool 2026 blue light, dust, flood tide mark and all objects. ONLY change the tall walnut cabinet at far right: its crescent-handle door is open toward right, exposing an empty upper shelf at chest height and empty bottom space. Cabinet should have one shelf as in a vintage wardrobe. No collectible objects inside; these will be overlaid by the game. Nothing else changes. No people, no text or UI."
+    }
+  ]
+}

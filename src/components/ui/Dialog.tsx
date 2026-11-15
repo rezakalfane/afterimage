@@ -24,8 +24,10 @@ export function Dialog({ open, title, onClose, children, tone = "paper", wide = 
       d.showModal();
     } else if (!open && d.open) {
       d.close();
-      // Back to the opener; show the focus ring only if the player is using the keyboard.
-      (opener.current as HTMLElement | null)?.focus?.({ focusVisible: lastInput === "key", preventScroll: true } as FocusOptions);
+      // The native dialog restores focus to the opener (with a ring). Keyboard players get it back
+      // there; after a mouse/touch interaction nothing stays selected.
+      if (lastInput === "key") (opener.current as HTMLElement | null)?.focus?.({ preventScroll: true });
+      else (document.activeElement as HTMLElement | null)?.blur?.();
     }
   }, [open]);
   return (

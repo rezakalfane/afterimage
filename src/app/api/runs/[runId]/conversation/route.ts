@@ -1,6 +1,7 @@
 import { requireContext } from "@/server/dal/context";
 import { closeConversation, openConversation } from "@/server/napster/conversation";
-import { handler, json } from "@/server/security/http";
+import { reconcileLeases } from "@/server/jobs/maintenance";
+import { handler, HttpError, json } from "@/server/security/http";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -9,7 +10,17 @@ type P = { params: Promise<{ runId: string }> };
 /** Reserve capacity and open a live conversation with the character of the run's current era. */
 export const POST = handler(async (req, { params }: P) => {
   const ctx = await requireContext(req);
-  const opened = await openConversation(ctx, (await params).runId);
+  const { runId } = await params;
+  let opened;
+  try {
+    opened = await openConversation(ctx, runId);
+  } catch (e) {
+    // Capacity may be held by expired/uncertain leases: reconcile them (bounded), then retry once.
+    if (!(e instanceof HttpError && e.code === "CAPACITY_FULL")) throw e;
+    const r = await reconcileLeases();
+    if (r.closed === 0) throw e;
+    opened = await openConversation(ctx, runId);
+  }
   // The token is returned once, in the body only (never in a URL, log or cache).
   return json({ ok: true, token: opened.token, leaseId: opened.leaseId, character: opened.character, revision: opened.revision });
 });

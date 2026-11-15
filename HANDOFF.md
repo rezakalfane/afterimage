@@ -1,49 +1,46 @@
 # HANDOFF
 
 ## Where we are (2026-11-15)
-| Phase | State |
+
+| Lot (kit §19) | State |
 |---|---|
-| Repo scaffold (Next.js, SDK, tests, docs) | done |
-| Canon guardian (1996 ↔ 2026) + tests | done (18 tests) |
-| Multilingual base (fr, en) | done |
-| Napster provisioning (3 tools, 4 agents, stock avatars as stand-ins) | done, live on the account |
-| Live voice call in a browser | **not yet tested by a human** |
-| Persistent world store | todo (blocks deployment) |
-| Custom avatars for Jeanne & Malik | waiting for portraits from the scenario team |
-| VHS tape (Recordings API) | code ready; feature **not enabled** on the org (403) → letter fallback |
-| Final story, prompts, scenes | scenario team (ChatGPT + user) |
-| Deploy to Vercel, phone call (VoIP) | todo |
+| 0 Accès | ✅ capability matrix, live proofs (docs/NAPSTER_ACCESS_REPORT.md), 4 agents documented and reused (fr = P0; en = 100% English, P1) |
+| 1 Fondation | ✅ setup/doctor/migrate/seed, env schema, lint, typecheck |
+| 2 Identités | ✅ Better Auth (guest + invitation), memberships, DAL; A/B isolation tested (same tenant and cross tenant) |
+| 3 Monde | ✅ engine, projections, transactions, CAS, idempotency, 3 endings |
+| 4 Interface | ✅ full chapter in rehearsal mode, desktop and mobile (e2e) |
+| 5 Napster | ✅ live in the real game (tools, mutations, reactions, era switch), admission, teardown |
+| 6 Mémoire | ✅ HMAC identity per run and character; no contamination (live canary); resume recalls |
+| 7 Signature | ✅ exact sentence end to end; no video generation required |
+| 8 Résilience | ✅ reload, network cut, retries, uncertain creates, close-during-open race, 429, maintenance |
+| 9 Finition | 🟡 visual pass done (screens in var/screens); sound not done (optional); UI strings not yet in dictionaries (English pass) |
+| 10 Release | ⏳ prepared (docs/OPERATIONS.md); needs a Turso account and approval for the Vercel projects |
+| 11 Bonus | ⛔ off (Recordings 403; phone and v2 untested) |
+| 12 Soumission | 🟡 README, demo script; the video is still to record |
 
 ## Verified at handoff
-- `npm run verify` → typecheck ok, 18/18 tests, production build ok.
-- `npm run provision` → created tools `cacher_bobine`, `laisser_message`, `fouiller` and agents jeanne/fr, jeanne/en, malik/fr, malik/en.
-- Dev server + curl: `/` redirects by Accept-Language, `/fr` 200, `/de` 404; tool chain hide → message → search returns the reel and the message; `/api/session` returns a token (session then closed from the backend); `/api/vhs` reports the letter fallback.
+- `npm run verify` → lint ✓, typecheck ✓, unit 28, integration 20, build ✓ (the counts move as tests are added).
+- `npx playwright test` → 6/6 (three endings, reload/offline, hints, mobile 390 px) on a production build.
+- `node tests/live/game-live.mjs` → full live path OK. Napster spend so far: **$0.99**.
 
 ## Resume in 5 commands
 ```bash
-npm install
-cp .env.example .env   # then set NAPSTER_API_KEY
-npm run check-key
-npm run verify
-npm run dev            # open http://localhost:3000, click "Appeler Jeanne"
+npm ci
+npm run setup            # or keep the existing .env.local
+npm run doctor
+npm run verify && npx playwright test
+npm run dev
 ```
 
 ## Next steps (in order)
-1. Talk to Jeanne and Malik in the browser (fr and en): check voice, tool calls, subtitles, memory on a second call.
-2. Replace `MemoryStore` with a persistent store (Vercel Marketplace), then deploy to Vercel (preview), set `NAPSTER_API_KEY` in the project env.
-3. When portraits arrive: put them in `public/characters/`, set `companion.picture`, set `PUBLIC_BASE_URL` to the deployed URL, `npm run provision`.
-4. Integrate the scenario team's story: prompts, locations, scenes, items. Re-provision.
-5. Once Recordings is enabled: run `npm run check-key`, measure render time, tune when the tape is requested.
-6. Phone call to Jeanne in 2026 (VoIP channel + Twilio number), Edge MCP hotspots in the scene, then polish and the demo video.
+1. Accesses from docs/OPERATIONS.md §0 (Turso, Vercel projects), then staging: release migration, owner bootstrap, deploy, acceptance on HTTPS, CSP observation, then production.
+2. English pass: UI strings to dictionaries, English episode content and texts, route `en` sessions to the `en` agents, English e2e.
+3. Optional polish: ambient sound with a mute button, more scene transitions, a demo video.
+4. Bonuses only after enablement: Recordings (VHS) and the phone epilogue.
 
 ## Things to know
-- **Commits in the user's name only** (sole-author hackathon rule). No AI trailers.
-- Web SDK v2.0.0 ≠ online docs (see `docs/01-ARCHITECTURE.md`). Trust `node_modules/@touchcastllc/napster-companion-api/lib/types/index.d.ts`.
-- Function IDs equal their names.
-- Connection endpoints: 1 request/s per key, so tests that open sessions back-to-back hit 429.
-- A WebSocket session opened but never joined can't always be deleted; it expires as `not_started`.
-- Recordings enablement message is ready to send (org ID is in the dashboard URL).
-- `typescript@7` is installed (native compiler); Next 16 builds with it.
-
-## Key files
-`content/` · `scripts/provision.ts` · `src/lib/world/world.ts` · `src/app/api/` · `src/components/CharacterCall.tsx` · `src/i18n/ui.ts` · `src/generated/napster-ids.json`
+- Commit as the user only (no AI trailers). Public repo: github.com/rezakalfane/afterimage.
+- Local DB = one connection behind a mutex (`serialized-client.ts`). Remote libSQL is untouched and must be validated on Turso.
+- Napster counts request arrivals: rate slot 1.5 s, one retry on 429.
+- E2E uses port 3197 (3100 is used by another local project). Never log the dev server into `var/` (reload loop).
+- Agent ids: `config/napster-resources.json`. `provision:napster` is a dry run unless `--apply`, and refuses while sessions are open.

@@ -24,7 +24,11 @@ No key, token, session token or private URL in this file. "Documented" ≠ "test
 | Cross-run access | **tested** | Guest B → `GET /api/runs/{A}` 404; `POST /api/runs/{A}/tool` 404 |
 | **Reconnection** | **tested** | Run A reconnected with the same memory id (`napster_bindings`): knows G7 (context) and recalls the canary (Napster memory within the run) |
 | Backend close `DELETE /public/connections/{id}` | **tested** | All 6 leases `closed`; no Napster session left open by the app |
-| Session cost | **tested** | `GET /public/sessions` `cost`: $0.41 total after the proof (10 sessions) |
+| Session cost | **tested** | `GET /public/sessions` `cost`: **$0.99 in total** after the proofs and the live game smoke tests (18 sessions) |
+| **Live in the real game screen** | **tested** | `tests/live/game-live.mjs`: Malik's tool → notebook updated → he reads G7; era switch closes his session; Jeanne goes live in ≈ 4–9 s; a clue relayed from the UI (silent `send_message` system projection) makes her react; her tool finds the key (notebook updated) |
+| Provider rate limit | **observed** | A create sent ~0.6 s after a delete → `429 RequestRateLimitExceeded`. Fix: shared slot of 1.5 s plus one retry after `Retry-After` (a 429 creates nothing) |
+| Close during open | **found and fixed** | React strict-mode remount closed a `reserved` lease while the create was in flight. The server now closes the new provider session and returns no token (integration test) |
+| No-op tool output | **found and fixed** | "Rien de nouveau" was read by Jeanne as a failure. A no-op now says "déjà pris en compte, ce n’est pas un échec" |
 | Recordings (VHS) | **unavailable** | `POST …/recordings` → 403 `RecordingsApiNotEnabled` → bonus disabled (`NAPSTER_RECORDINGS_ENABLED=false`) |
 | Avatar v2 / custom companions from kit portraits | not tested | Kit portraits are artwork only; stock companions stand in |
 | VoIP (Twilio) | documented, channel config tested | Phone bonus disabled (`NAPSTER_PHONE_ENABLED=false`) |
@@ -39,12 +43,14 @@ Raw proof logs (local, gitignored): `var/proof/live-proof-*.json`. Script: `test
 |---|---|---|---|
 | `5f23083f…` afterimage-jeanne-fr | Jeanne, French | **P0**. Kit prompt + technical appendix, tools `jeanne_*` + `world_request_hint`, web search off | shared by local, staging, production |
 | `41ff2adc…` afterimage-malik-fr | Malik, French | **P0**. Kit prompt + technical appendix, tools `malik_*` + `world_request_hint`, web search off | shared by local, staging, production |
-| `5ef3814f…` afterimage-jeanne-en | Jeanne, English | Reserved for P1. Still holds the earlier prototype configuration; **not used** | — |
-| `3c823040…` afterimage-malik-en | Malik, English | Reserved for P1. Still holds the earlier prototype configuration; **not used** | — |
+| `5ef3814f…` afterimage-jeanne-en | Jeanne, English | P1. **100% English**: kit prompt translated (to be reviewed), English technical appendix, tools `en_jeanne_*` + `en_world_request_hint` (English descriptions, prompts and enum values). Not used by the app until the English content pass | — |
+| `3c823040…` afterimage-malik-en | Malik, English | P1. **100% English**: same as above with `en_malik_*` tools | — |
 
 Rules:
 - Global instructions are **never** changed with player data. Run data goes only through `externalClientProfile` at connection time, through tool outputs, and through silent `send_message` system updates from the player's own browser.
 - `provision:napster` refuses to patch while a session of these agents is open.
 - Environment isolation comes from the memory identity, `externalClientId = "ai_" + HMAC(env | tenant | user | run | character | generation)[:28]`, plus separate databases. It does not come from separate agents.
 - Capacity: the org limit (5 concurrent WebRTC sessions) is shared by every environment. The per-environment `NAPSTER_MAX_ACTIVE` values must sum to 5 or less. Recommended: production 3, staging 1, local 1.
-- Old prototype functions (`cacher_bobine`, `laisser_message`, `fouiller`) are still attached to the `en` agents. They will be removed during the English pass.
+- Prototype functions (`cacher_bobine`, `laisser_message`, `fouiller`) were detached and **deleted**. The account now holds 14 functions: 7 fr + 7 en.
+- Language check (2026-11-15): fr agents have 0 English markers in their instructions or tools. en agents have 0 French markers in their tools, and only the proper nouns « Le Régina » and « Les lumières du Régina » in their instructions.
+- Remaining for a 100% English game: the per-run context (facts, documents) and the game texts are French until the English content pass.

@@ -1,7 +1,7 @@
 // Full chapter in a real browser, rehearsal mode: every step through visible UI controls.
 import { expect, test } from "@playwright/test";
 
-import { closeDialog, hotspot, inDialog, PHRASE, playToDecision } from "./helpers";
+import { closeDialog, hotspot, inDialog, playToDecision } from "./helpers";
 
 for (const [ending, label, closing] of [
   ["public_cut", /Projeter la version autorisée/, /La salle se rallume/],

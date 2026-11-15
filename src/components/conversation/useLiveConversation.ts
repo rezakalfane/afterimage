@@ -70,7 +70,9 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent }: Option
         cbs.current.onPublicState?.(null, -1);
         console.warn("[tool]", (e as Error).message);
       }
-      send({ type: "send_function_output", data: { call_id: callId, output, delay: false } });
+      // delay: true → the result is processed once the character has finished its current
+      // sentence ("Je vais ouvrir l’armoire…"); delay: false made it cut itself off mid-sentence.
+      send({ type: "send_function_output", data: { call_id: callId, output, delay: true } });
     },
     [runId, send],
   );

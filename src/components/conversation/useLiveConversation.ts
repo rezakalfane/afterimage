@@ -43,6 +43,10 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent }: Option
   const [error, setError] = useState<{ code: string; message: string } | null>(null);
   const [transcript, setTranscript] = useState<TranscriptLine[]>([]);
   const [subtitle, setSubtitle] = useState("");
+  const tRef = useRef(t);
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
   const cbs = useRef({ onPublicState, onRawEvent });
   useEffect(() => {
     cbs.current = { onPublicState, onRawEvent };
@@ -58,7 +62,7 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent }: Option
       const name = String(data.name ?? "");
       if (!callId || !name || seen.current.has(callId) || !leaseRef.current) return; // SDK may emit twice
       seen.current.add(callId);
-      let output: Record<string, unknown> = { ok: false, message: "Le serveur ne répond pas ; reste en personnage et propose de réessayer." };
+      let output: Record<string, unknown> = { ok: false, message: tRef.current.toolNoServer };
       try {
         const r = await api<{ output: Record<string, unknown>; revision: number; publicState: unknown }>(`/api/runs/${runId}/tool`, {
           method: "POST",
@@ -68,7 +72,7 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent }: Option
         cbs.current.onPublicState?.(r.publicState, r.revision);
       } catch (e) {
         // Never claim failure if it may have committed: the UI reloads the canonical state.
-        output = { ok: false, message: "Je n’ai pas pu vérifier. Laisse-moi un instant." };
+        output = { ok: false, message: tRef.current.toolUnverified };
         cbs.current.onPublicState?.(null, -1);
         console.warn("[tool]", (e as Error).message);
       }

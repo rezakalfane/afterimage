@@ -1,7 +1,9 @@
 "use client";
-// Character panel. A static portrait is a FALLBACK, labelled as such; "En direct" is shown only
-// when the live Napster session is actually up. Rehearsal mode is labelled everywhere.
-import { useState } from "react";
+// Character panel. Name, role, era and the conversation state are permanent (a header row, never
+// layered over the SDK video). The state comes from real events only (status, talk_state, mic).
+// The portrait/video shrinks first when height is short; subtitles keep a fixed box; the history
+// is a bounded drawer over the media area (the SDK mount is never unmounted).
+import { useEffect, useRef, useState } from "react";
 import { Dialog } from "@/components/ui/Dialog";
 import { ERA_META } from "@/components/game/scene-config";
 import { useT } from "@/i18n/I18nProvider";
@@ -51,28 +53,40 @@ export function CharacterPanel({ mountRef, ...p }: PanelProps) {
   const meta = { ...ERA_META[p.era], ...c[ERA_META[p.era].character] };
   const [text, setText] = useState("");
   const [prepOpen, setPrepOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const live = p.mode === "live";
   const liveUp = live && p.status === "live";
-  const badge = !live ? c.badgeRehearsal : liveUp ? (p.videoReady ? c.badgeLive : c.badgeLiveAudio) : p.status === "connecting" ? c.badgeConnecting : p.status === "closing" ? c.badgeClosing : null; // offline: no badge (the "En direct" badge marks a live session)
-  // Only this era's character: never show the other character's last line after a switch.
-  const lastLines = p.transcript.filter((l) => l.character === meta.character).slice(-6);
+  // Only this era's character: never show the other character's lines after a switch.
+  const lines = p.transcript.filter((l) => l.character === meta.character);
+  const state = !live
+    ? c.stateRehearsal
+    : p.status === "connecting" ? c.stateConnecting
+    : p.status === "closing" ? c.stateClosing
+    : p.status === "error" ? c.stateError
+    : liveUp ? (p.speaking ? fmt(c.stateSpeaking, { name: meta.name }) : p.micMuted ? c.stateMuted : c.stateListening)
+    : c.stateIdle;
+  const tone = liveUp ? (p.speaking ? "speaking" : "live") : p.status === "connecting" ? "busy" : !live ? "rehearsal" : "idle";
+  const subtitle = (liveUp ? p.subtitle : lines.filter((l) => l.role === "assistant").at(-1)?.text) || "";
 
   return (
     <aside className={`character character--${meta.character}`} aria-label={`${meta.name}, ${meta.role}`}>
-      <div className="character__media">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className={`character__portrait${liveUp && p.videoReady ? " is-hidden" : ""}`} src={`${meta.portrait}-600.webp`} srcSet={`${meta.portrait}-600.webp 600w, ${meta.portrait}-1200.webp 1200w`} sizes="(max-width: 900px) 100vw, 36vw" alt={fmt(c.portraitAlt, { name: meta.name })} />
-        <div className={`character__live${liveUp ? " is-on" : ""}`} ref={mountRef} />
+      <header className="character__head">
         <div className="character__id">
           <h2>{meta.name}</h2>
           <span>{meta.role}</span>
         </div>
-        {badge && <span className={`badge${liveUp ? " badge--live" : !live ? " badge--rehearsal" : ""}`} role="status">{badge}</span>}
+        <span className={`state state--${tone}`} role="status">{state}{liveUp && !p.videoReady ? ` · ${c.stateAudio}` : ""}</span>
+      </header>
+
+      <div className="character__media">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className={`character__portrait${liveUp && p.videoReady ? " is-hidden" : ""}`} src={`${meta.portrait}-600.webp`} srcSet={`${meta.portrait}-600.webp 600w, ${meta.portrait}-1200.webp 1200w`} sizes="(max-width: 900px) 100vw, 36vw" alt={fmt(c.portraitAlt, { name: meta.name })} />
+        <div className={`character__live${liveUp ? " is-on" : ""}`} ref={mountRef} />
+        {historyOpen && <History lines={lines} name={meta.name} onClose={() => setHistoryOpen(false)} />}
       </div>
 
       <div className="character__subtitles" aria-live="polite" aria-label={c.subtitles}>
-        {(liveUp ? p.subtitle : lastLines.filter((l) => l.role === "assistant").at(-1)?.text) || <span className="muted">{live ? c.emptyLive : c.emptyRehearsal}</span>}
-        {p.speaking && <span className="speaking" aria-hidden="true">●</span>}
+        {subtitle || <span className="muted">{live ? c.emptyLive : c.emptyRehearsal}</span>}
       </div>
 
       {p.suggestion && (
@@ -83,16 +97,19 @@ export function CharacterPanel({ mountRef, ...p }: PanelProps) {
       )}
 
       <div className="character__controls">
-        {live && !liveUp && p.status !== "connecting" && (
+        {live && !liveUp && p.status !== "connecting" && p.status !== "closing" && (
           <button type="button" className="btn btn--brass" onClick={async () => ((await hasMicConsent()) ? p.onStart() : setPrepOpen(true))} disabled={p.disabled}>{fmt(c.talk, { name: meta.name })}</button>
         )}
         {live && p.status === "connecting" && <button type="button" className="btn" onClick={p.onStop}>{t.common.cancel}</button>}
         {liveUp && (
           <>
-            <button type="button" className="btn" aria-pressed={p.micMuted} onClick={p.onToggleMic}>{p.micMuted ? c.micOff : c.micOn}</button>
+            <button type="button" className="btn" onClick={p.onToggleMic}>{p.micMuted ? c.micUnmute : c.micMute}</button>
             <button type="button" className="btn" onClick={p.onStop}>{c.hangUp}</button>
           </>
         )}
+        <button type="button" className="btn btn--quiet character__history" aria-expanded={historyOpen} onClick={() => setHistoryOpen((o) => !o)}>
+          {lines.length ? fmt(c.historyCount, { n: lines.length }) : c.history}
+        </button>
       </div>
 
       <Dialog open={prepOpen && !liveUp} title={c.prepLabel} onClose={() => setPrepOpen(false)}>
@@ -118,7 +135,7 @@ export function CharacterPanel({ mountRef, ...p }: PanelProps) {
         </div>
       </Dialog>
 
-      {p.error && <p className="warn" role="alert">{p.error.message}</p>}
+      {p.error && <p className="warn character__error" role="alert">{p.error.message}</p>}
 
       <form
         className="say"
@@ -133,14 +150,47 @@ export function CharacterPanel({ mountRef, ...p }: PanelProps) {
         <input id="say" value={text} maxLength={500} onChange={(e) => setText(e.target.value)} placeholder={live && !liveUp ? fmt(c.writeWhenLive, { name: meta.name }) : fmt(c.writeToEllipsis, { name: meta.name })} disabled={(live && !liveUp) || p.disabled} autoComplete="off" />
         <button type="submit" className="btn" disabled={(live && !liveUp) || p.disabled}>{c.send}</button>
       </form>
-
-      {lastLines.length > 0 && (
-        <details className="transcript">
-          <summary>{c.lastExchanges}</summary>
-          <ol>{lastLines.map((l, i) => <li key={i} className={`t t--${l.role}`}><span className="sr-only">{l.role === "user" ? c.you : meta.name} :</span>{l.text}</li>)}</ol>
-        </details>
-      )}
       <p className="disclosure">{c.disclosure}</p>
     </aside>
+  );
+}
+
+/** Bounded history: internal scroll, follows new lines only while the reader is at the bottom. */
+function History({ lines, name, onClose }: { lines: { role: "user" | "assistant"; text: string; at: number }[]; name: string; onClose: () => void }) {
+  const c = useT().character;
+  const box = useRef<HTMLOListElement>(null);
+  const [atEnd, setAtEnd] = useState(true);
+  const count = lines.length;
+  useEffect(() => {
+    const el = box.current;
+    if (el && atEnd) el.scrollTop = el.scrollHeight;
+  }, [count, atEnd]);
+  return (
+    <section className="history" aria-label={c.history}>
+      <header className="history__head">
+        <span className="eyebrow">{c.history}</span>
+        <button type="button" className="btn btn--quiet" onClick={onClose}>{c.historyClose}</button>
+      </header>
+      <ol
+        ref={box}
+        className="history__list"
+        tabIndex={0}
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          setAtEnd(el.scrollHeight - el.scrollTop - el.clientHeight < 24);
+        }}
+      >
+        {count === 0 && <li className="muted">{c.historyEmpty}</li>}
+        {lines.map((l, i) => (
+          <li key={i} className={`t t--${l.role}`}>
+            <span className="t__who">{l.role === "user" ? c.you : name}</span>
+            <span className="t__text">{l.text}</span>
+          </li>
+        ))}
+      </ol>
+      {!atEnd && (
+        <button type="button" className="btn history__latest" onClick={() => setAtEnd(true)}>{c.historyLatest}</button>
+      )}
+    </section>
   );
 }

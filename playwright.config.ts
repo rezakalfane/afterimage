@@ -11,9 +11,11 @@ export default defineConfig({
   globalSetup: "./tests/e2e/global-setup.ts",
   use: { baseURL: `http://localhost:${PORT}`, trace: "retain-on-failure", screenshot: "only-on-failure" },
   projects: [
-    { name: "desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } }, grepInvert: /@mobile|@screens/ },
+    { name: "desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } }, grepInvert: /@mobile|@screens|@capture/ },
     { name: "mobile", use: { ...devices["Pixel 7"], viewport: { width: 390, height: 844 } }, grep: /@mobile/ },
     // Screenshots for visual review and docs: npx playwright test --project=screens
+    // Before/after review captures at 1440×900, 1280×720, 390×844 and 200 % zoom: SCREENS_DIR=… --project=capture
+    { name: "capture", grep: /@capture/ },
     { name: "screens", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } }, grep: /@screens/ },
   ],
   webServer: {

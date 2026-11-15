@@ -9,8 +9,8 @@ export function apply(s: WorldState, action: string, args: Record<string, unknow
 export function ready(message = "Les étoiles restent allumées."): WorldState {
   let s = initialState();
   const steps: [string, Record<string, unknown>?][] = [
-    ["inspect_photo"], ["inspect_waterline"], ["switch_era", { era: 1996 }], ["relay_key_location"], ["retrieve_key"], ["open_cabinet"],
-    ["inspect_programme"], ["read_letter"], ["acknowledge_permission"], ["relay_flood_warning"], ["write_message", { text: message }],
+    ["inspect_photo"], ["inspect_waterline"], ["switch_era", { era: 1996 }], ["share_photo_note"], ["ask_usual_place"], ["inspect_programme"],
+    ["propose_seat", { seat: "G7" }], ["retrieve_key"], ["open_cabinet"], ["read_letter"], ["acknowledge_permission"], ["relay_flood_warning"], ["write_message", { text: message }],
     ["confirm_message", { text: normalizeMessage(message)! }], ["preserve_cache", { location: "upper_cabinet" }], ["switch_era", { era: 2026 }],
     ["find_future_key"], ["recover_cache"], ["read_message"], ["read_future_letter"],
   ];

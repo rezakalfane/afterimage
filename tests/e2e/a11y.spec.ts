@@ -20,12 +20,12 @@ test("no serious WCAG violation on home, game and an open dialog", async ({ page
   await axe(page, "home");
   await startRun(page);
   await axe(page, "game 2026");
-  await page.getByRole("button", { name: /Photographie sur le bureau/ }).click();
+  await page.getByRole("button", { name: /^Photographie$/ }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await axe(page, "inspector dialog");
 });
 
-test("keyboard only: start, inspect the photo, read G7, close with Escape, switch era", async ({ page }) => {
+test("keyboard only: start, inspect the photo, read the note, close with Escape, switch era", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Commencer" }).focus();
   await page.keyboard.press("Enter");
@@ -34,9 +34,9 @@ test("keyboard only: start, inspect the photo, read G7, close with Escape, switc
   for (let i = 0; i < 30; i++) {
     await page.keyboard.press("Tab");
     const name = await page.evaluate(() => document.activeElement?.getAttribute("aria-label") ?? "");
-    if (/Photographie sur le bureau/.test(name)) break;
+    if (/^Photographie$/.test(name)) break;
   }
-  expect(await page.evaluate(() => document.activeElement?.getAttribute("aria-label"))).toMatch(/Photographie sur le bureau/);
+  expect(await page.evaluate(() => document.activeElement?.getAttribute("aria-label"))).toMatch(/^Photographie$/);
   const outline = await page.evaluate(() => getComputedStyle(document.activeElement!).outlineStyle);
   expect(outline).not.toBe("none");
   await page.keyboard.press("Enter");
@@ -49,7 +49,7 @@ test("keyboard only: start, inspect the photo, read G7, close with Escape, switc
   const answered = page.waitForResponse((r) => r.url().includes("/commands"));
   await page.keyboard.press("Enter");
   await answered;
-  await expect(page.getByRole("dialog").getByText(/G7/)).toBeVisible();
+  await expect(page.getByRole("dialog").getByText(/notre place habituelle/)).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.locator("dialog[open]")).toHaveCount(0);
   await page.getByRole("navigation", { name: "Époque" }).getByRole("button", { name: "1996" }).focus();

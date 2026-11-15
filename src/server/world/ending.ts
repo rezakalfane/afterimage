@@ -5,7 +5,7 @@ import "server-only";
 //   2. confirm: consumes the token atomically inside the SAME transaction as the engine mutation.
 // No model tool can reach this path.
 import type { TenantContext } from "@/server/dal/context";
-import { getRun } from "@/server/dal/runs";
+import { assertPlayable, getRun } from "@/server/dal/runs";
 import { sqlClient } from "@/server/db/client";
 import { HttpError } from "@/server/security/http";
 import { randomToken, sha256 } from "@/server/security/ids";
@@ -18,6 +18,7 @@ const TTL_MS = 2 * 60_000;
 export async function createEndingIntent(ctx: TenantContext, runId: string, ending: string, expectedRevision: number, locale: "fr" | "en" = "fr") {
   if (!ENDING_IDS.includes(ending as EndingId)) throw new HttpError("INVALID_ARGUMENT");
   const run = await getRun(ctx, runId);
+  assertPlayable(run);
   if (run.revision !== expectedRevision) throw new HttpError("REVISION_CONFLICT", "La partie a changé entre-temps.");
   const probe = transition(run.state, { action: "choose_ending", args: { ending } }, { channel: "ending-confirmed" });
   if (!probe.ok) throw new HttpError("INVALID_ARGUMENT", "Lisez d’abord le message et la lettre retrouvés.");

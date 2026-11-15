@@ -9,7 +9,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { FacadeSign } from "@/components/ui/FacadeSign";
 import { DisplayChoices } from "@/components/ui/DisplayChoices";
 
-export function HomeClient({ mode, runs, signedIn, isAdmin }: { mode: "rehearsal" | "live"; runs: { id: string; status: string; updatedAt: number }[]; signedIn: boolean; isAdmin: boolean }) {
+export function HomeClient({ mode, runs, signedIn, isAdmin }: { mode: "rehearsal" | "live"; runs: { id: string; status: string; retired?: boolean; updatedAt: number }[]; signedIn: boolean; isAdmin: boolean }) {
   const router = useRouter();
   const t = useT();
   const h = t.home;
@@ -22,7 +22,9 @@ export function HomeClient({ mode, runs, signedIn, isAdmin }: { mode: "rehearsal
   const [error, setError] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const resume = runs.find((r) => r.status === "active") ?? runs[0];
+  // Only a game of the current chapter version is offered for resuming.
+  const playable = runs.filter((r) => !r.retired);
+  const resume = playable.find((r) => r.status === "active") ?? playable[0];
 
   async function start() {
     setBusy(true);
@@ -62,7 +64,7 @@ export function HomeClient({ mode, runs, signedIn, isAdmin }: { mode: "rehearsal
         <Dialog open={settingsOpen} title={h.settings} onClose={() => setSettingsOpen(false)}>
           <div className="settings">
             <LanguageChoice />
-            <DisplayChoices />
+            <DisplayChoices withObjects />
             <p className="muted small">{h.settingsNote}</p>
           </div>
         </Dialog>

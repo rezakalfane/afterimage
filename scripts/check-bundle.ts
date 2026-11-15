@@ -25,14 +25,28 @@ const needles: [string, string | undefined][] = [
   ["X-Api-Key header", "X-Api-Key"],
   ["companion-api.napster.com/public/agents", "companion-api.napster.com/public/agents"],
   ["Alice's letter text", episode.documents.letter.slice(0, 40)],
-  ["photo back (G7) text", episode.documents.photoBack],
+  ["photo back text", episode.documents.photoBack],
+  ["programme annotation", episode.documents.programmeNote.slice(0, 30)],
+  ["Jeanne's row memory", episode.documents.rowMemory.slice(0, 30)],
   ["2008 report text", episode.documents.archiveReport.slice(0, 40)],
   ["closing texts", episode.documents.closingBreach.slice(0, 40)],
   ["canon truth", episode.canon.truth.slice(0, 40)],
   ["key location", episode.canon.keyLocation],
 ];
+// v3 solutions must only reach the client through the server projection (never in a chunk).
+const patterns: [string, RegExp][] = [
+  ["seat G7", /\bG ?7\b|G sept\b/],
+  ["row G", /rangée G\b|row G\b/],
+  ["seat 7 annotation", /place 7\b|seat 7\b/],
+  ["upper shelf as the answer", /étagère haute|upper shelf/i],
+];
 let bad = 0;
 const contents = files.map((f) => readFileSync(f, "utf8"));
+for (const [label, re] of patterns) {
+  const hits = contents.filter((c) => re.test(c)).length;
+  if (hits) bad++;
+  console.log(`${hits ? "✗" : "✓"} ${label}: ${hits} file(s)`);
+}
 for (const [label, value] of needles) {
   if (!value) {
     console.log(`• ${label}: not set, skipped`);

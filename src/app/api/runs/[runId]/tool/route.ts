@@ -4,12 +4,14 @@ import { z } from "zod";
 import { requireContext } from "@/server/dal/context";
 import { handler, HttpError, json, readJson } from "@/server/security/http";
 import { sqlClient } from "@/server/db/client";
-import { getRun } from "@/server/dal/runs";
+import { assertPlayable, getRun } from "@/server/dal/runs";
 import { rejectedToolLog, toolsForActions, toolToCommand } from "@/server/napster/tools";
 import { contextUpdateText } from "@/server/napster/context";
 import { executeCommand } from "@/server/world/service";
 import { texts, type Locale } from "@/server/world/texts";
 import { log } from "@/server/security/log";
+import { backingFor, isBacked } from "@/server/world/turns";
+import { playerView } from "@/server/world/projections";
 import type { CharacterId } from "@/server/world/content";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +29,7 @@ export const POST = handler(async (req, { params }: P) => {
   const { runId } = await params;
   const p = body.safeParse(await readJson(req));
   if (!p.success) throw new HttpError("INVALID_ARGUMENT");
-  await getRun(ctx, runId); // foreign or unknown run → 404 before anything else
+  assertPlayable(await getRun(ctx, runId)); // foreign/unknown → 404; older chapter version → retired
   // The character is the one of the caller's lease — never an argument from the request.
   const lease = await sqlClient().execute({
     sql: `SELECT character_id, locale FROM conversation_leases WHERE id = ? AND tenant_id = ? AND run_id = ? AND user_id = ? AND status = 'active'`,
@@ -39,6 +41,14 @@ export const POST = handler(async (req, { params }: P) => {
   const mapped = toolToCommand(character, p.data.name, p.data.args);
 
   const command = mapped.ok ? mapped.command : { action: "__invalid_tool__", args: {} };
+  // A share recorded "from the player" must be backed by the player's own recent turn in this
+  // session: an autonomous model call cannot create that proof.
+  const backing = mapped.ok ? backingFor(command.action, command.args) : null;
+  if (backing && !(await isBacked(ctx, runId, p.data.conversationLeaseId, backing))) {
+    const run = await getRun(ctx, runId);
+    log.info("napster.tool.rejected", rejectedToolLog({ character, name: p.data.name, callId: p.data.callId, revision: run.revision, code: "UNBACKED" }));
+    return json({ ok: false, output: { ok: false, message: texts(locale).tool.unbacked }, revision: run.revision, publicState: playerView(run.state, locale), focus: null });
+  }
   const result = await executeCommand(
     ctx,
     runId,

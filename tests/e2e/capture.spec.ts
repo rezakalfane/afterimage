@@ -14,8 +14,8 @@ const VIEWPORTS = [
   { id: "zoom200", width: 720, height: 450, scale: 2 },
 ];
 type Step = [string, Record<string, unknown>?];
-const TO_KEY: Step[] = [["inspect_photo"], ["inspect_waterline"], ["switch_era", { era: 1996 }], ["relay_key_location"], ["retrieve_key"], ["open_cabinet"]];
-const TO_LETTER: Step[] = [...TO_KEY, ["inspect_programme"], ["read_letter"]];
+const TO_KEY: Step[] = [["inspect_photo"], ["inspect_waterline"], ["switch_era", { era: 1996 }], ["share_photo_note"], ["ask_usual_place"], ["inspect_programme"], ["propose_seat", { seat: "G7" }], ["retrieve_key"], ["open_cabinet"]];
+const TO_LETTER: Step[] = [...TO_KEY, ["read_letter"]];
 const TO_WORDS: Step[] = [...TO_LETTER, ["acknowledge_permission"], ["relay_flood_warning"], ["write_message", { text: "Les étoiles restent allumées. Je reviendrai." }]];
 const TO_STORED: Step[] = [...TO_WORDS, ["confirm_message", { text: "Les étoiles restent allumées. Je reviendrai." }], ["preserve_cache", { location: "upper_cabinet" }]];
 const TO_DECIDE: Step[] = [...TO_STORED, ["switch_era", { era: 2026 }], ["find_future_key"], ["recover_cache"], ["read_message"], ["read_future_letter"]];
@@ -67,7 +67,7 @@ for (const vp of VIEWPORTS) {
     await page.waitForTimeout(300);
     await shot(page, vp.id, "03-history", full);
     await page.getByRole("button", { name: /Fermer l’historique/ }).click({ timeout: 2000 }).catch(() => {});
-    await page.getByRole("button", { name: /Trace d’humidité/ }).first().click();
+    await page.getByRole("button", { name: /^Bas de l’armoire$/ }).first().click();
     await page.waitForTimeout(300);
     await shot(page, vp.id, "04-inspect-waterline");
     await page.keyboard.press("Escape");

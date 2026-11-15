@@ -120,12 +120,13 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .hotspot { position: absolute; border: 1px dashed transparent; background: transparent; border-radius: 3px; cursor: pointer; padding: 0; }
 .hotspot__dot { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; border: 1.5px solid rgb(226 200 143 / 0.7); background: transparent; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.35), 0 0 0 4px rgb(185 155 98 / 0.1); }
 .hotspot:hover .hotspot__dot, .hotspot:focus-visible .hotspot__dot { border-color: var(--brass-hi); background: rgb(16 23 21 / 0.35); }
-.hotspot--ready .hotspot__dot { border-color: var(--brass-hi); box-shadow: 0 0 0 6px rgb(227 201 143 / 0.22), 0 0 18px rgb(227 201 143 / 0.45); }
-.hotspot--done .hotspot__dot { opacity: 0.55; }
 .hotspot__label { position: absolute; left: 50%; top: calc(50% + 20px); transform: translateX(-50%); white-space: nowrap; font-size: 0.78rem; padding: 3px 8px; background: rgb(16 23 21 / 0.88); border: 1px solid var(--line); opacity: 0; transition: opacity 160ms; pointer-events: none; }
-.hotspot:hover, .hotspot:focus-visible { border-color: rgb(226 200 143 / 0.6); background: rgb(226 200 143 / 0.06); }
+.hotspot:hover { border-color: rgb(226 200 143 / 0.28); background: rgb(226 200 143 / 0.04); }
+.hotspot:focus-visible { border-color: rgb(226 200 143 / 0.6); background: rgb(226 200 143 / 0.06); }
+/* Interactive objects are not marked by default (option "Afficher les éléments interactifs"). */
+.hotspot__dot { display: none; }
+:root[data-show-objects="true"] .hotspot__dot { display: block; }
 .hotspot:hover .hotspot__label, .hotspot:focus-visible .hotspot__label { opacity: 1; }
-.hotspot--pulse .hotspot__dot { animation: halo 900ms ease-out; }
 .scene__lights { position: absolute; inset: 0; background: radial-gradient(ellipse at 55% 35%, rgb(255 236 190 / 0.32), transparent 60%); animation: fadein 1.2s ease both; pointer-events: none; }
 .scene__list { list-style: none; margin: 6px 0 0; padding: 0; display: none; gap: 0.2rem 1rem; flex-wrap: wrap; }
 
@@ -280,7 +281,6 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .epilogue__msg { width: min(640px, 100%); }
 
 @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
-@keyframes halo { from { box-shadow: 0 0 0 0 rgb(227 201 143 / 0.7); } to { box-shadow: 0 0 0 26px rgb(227 201 143 / 0); } }
 @keyframes blink { 50% { opacity: 0.3; } }
 @keyframes lights { from { filter: brightness(0.35); } to { filter: brightness(1); } }
 
@@ -422,3 +422,4 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .lang-switch button { min-height: 36px; min-width: 44px; border: 0; background: transparent; color: var(--muted); cursor: pointer; letter-spacing: 0.1em; font-size: 0.8rem; }
 .lang-switch button[aria-pressed="true"] { background: var(--ivory); color: var(--ink); }
 .home__panel .lang-switch { margin-bottom: 1.5rem; }
+.seat-form { display: grid; gap: 6px; margin-top: 0.8rem; }

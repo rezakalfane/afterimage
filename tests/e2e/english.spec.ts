@@ -13,11 +13,11 @@ test("settings → English; documents and characters in English; back to French 
   await page.getByRole("button", { name: "Start" }).click();
   await page.waitForURL(/\/play\/run_/);
   await expect(page.locator(".character__subtitles")).toContainText("I can hear you");
-  await page.getByRole("button", { name: /Photograph on the desk/ }).first().click();
+  await page.getByRole("button", { name: /^Photograph$/ }).first().click();
   const answered = page.waitForResponse((r) => r.url().includes("/commands"));
   await page.getByRole("dialog").getByRole("button", { name: /Turn the photo over/ }).click();
   await answered;
-  await expect(page.getByRole("dialog").getByText("To find the key from the last night: G7. — J.")).toBeVisible();
+  await expect(page.getByRole("dialog").getByText("The key is at our usual place. — J.")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.getByText(/Find a way to open the crescent cabinet/)).toBeVisible();
   await page.getByRole("navigation", { name: "Era" }).getByRole("button", { name: "1996" }).click();

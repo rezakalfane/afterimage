@@ -58,6 +58,16 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUt
     cbs.current = { onPublicState, onRawEvent, onUserUtterance, onFocus };
   }, [onPublicState, onRawEvent, onUserUtterance, onFocus]);
 
+  /** The player's own turn → server (indicators only are kept; proof for shares). Best effort. */
+  const postTurn = useCallback(
+    (text: string, itemId: string) => {
+      const leaseId = leaseRef.current;
+      if (!leaseId) return;
+      void api(`/api/runs/${runId}/turn`, { method: "POST", body: { leaseId, itemId: itemId.replace(/[^A-Za-z0-9_.:-]/g, "_").slice(0, 80), text: text.slice(0, 1000) } }).catch(() => {});
+    },
+    [runId],
+  );
+
   const send = useCallback((cmd: unknown) => {
     instanceRef.current?.sendCommand(cmd as Parameters<Instance["sendCommand"]>[0]);
   }, []);
@@ -107,14 +117,18 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUt
           setTranscript((t) => [...t.slice(-40), line]);
           if (m.role === "assistant") setSubtitle(line.text);
           // FINAL transcript of the player (action "completed"): never a delta, never the character.
-          else cbs.current.onUserUtterance?.(line.text, { itemId: String(m.item_id ?? `${line.at}`), receivedAt: line.at });
+          else {
+            const itemId = String(m.item_id ?? `t${line.at}`);
+            postTurn(line.text, itemId);
+            cbs.current.onUserUtterance?.(line.text, { itemId, receivedAt: line.at });
+          }
         }
       } else if (ev === "provider_connection_aborted" || ev === "session_expired" || ev === "no_credits_left") {
         setError({ code: ev, message: t.liveInterrupted });
         void stopRef.current?.();
       }
     },
-    [handleTool, t],
+    [handleTool, t, postTurn],
   );
 
   const stop = useCallback(async () => {
@@ -211,9 +225,10 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUt
   const sendText = useCallback((text: string) => {
     const t = text.trim().slice(0, 500);
     if (!t) return;
+    postTurn(t, `typed_${Date.now()}`);
     send({ type: "send_message", data: { role: "user", text: t, trigger_response: true, delay: true } });
     setTranscript((x) => [...x.slice(-40), { role: "user", text: t, at: Date.now(), character: characterRef.current }]);
-  }, [send]);
+  }, [send, postTurn]);
 
   /** Silent context update after a UI mutation (projection of the active character only). */
   const pushContext = useCallback((contextText: string, react = false) => {

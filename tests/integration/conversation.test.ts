@@ -139,7 +139,8 @@ describe("tool proposals", () => {
     expect((await a.tool(runId, "malik_examine", { objet: "photo" }, "lease_forged")).body.code).toBe("LEASE_INVALID");
     const ok = await a.tool(runId, "malik_examine", { objet: "photo" }, leaseId, "call_same");
     expect(ok.body).toMatchObject({ ok: true, revision: 1 });
-    expect(ok.body.output.contexte).toContain("G7");
+    expect(ok.body.output.contexte).toContain("notre place habituelle");
+    expect(ok.body.output.contexte).not.toContain("G7");
     const replay = await a.tool(runId, "malik_examine", { objet: "photo" }, leaseId, "call_same"); // SDK duplicate
     expect(replay.body.revision).toBe(1);
     // Jeanne's tool through Malik's lease, unknown tool, extra args: refused, no mutation.

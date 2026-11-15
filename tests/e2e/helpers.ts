@@ -37,32 +37,40 @@ export async function playToDecision(page: Page) {
   await expect(page.getByText(/Mode répétition — aucun appel Napster/)).toBeVisible();
   await expect(page.getByText("Je vous reçois.", { exact: false }).first()).toBeVisible();
 
-  // Énigme 1 — la clé d’un autre temps
-  await hotspot(page, /Photographie sur le bureau/);
+  // Énigme 1 — la clé d’un autre temps (v3 : photo + souvenir de Jeanne + programme)
+  await hotspot(page, /^Photographie$/);
   await inDialog(page, /Retourner la photo/);
-  await expect(page.getByRole("dialog").getByText(/G7/)).toBeVisible();
+  await expect(page.getByRole("dialog").getByText(/notre place habituelle/)).toBeVisible();
   await closeDialog(page);
-  await openReading(page, /Trace d’humidité/);
+  await openReading(page, /^Bas de l’armoire$/);
   await closeDialog(page);
   await era(page, "1996");
   // Early refusal: the cabinet is locked, nothing changes.
-  await hotspot(page, /Armoire au croissant/);
+  await hotspot(page, /^Armoire$/);
   await expect(page.getByRole("dialog").getByText(/Il me manque la clé/)).toBeVisible();
   await closeDialog(page);
   await page.getByRole("button", { name: /Photographie du Régina/ }).click(); // notebook card
-  await inDialog(page, /Transmettre cet indice à Jeanne/);
+  await inDialog(page, /En parler à Jeanne/);
+  await inDialog(page, /leur place habituelle/);
   await closeDialog(page);
-  await hotspot(page, /La salle, par la vitre/);
+  await expect(page.getByRole("button", { name: /Souvenir de Jeanne/ })).toBeVisible();
+  await openReading(page, /^Programme$/);
+  await expect(page.getByRole("dialog").getByText(/Alice — place 7/)).toBeVisible();
+  await closeDialog(page);
+  await hotspot(page, /^Salle$/);
+  await page.getByLabel(/Quel siège proposer/).fill("G5");
+  await inDialog(page, /Proposer ce siège/);
+  await expect(page.getByText(/Ce n’est pas la place d’Alice/)).toBeVisible(); // wrong seat: a reason, no change
+  await page.getByLabel(/Quel siège proposer/).fill("G sept");
+  await inDialog(page, /Proposer ce siège/);
   await inDialog(page, /aller chercher la clé/);
   await closeDialog(page);
-  await hotspot(page, /Armoire au croissant/);
+  await hotspot(page, /^Armoire$/);
   await inDialog(page, /Ouvrir l’armoire/);
   await closeDialog(page);
 
   // Énigme 2 — la promesse et la trace
-  await openReading(page, /Programme de la séance/);
-  await closeDialog(page);
-  await openReading(page, /La lettre dans l’armoire/);
+  await openReading(page, /^Lettre$/);
   await inDialog(page, /Je reconnais la condition d’Alice/);
   await closeDialog(page);
   await page.getByRole("button", { name: /Rapport de conservation/ }).click();
@@ -80,28 +88,28 @@ export async function playToDecision(page: Page) {
   await confirmed;
   await expect(page.getByText(/Jeanne a gardé vos mots/)).toBeVisible();
   await closeDialog(page);
-  await hotspot(page, /Étagère haute de l’armoire/);
-  await page.getByRole("dialog").getByLabel(/Sur le bureau/).check();
+  await hotspot(page, /^Étagère$/);
+  await page.getByRole("dialog").getByLabel(/Dans le tiroir du bureau/).check();
   await inDialog(page, /tout ranger ici/);
-  await expect(page.getByText(/Pas sur le bureau/)).toBeVisible();
-  await page.getByRole("dialog").getByLabel(/Étagère haute de l’armoire/).check();
+  await expect(page.getByText(/à l’abri des regards, pas de l’eau/)).toBeVisible(); // a reason, no answer
+  await page.getByRole("dialog").getByLabel(/En haut de l’armoire/).check();
   await inDialog(page, /tout ranger ici/);
   await closeDialog(page);
 
   // Énigme 3 — retrouver et décider
   await era(page, "2026");
   // The cabinet stays locked until the key is found behind the projector.
-  await hotspot(page, /Armoire au croissant/);
+  await hotspot(page, /^Armoire$/);
   await expect(page.getByRole("dialog").getByText(/Il faudrait d’abord trouver la clé/)).toBeVisible();
   await closeDialog(page);
-  await hotspot(page, /Derrière le projecteur/);
-  await inDialog(page, /Chercher derrière le projecteur/);
+  await hotspot(page, /^Projecteur$/);
+  await inDialog(page, /Chercher ce que Jeanne a pu laisser/);
   await closeDialog(page);
   await expect(page.getByRole("button", { name: /Clé au croissant/ })).toBeVisible();
-  await hotspot(page, /Armoire au croissant/);
+  await hotspot(page, /^Armoire$/);
   await inDialog(page, /Ouvrir l’armoire/);
   await closeDialog(page);
-  await hotspot(page, /Étagère haute de l’armoire/);
+  await hotspot(page, /^Armoire$/);
   await inDialog(page, /Déplier le papier/);
   await expect(page.getByRole("dialog").locator(".paper__text")).toHaveText(PHRASE.normalize("NFC")); // exact, as text
   await inDialog(page, /Lire la lettre de l’enveloppe/);

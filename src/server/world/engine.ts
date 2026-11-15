@@ -4,14 +4,23 @@ import "server-only";
 // docs/DECISIONS.md ("Engine changes vs kit"). The CALLER builds `ctx` from trusted server
 // state (session, lease); it is never read from a request body.
 import { ENDING_IDS, EPISODE, type CharacterId, type EndingId, type Era } from "./content";
+import { parseSeat } from "./seat";
 
 /** Kit flags + "future_key_found" (2026 key search split from opening the cabinet) + door states:
  *  "door_closed_<era>" = the player closed the cabinet again after it was opened (freedom, no
  *  canon change: opening it again only reopens the door; prerequisites are untouched). */
-export type Flag = (typeof EPISODE.requiredFlags)[number] | "future_key_found" | "door_closed_1996" | "door_closed_2026";
+export type Flag =
+  | (typeof EPISODE.requiredFlags)[number]
+  | "future_key_found"
+  | "door_closed_1996"
+  | "door_closed_2026"
+  /** The player presented the 2008 report to Jeanne (a future document: a temporal claim). */
+  | "report_shared"
+  /** The player explicitly claimed to come from 2026 (backed by their own words or the UI). */
+  | "temporal_claim";
 export type Phase = "investigate" | "preserve" | "recover" | "decide" | "finished";
 export type HintTopic = "key" | "cache" | "promise";
-export type StorageLocation = "upper_cabinet" | "lower_cabinet" | "desk" | "floor";
+export type StorageLocation = "upper_cabinet" | "lower_cabinet" | "desk" | "drawer" | "floor";
 
 export interface WorldState {
   schemaVersion: 1;
@@ -25,6 +34,10 @@ export interface WorldState {
   ending: EndingId | null;
   hintsUsed: number;
   hintLevels: Record<HintTopic, number>;
+  /** Seat the player proposed to Jeanne, once accepted (canonical form). */
+  proposedSeat?: string | null;
+  /** Last hint requested: progression restarts gently when the player reaches a new step. */
+  hintCursor?: { topic: HintTopic; step: string; level: number } | null;
 }
 
 export type Channel = "ui" | "tool" | "ending-confirmed";
@@ -36,7 +49,11 @@ export interface EngineContext {
 
 export type Action =
   | "inspect_photo"
-  | "relay_key_location"
+  | "share_photo_note"
+  | "ask_usual_place"
+  | "propose_seat"
+  | "share_report"
+  | "claim_future"
   | "retrieve_key"
   | "open_cabinet"
   | "inspect_programme"
@@ -58,7 +75,7 @@ export type Action =
   | "request_hint";
 
 export const ACTIONS: readonly Action[] = [
-  "inspect_photo", "relay_key_location", "retrieve_key", "open_cabinet", "inspect_programme", "read_letter",
+  "inspect_photo", "share_photo_note", "ask_usual_place", "propose_seat", "share_report", "claim_future", "retrieve_key", "open_cabinet", "inspect_programme", "read_letter",
   "acknowledge_permission", "inspect_waterline", "relay_flood_warning", "write_message", "confirm_message",
   "preserve_cache", "find_future_key", "recover_cache", "close_cabinet", "look_at", "read_message", "read_future_letter", "choose_ending", "switch_era", "request_hint",
 ];
@@ -97,14 +114,18 @@ export function initialState(): WorldState {
     ending: null,
     hintsUsed: 0,
     hintLevels: { key: 0, cache: 0, promise: 0 },
+    proposedSeat: null,
+    hintCursor: null,
   };
 }
 
 /** [era, required flags, flag set] for the simple no-argument actions. */
 const SIMPLE: Partial<Record<Action, [Era, Flag[], Flag]>> = {
   inspect_photo: [2026, [], "photo_seen"],
-  relay_key_location: [1996, ["photo_seen"], "key_location_shared"],
-  retrieve_key: [1996, ["key_location_shared"], "key_found"],
+  share_photo_note: [1996, ["photo_seen"], "note_shared"],
+  ask_usual_place: [1996, ["note_shared"], "row_learned"],
+  retrieve_key: [1996, ["seat_proposed"], "key_found"],
+  claim_future: [1996, [], "temporal_claim"],
   open_cabinet: [1996, ["key_found"], "cabinet_open"],
   inspect_programme: [1996, [], "programme_seen"],
   read_letter: [1996, ["cabinet_open", "programme_seen"], "letter_read"],
@@ -119,8 +140,8 @@ const SIMPLE: Partial<Record<Action, [Era, Flag[], Flag]>> = {
 
 /** What a character can show the player in each era (look_at targets; no secret, only places). */
 export const LOOK_TARGETS: Record<Era, readonly string[]> = {
-  1996: ["hall", "cabinet", "desk", "programme", "letter", "projector"],
-  2026: ["cabinet", "projector", "desk", "photo", "waterline", "message", "letter"],
+  1996: ["hall", "cabinet", "desk", "programme", "letter", "projector", "reels", "lamp", "splicer"],
+  2026: ["cabinet", "projector", "desk", "photo", "waterline", "message", "letter", "reels", "lamp", "seats"],
 };
 
 /** Actions on what is inside the cabinet: refused while its door is closed. */
@@ -128,7 +149,9 @@ const DOOR_NEEDED: ReadonlySet<Action> = new Set(["read_letter", "read_message",
 
 /** Actions that only the player's own UI can perform (never a model tool). */
 const UI_ONLY: ReadonlySet<Action> = new Set(["switch_era", "confirm_message"]);
-const STORAGE_LOCATIONS: readonly StorageLocation[] = ["upper_cabinet", "lower_cabinet", "desk", "floor"];
+const STORAGE_LOCATIONS: readonly StorageLocation[] = ["upper_cabinet", "lower_cabinet", "desk", "drawer", "floor"];
+/** The seat that matches Alice's place (row G + "place 7"). Server-only. */
+const ALICE_SEAT = "G7";
 
 // Disallowed control characters (keeps \t \n \r). Checked after NFC + trim.
 const CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F​-‏‪-‮⁦-⁩]/u;
@@ -148,6 +171,29 @@ export function hintTopic(s: WorldState): HintTopic {
   if (!has("letter_read") || !has("permission_acknowledged")) return "promise";
   if (!has("cache_preserved")) return "cache";
   return "promise";
+}
+
+/** Which step of a topic the player is on (hints follow the current state, never a fixed list). */
+export function hintStep(s: WorldState, topic: HintTopic): string {
+  const has = (f: Flag) => s.flags.includes(f);
+  if (topic === "key") {
+    if (!has("photo_seen")) return "photo";
+    if (!has("note_shared")) return "note";
+    if (!has("row_learned")) return "row";
+    if (!has("programme_seen")) return "programme";
+    if (!has("seat_proposed")) return "seat";
+    if (!has("key_found")) return "search";
+    return "open";
+  }
+  if (topic === "cache") {
+    if (!has("waterline_seen")) return "trace";
+    if (!has("flood_warning_shared")) return "risk";
+    if (!has("message_confirmed")) return "words";
+    return "place";
+  }
+  if (!has("letter_read")) return "letter";
+  if (!has("permission_acknowledged")) return "consent";
+  return "choice";
 }
 
 function phaseOf(s: WorldState): Phase {
@@ -196,6 +242,24 @@ export function transition(state: WorldState, command: Command, ctx: EngineConte
     mark(flag);
     // Opening an already unlocked cabinet just reopens its door.
     if (a === "open_cabinet" || a === "recover_cache") s.flags = s.flags.filter((f) => f !== `door_closed_${era}`);
+  } else if (a === "propose_seat") {
+    if (!exact(["seat"])) return fail("INVALID_ARGUMENT");
+    if (s.activeEra !== 1996) return fail("WRONG_ERA");
+    if (has("seat_proposed")) return { ok: true, changed: false, state };
+    const seat = parseSeat(args.seat);
+    if (!seat) return fail("INVALID_ARGUMENT", "seat");
+    // A guess before the clues are gathered is never called wrong: ask what leads there.
+    if (!need(["row_learned", "programme_seen"])) return fail("PREREQUISITE_MISSING", "why");
+    if (seat !== ALICE_SEAT) return fail("PREREQUISITE_MISSING", "seat_mismatch");
+    s.proposedSeat = seat;
+    mark("seat_proposed");
+  } else if (a === "share_report") {
+    if (!exact([])) return fail("INVALID_ARGUMENT");
+    if (s.activeEra !== 1996) return fail("WRONG_ERA");
+    if (!need(["waterline_seen"])) return fail("PREREQUISITE_MISSING");
+    // Presenting the 2008 report also conveys the water risk.
+    mark("report_shared");
+    mark("flood_warning_shared");
   } else if (a === "look_at") {
     // Pure look: shows a place or object of the CURRENT era to the player; never mutates.
     if (!exact(["target"]) || !LOOK_TARGETS[s.activeEra].includes(String(args.target))) return fail("INVALID_ARGUMENT");
@@ -245,9 +309,13 @@ export function transition(state: WorldState, command: Command, ctx: EngineConte
   } else if (a === "request_hint") {
     if (!exact([])) return fail("INVALID_ARGUMENT");
     const topic = hintTopic(s);
+    const step = hintStep(s, topic);
+    const prev = s.hintCursor;
+    const level = prev && prev.topic === topic && prev.step === step ? Math.min(2, prev.level + 1) : 1;
+    s.hintCursor = { topic, step, level };
     s.hintLevels[topic] = Math.min(3, s.hintLevels[topic] + 1);
     s.hintsUsed += 1;
-    hint = { topic, level: s.hintLevels[topic] };
+    hint = { topic, level };
   }
 
   s.phase = phaseOf(s);
@@ -267,6 +335,8 @@ function probeArgs(a: Action, s: WorldState): Record<string, unknown> | null {
       return s.messageDraft ? { text: s.messageDraft } : null;
     case "preserve_cache":
       return { location: "upper_cabinet" };
+    case "propose_seat":
+      return { seat: ALICE_SEAT };
     case "choose_ending":
       return { ending: "public_cut" };
     default:

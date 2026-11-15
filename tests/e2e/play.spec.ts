@@ -30,11 +30,11 @@ test("resume after reload and network cut keeps a consistent state", async ({ pa
   await page.goto("/");
   await page.getByRole("button", { name: "Commencer" }).click();
   await page.waitForURL(/\/play\/run_/);
-  await hotspot(page, /Photographie sur le bureau/);
+  await hotspot(page, /^Photographie$/);
   await inDialog(page, /Retourner la photo/);
   await closeDialog(page);
   await context.setOffline(true);
-  await hotspot(page, /Trace d’humidité/); // opening the report reads it: fails offline
+  await hotspot(page, /^Bas de l’armoire$/); // opening the report reads it: fails offline
   await expect(page.getByText(/Connexion au serveur impossible|Failed to fetch/)).toBeVisible();
   await context.setOffline(false);
   await page.reload();
@@ -51,7 +51,13 @@ test("hints are progressive and requested by the player", async ({ page }) => {
   await page.getByRole("button", { name: "Aide" }).click();
   await expect(page.getByText(/Certains objets racontent deux histoires/)).toBeVisible();
   await page.getByRole("button", { name: "Aide" }).click();
-  await expect(page.getByText(/Retournez la photo en 2026/)).toBeVisible();
+  await expect(page.getByText(/Regardez le verso de la photo, en 2026/)).toBeVisible();
+  // After progress, the next hint concerns the new step and starts gently again.
+  await page.getByRole("button", { name: /^Photographie$/ }).first().click();
+  await page.getByRole("dialog").getByRole("button", { name: /Retourner la photo/ }).click();
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Aide" }).click();
+  await expect(page.getByText(/Cette note parle d’une place qu’on partageait/)).toBeVisible();
 });
 
 test("mobile layout is usable @mobile", async ({ page }) => {

@@ -13,13 +13,20 @@ describe("complete paths", () => {
       expect(transition(r, { action: "switch_era", args: { era: 1996 } }, ui)).toMatchObject({ ok: false, code: "RUN_FINISHED" });
     });
   }
-  it("accepts the clues in another order (1996 first, then 2026)", () => {
+  it("accepts the clues in another order (1996 programme first, then 2026, then the row)", () => {
     let s = apply(initialState(), "switch_era", { era: 1996 });
     s = apply(s, "inspect_programme");
-    expect(transition(s, { action: "relay_key_location" }, ui)).toMatchObject({ code: "PREREQUISITE_MISSING" }); // needs the photo first
+    expect(transition(s, { action: "share_photo_note" }, ui)).toMatchObject({ code: "PREREQUISITE_MISSING" }); // needs the photo first
+    // A correct guess before the clues are gathered is not called wrong: "what leads you there?"
+    expect(transition(s, { action: "propose_seat", args: { seat: "G7" } }, ui)).toMatchObject({ ok: false, code: "PREREQUISITE_MISSING", detail: "why" });
     s = apply(apply(s, "switch_era", { era: 2026 }), "inspect_photo");
-    s = apply(apply(s, "switch_era", { era: 1996 }), "relay_key_location");
-    expect(s.flags).toContain("key_location_shared");
+    s = apply(apply(s, "switch_era", { era: 1996 }), "share_photo_note");
+    expect(transition(s, { action: "retrieve_key" }, ui)).toMatchObject({ code: "PREREQUISITE_MISSING" }); // the photo alone is not enough
+    s = apply(s, "ask_usual_place");
+    expect(transition(s, { action: "propose_seat", args: { seat: "G5" } }, ui)).toMatchObject({ ok: false, detail: "seat_mismatch" });
+    s = apply(s, "propose_seat", { seat: "septième siège de la rangée G" });
+    expect(s.flags).toContain("seat_proposed");
+    expect(apply(s, "retrieve_key").flags).toContain("key_found");
   });
 });
 
@@ -40,7 +47,9 @@ describe("the cabinet can be closed again (freedom, no canon change)", () => {
   it("1996: close, reading is refused while closed, reopen with the same gesture", () => {
     let s = apply(initialState(), "inspect_photo");
     s = apply(s, "switch_era", { era: 1996 });
-    for (const a of ["relay_key_location", "retrieve_key", "open_cabinet", "inspect_programme"]) s = apply(s, a);
+    for (const a of ["share_photo_note", "ask_usual_place", "inspect_programme"]) s = apply(s, a);
+    s = apply(s, "propose_seat", { seat: "G7" });
+    for (const a of ["retrieve_key", "open_cabinet"]) s = apply(s, a);
     s = apply(s, "close_cabinet");
     expect(s.flags).toContain("door_closed_1996");
     expect(transition(s, { action: "read_letter" }, ui)).toMatchObject({ ok: false, code: "PREREQUISITE_MISSING", detail: "door" });
@@ -157,9 +166,9 @@ describe("hints and availability", () => {
 import { toolToCommand } from "@/server/napster/tools";
 describe("tool argument tolerance (still validated)", () => {
   it("a location given with another gesture is ignored; JSON-string arguments are parsed", () => {
-    expect(toolToCommand("jeanne", "jeanne_act", { geste: "chercher_cle", emplacement: "siege_g7" })).toMatchObject({ ok: true, command: { action: "retrieve_key" } });
+    expect(toolToCommand("jeanne", "jeanne_act", { geste: "chercher_cle", emplacement: "sous un fauteuil" })).toMatchObject({ ok: true, command: { action: "retrieve_key" } });
     expect(toolToCommand("jeanne", "jeanne_act", '{"geste":"ouvrir_armoire"}')).toMatchObject({ ok: true, command: { action: "open_cabinet" } });
-    expect(toolToCommand("jeanne", "jeanne_act", { geste: "conserver", emplacement: "siege_g7" })).toEqual({ ok: false });
+    expect(toolToCommand("jeanne", "jeanne_act", { geste: "conserver", emplacement: "nulle part" })).toEqual({ ok: false });
     expect(toolToCommand("jeanne", "jeanne_act", "{not json")).toEqual({ ok: false });
     expect(toolToCommand("malik", "malik_act", { geste: "fermer_armoire" })).toMatchObject({ ok: true, command: { action: "close_cabinet" } });
   });
@@ -170,7 +179,9 @@ describe("1996 after storing: the cabinet stays locked", () => {
     let s = apply(initialState(), "inspect_photo");
     s = apply(s, "inspect_waterline");
     s = apply(s, "switch_era", { era: 1996 });
-    for (const a of ["relay_key_location", "retrieve_key", "open_cabinet", "inspect_programme", "read_letter", "acknowledge_permission", "relay_flood_warning"]) s = apply(s, a);
+    for (const a of ["share_photo_note", "ask_usual_place", "inspect_programme"]) s = apply(s, a);
+    s = apply(s, "propose_seat", { seat: "G7" });
+    for (const a of ["retrieve_key", "open_cabinet", "read_letter", "acknowledge_permission", "relay_flood_warning"]) s = apply(s, a);
     s = apply(s, "write_message", { text: "Les étoiles." });
     s = apply(s, "confirm_message", { text: "Les étoiles." });
     s = apply(s, "preserve_cache", { location: "upper_cabinet" });
@@ -211,5 +222,36 @@ describe("objective follows the era on screen", () => {
     expect(playerView({ ...stored, activeEra: 1996 }, "fr").objective).toBe("Retournez en 2026 pour découvrir ce que Jeanne a laissé.");
     expect(playerView({ ...stored, activeEra: 1996 }, "en").objective).toBe("Go back to 2026 to discover what Jeanne left behind.");
     expect(playerView(stored, "en").objective).toBe("Look for what Jeanne left behind.");
+  });
+});
+
+import { parseSeat } from "@/server/world/seat";
+import { parseLocation } from "@/server/napster/tools";
+describe("seat and place parsing (player's words)", () => {
+  it("accepts equivalent seat formulations", () => {
+    for (const t of ["G7", "g 7", "G-7", "G sept", "rangée G, place 7", "le septième siège de la rangée G", "la place 7 de la rangée G", "seat seven in row G", "row G seat 7"]) expect(parseSeat(t), t).toBe("G7");
+    expect(parseSeat("rangée B, place 3")).toBe("B3");
+    expect(parseSeat("notre place habituelle")).toBeNull();
+  });
+  it("reads where the player wants things stored", () => {
+    expect(parseLocation("tout en haut de l’armoire")).toBe("upper_cabinet");
+    expect(parseLocation("sur l'étagère")).toBe("upper_cabinet");
+    expect(parseLocation("dans le tiroir")).toBe("drawer");
+    expect(parseLocation("en bas de l’armoire")).toBe("lower_cabinet");
+    expect(parseLocation("on the desk")).toBe("desk");
+    expect(parseLocation("ailleurs")).toBeNull();
+  });
+});
+
+describe("water reasoning: a wrong place teaches without giving the answer, never a softlock", () => {
+  it("drawer, desk, floor and bottom are refused with a reason; the high place is accepted", () => {
+    let s = ready();
+    // rebuild the state just before storing
+    s = { ...s, activeEra: 1996, flags: s.flags.filter((f) => !["cache_preserved", "future_key_found", "cache_recovered", "message_read", "future_letter_read"].includes(f)), storage: null, phase: "preserve" };
+    for (const location of ["drawer", "desk", "floor", "lower_cabinet"]) {
+      const r = transition(s, { action: "preserve_cache", args: { location } }, ui);
+      expect(r).toMatchObject({ ok: false, code: "WRONG_LOCATION" });
+    }
+    expect(apply(s, "preserve_cache", { location: "upper_cabinet" }).flags).toContain("cache_preserved");
   });
 });

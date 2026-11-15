@@ -11,7 +11,7 @@ function pct(n: number) {
   return `${(n * 100).toFixed(2)}%`;
 }
 
-export function SceneViewport({ era, view, onHotspot, pulse }: { era: Era; view: PublicState; onHotspot: (id: string) => void; pulse: string | null }) {
+export function SceneViewport({ era, view, onHotspot }: { era: Era; view: PublicState; onHotspot: (id: string) => void }) {
   const t = useT().scene;
   const label = (id: string) => t.hotspots[id] ?? id;
   const open = era === 1996 ? view.scene.cabinetOpen1996 : view.scene.cabinetOpen2026;
@@ -24,7 +24,6 @@ export function SceneViewport({ era, view, onHotspot, pulse }: { era: Era; view:
     setShown(src);
   }
   const spots = HOTSPOTS[era].filter((h) => !h.when || (h.when === "open") === open);
-  const seen = new Set(view.notebook.map((n) => n.id));
   const overlays: (Overlay & { key: string })[] = [];
   if (era === 2026 && !open) overlays.push({ key: "photo", ...OVERLAYS.photo2026 });
   if (era === 2026 && open) overlays.push({ key: "env", ...OVERLAYS.envelopeHigh }, { key: "msg", ...OVERLAYS.messageHigh }, { key: "reel", ...OVERLAYS.reelHigh });
@@ -52,23 +51,20 @@ export function SceneViewport({ era, view, onHotspot, pulse }: { era: Era; view:
             <img src={objectImage(o.asset)} alt="" />
           </span>
         ))}
-        {spots.map((h) => {
-          const available = h.action ? view.availableActions.includes(h.action) : false;
-          const done = h.inspect ? seen.has(h.inspect) : false;
-          return (
-            <button
-              key={h.id}
-              type="button"
-              className={`hotspot${available ? " hotspot--ready" : ""}${done ? " hotspot--done" : ""}${pulse === h.id ? " hotspot--pulse" : ""}`}
-              style={{ left: pct(h.rect.x), top: pct(h.rect.y), width: pct(h.rect.w), height: pct(h.rect.h) }}
-              onClick={() => onHotspot(h.id)}
-              aria-label={label(h.id)}
-            >
-              <span className="hotspot__dot" aria-hidden="true" />
-              <span className="hotspot__label">{label(h.id)}</span>
-            </button>
-          );
-        })}
+        {spots.map((h) => (
+          // No state is shown on the hotspot itself (ready/done would reveal importance).
+          <button
+            key={h.id}
+            type="button"
+            className="hotspot"
+            style={{ left: pct(h.rect.x), top: pct(h.rect.y), width: pct(h.rect.w), height: pct(h.rect.h) }}
+            onClick={() => onHotspot(h.id)}
+            aria-label={label(h.id)}
+          >
+            <span className="hotspot__dot" aria-hidden="true" />
+            <span className="hotspot__label">{label(h.id)}</span>
+          </button>
+        ))}
         {view.ending && <div className="scene__lights" aria-hidden="true" />}
       </div>
       <ul className="scene__list" aria-label={t.list}>

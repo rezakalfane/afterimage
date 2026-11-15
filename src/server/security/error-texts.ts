@@ -34,6 +34,7 @@ export const ERROR_TEXTS_EN: Record<string, string> = {
   "Vous avez déjà plusieurs parties en cours. Reprenez-en une ou supprimez-la.": "You already have several games in progress. Resume or delete one.",
   "Vous ne pouvez pas vous retirer vous-même.": "You cannot remove yourself.",
   "Une erreur inattendue est survenue.": "An unexpected error occurred.",
+  "Cette partie utilise une version précédente du chapitre. Elle reste consultable ; commencez une nouvelle partie pour jouer la version actuelle.": "This game uses a previous version of the chapter. It stays saved; start a new game to play the current version.",
 };
 
 /** The public message in the caller's locale (unknown or already-English texts pass through). */

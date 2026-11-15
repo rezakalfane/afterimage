@@ -18,6 +18,8 @@ export interface RunRow {
   state: WorldState;
   createdAt: number;
   updatedAt: number;
+  /** Chapter content version the run was created with (older ones are retired: read-only). */
+  episodeVersion: number;
 }
 
 const DAY = 86_400_000;
@@ -31,12 +33,13 @@ function toRow(r: Record<string, unknown>): RunRow {
     revision: Number(r.revision),
     status: String(r.status) as RunRow["status"],
     state: JSON.parse(String(r.state_json)) as WorldState,
+    episodeVersion: Number(r.episode_version ?? 1),
     createdAt: Number(r.created_at),
     updatedAt: Number(r.updated_at),
   };
 }
 
-const SCOPED = `SELECT id, tenant_id, owner_user_id, revision, status, state_json, created_at, updated_at FROM runs WHERE tenant_id = ? AND id = ? AND owner_user_id = ?`;
+const SCOPED = `SELECT id, tenant_id, owner_user_id, revision, status, state_json, episode_version, created_at, updated_at FROM runs WHERE tenant_id = ? AND id = ? AND owner_user_id = ?`;
 
 export async function getRun(ctx: TenantContext, runId: string, tx?: Transaction): Promise<RunRow> {
   if (!/^run_[a-f0-9]{32}$/.test(runId)) throw new HttpError("NOT_FOUND");
@@ -47,10 +50,10 @@ export async function getRun(ctx: TenantContext, runId: string, tx?: Transaction
 
 export async function listRuns(ctx: TenantContext) {
   const r = await sqlClient().execute({
-    sql: `SELECT id, revision, status, updated_at, created_at FROM runs WHERE tenant_id = ? AND owner_user_id = ? AND status != 'deleting' ORDER BY updated_at DESC LIMIT 20`,
+    sql: `SELECT id, revision, status, episode_version, updated_at, created_at FROM runs WHERE tenant_id = ? AND owner_user_id = ? AND status != 'deleting' ORDER BY updated_at DESC LIMIT 20`,
     args: [ctx.tenantId, ctx.userId],
   });
-  return r.rows.map((x) => ({ id: String(x.id), revision: Number(x.revision), status: String(x.status), updatedAt: Number(x.updated_at), createdAt: Number(x.created_at) }));
+  return r.rows.map((x) => ({ id: String(x.id), revision: Number(x.revision), status: String(x.status), retired: Number(x.episode_version ?? 1) !== EPISODE_VERSION, updatedAt: Number(x.updated_at), createdAt: Number(x.created_at) }));
 }
 
 export async function createRun(ctx: TenantContext): Promise<RunRow> {
@@ -59,7 +62,8 @@ export async function createRun(ctx: TenantContext): Promise<RunRow> {
   const state = initialState();
   const ttl = ctx.isGuest ? 7 * DAY : 30 * DAY;
   await writeTx(async (tx) => {
-    const c = await tx.execute({ sql: `SELECT count(*) AS n FROM runs WHERE tenant_id = ? AND owner_user_id = ? AND status = 'active'`, args: [ctx.tenantId, ctx.userId] });
+    // Retired games (older chapter version) stay viewable but do not count against the quota.
+    const c = await tx.execute({ sql: `SELECT count(*) AS n FROM runs WHERE tenant_id = ? AND owner_user_id = ? AND status = 'active' AND episode_version = ?`, args: [ctx.tenantId, ctx.userId, EPISODE_VERSION] });
     if (Number(c.rows[0].n) >= (ctx.isGuest ? MAX_ACTIVE_RUNS.guest : MAX_ACTIVE_RUNS.account)) {
       throw new HttpError("QUOTA_EXCEEDED", "Vous avez déjà plusieurs parties en cours. Reprenez-en une ou supprimez-la.");
     }
@@ -70,7 +74,7 @@ export async function createRun(ctx: TenantContext): Promise<RunRow> {
     });
     await tx.execute({ sql: `UPDATE app_users SET last_seen_at = ? WHERE id = ?`, args: [now, ctx.userId] });
   });
-  return { id, tenantId: ctx.tenantId, ownerUserId: ctx.userId, revision: 0, status: "active", state, createdAt: now, updatedAt: now };
+  return { id, tenantId: ctx.tenantId, ownerUserId: ctx.userId, revision: 0, status: "active", state, episodeVersion: EPISODE_VERSION, createdAt: now, updatedAt: now };
 }
 
 /**
@@ -89,3 +93,10 @@ export async function purgeRun(ctx: TenantContext, runId: string) {
 }
 
 export const RUN_TTL = { guest: 7 * DAY, account: 30 * DAY };
+
+/** A run of an older chapter version keeps its data but cannot be played on (offer a new game). */
+export function assertPlayable(run: RunRow) {
+  if (run.episodeVersion !== EPISODE_VERSION) {
+    throw new HttpError("VERSION_RETIRED", "Cette partie utilise une version précédente du chapitre. Elle reste consultable ; commencez une nouvelle partie pour jouer la version actuelle.");
+  }
+}

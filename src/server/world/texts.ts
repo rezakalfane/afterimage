@@ -8,14 +8,16 @@ export const DEFAULT_LOCALE: Locale = "fr";
 
 type Texts = {
   objectives: Record<string, string>;
-  hints: Record<HintTopic, [string, string, string]>;
+  /** Step-based hints: topic → step → [gentle, more direct]. Never the solution itself. */
+  hints: Record<HintTopic, Record<string, [string, string]>>;
+  details: Record<string, string>;
   refusals: Partial<Record<Action, Partial<Record<FailCode, string>>>> & { default: Partial<Record<FailCode, string>> };
   wrongLocation: Record<string, string>;
   doorClosed: string;
   cabinetSealed: string;
   events: Partial<Record<Action, string>>;
   notebook: Record<string, string>;
-  tool: { noop: string; shown: string; invalid: string; contextHeader: string; opening: string; resume: string; openingLines: Record<"jeanne" | "malik", string> };
+  tool: { noop: string; shown: string; unbacked: string; invalid: string; contextHeader: string; opening: string; resume: string; openingLines: Record<"jeanne" | "malik", string> };
 };
 
 const fr: Texts = {
@@ -32,9 +34,26 @@ const fr: Texts = {
     finished: "L’histoire est terminée.",
   },
   hints: {
-    key: ["Certains objets racontent deux histoires.", "Retournez la photo en 2026.", "La fiche « G7 » de votre carnet peut être transmise à Jeanne en 1996."],
-    cache: ["Tout n’a pas vieilli de la même façon.", "Comparez le bas de l’armoire en 2026 et le rapport d’humidité.", "Transmettez l’avertissement d’humidité à Jeanne : l’étagère haute de l’armoire restera au sec."],
-    promise: ["Alice a laissé plus qu’une bobine.", "Lisez sa lettre, puis retrouvez-la dans le futur.", "La lettre est dans votre carnet ; relisez-la avant de choisir comment montrer le film."],
+    key: {
+      photo: ["Certains objets racontent deux histoires.", "Regardez le verso de la photo, en 2026."],
+      note: ["Cette note parle d’une place qu’on partageait.", "En 1996, parlez à Jeanne de la note de la photo."],
+      row: ["« Notre place habituelle » : Jeanne doit s’en souvenir.", "Demandez à Jeanne quelle était leur place habituelle."],
+      programme: ["Alice a peut-être laissé une trace sur un papier de la séance.", "Lisez le programme posé sur le bureau, en 1996."],
+      seat: ["Une rangée, un numéro : il reste à les rapprocher.", "Rapprochez la rangée dont parle Jeanne et l’annotation du programme, puis proposez ce siège à Jeanne."],
+      search: ["Jeanne peut aller voir sous ce siège.", "Demandez à Jeanne d’aller chercher la clé."],
+      open: ["La clé ouvre quelque chose dans la cabine.", "Demandez à Jeanne d’ouvrir l’armoire."],
+    },
+    cache: {
+      trace: ["Tout n’a pas vieilli de la même façon.", "En 2026, regardez le bas de l’armoire."],
+      risk: ["Ce qui est arrivé ici en 2008 pourrait arriver au film.", "Parlez à Jeanne du risque d’eau, ou montrez-lui le rapport."],
+      words: ["Des mots peuvent accompagner le film.", "Dictez vos mots à Jeanne, puis confirmez-les."],
+      place: ["Où l’eau n’aurait-elle pas pu monter ?", "Le bureau a souffert : cherchez un endroit plus haut dans la cabine."],
+    },
+    promise: {
+      letter: ["Alice a laissé plus qu’une bobine.", "La lettre est dans l’armoire : lisez-la avec Jeanne."],
+      consent: ["Alice pose une condition.", "Dites à Jeanne que vous acceptez la condition d’Alice."],
+      choice: ["Ce que Jeanne a laissé attend d’être lu.", "Relisez la lettre d’Alice avant de choisir comment montrer le film."],
+    },
   },
   refusals: {
     default: {
@@ -50,11 +69,13 @@ const fr: Texts = {
       WRONG_LOCATION: "Pas à cet endroit.",
     },
     open_cabinet: { PREREQUISITE_MISSING: "Il me manque la clé. Je l’avais pendant mon dernier tour de salle." },
-    retrieve_key: { PREREQUISITE_MISSING: "Je ne sais pas où chercher. Il me faudrait un indice précis." },
-    relay_key_location: { PREREQUISITE_MISSING: "Il vous faut un indice concret avant de m’envoyer chercher quoi que ce soit." },
+    retrieve_key: { PREREQUISITE_MISSING: "Chercher où ? Il me faudrait un siège précis." },
+    share_photo_note: { PREREQUISITE_MISSING: "Quelle note ? Je n’ai rien vu de tel." },
+    ask_usual_place: { PREREQUISITE_MISSING: "Notre place ? De quoi parlez-vous ?" },
+    share_report: { PREREQUISITE_MISSING: "Quel rapport ? Je ne vois pas de quoi vous parlez." },
     read_letter: { PREREQUISITE_MISSING: "La lettre est dans l’armoire, avec le film. Il faut l’ouvrir, et savoir de quelle séance il s’agit." },
     acknowledge_permission: { PREREQUISITE_MISSING: "Lisez d’abord la lettre d’Alice." },
-    relay_flood_warning: { PREREQUISITE_MISSING: "Vous n’avez encore rien vu qui justifie cet avertissement." },
+    relay_flood_warning: { PREREQUISITE_MISSING: "De l’eau ? Qu’est-ce qui vous fait dire ça ?" },
     write_message: { PREREQUISITE_MISSING: "Avant de laisser des mots avec le film, lisez ce qu’Alice a écrit.", INVALID_ARGUMENT: "Le message doit faire entre 1 et 240 caractères, sans caractères de contrôle." },
     confirm_message: { INVALID_ARGUMENT: "Le texte confirmé doit être exactement le brouillon affiché." },
     preserve_cache: { PREREQUISITE_MISSING: "Pas encore : l’armoire, la promesse d’Alice, le risque signalé et vos mots confirmés doivent être réunis." },
@@ -66,21 +87,31 @@ const fr: Texts = {
     choose_ending: { PREREQUISITE_MISSING: "Lisez d’abord le message et la lettre retrouvés." },
   },
   wrongLocation: {
-    desk: "Pas sur le bureau : d’après votre avertissement, l’eau monterait jusque-là. L’étagère haute de l’armoire resterait au sec.",
-    floor: "Pas au sol : c’est le premier endroit que l’eau atteindrait. L’étagère haute de l’armoire resterait au sec.",
-    lower_cabinet: "Pas en bas de l’armoire : votre avertissement parle d’eau à ce niveau. L’étagère haute resterait au sec.",
+    desk: "Pas sur le bureau : si l’eau entre dans la cabine, c’est lui qu’elle abîmera.",
+    drawer: "Le tiroir est dans le bureau : à l’abri des regards, pas de l’eau.",
+    floor: "Au sol ? C’est le premier endroit que l’eau atteindrait.",
+    lower_cabinet: "Le bas de l’armoire ne serait pas plus à l’abri que le bureau.",
+  },
+  details: {
+    why: "Pourquoi ce siège ? Qu’est-ce qui vous y conduit ?",
+    seat_mismatch: "Ce n’est pas la place d’Alice… Reprenez ce que vous avez rassemblé.",
+    seat: "Quel siège, exactement ? Une rangée et un numéro.",
   },
   doorClosed: "L’armoire est refermée : il faut d’abord la rouvrir.",
   cabinetSealed: "Je l’ai refermée à clé et j’ai caché la clé derrière le projecteur : elle doit rester close, pour trente ans.",
   events: {
     inspect_photo: "Au dos de la photo, une inscription à la main.",
-    relay_key_location: "Vous avez transmis l’indice du siège G7 à Jeanne.",
+    share_photo_note: "Vous avez parlé à Jeanne de la note de la photo.",
+    ask_usual_place: "Jeanne se souvient de la place habituelle d’Alice.",
+    propose_seat: "Jeanne accepte de chercher sous ce siège.",
+    share_report: "Vous avez montré le rapport à Jeanne.",
+    claim_future: "Vous avez dit à Jeanne d’où vous venez.",
     retrieve_key: "Jeanne a retrouvé la clé au croissant.",
     open_cabinet: "L’armoire au croissant est ouverte.",
     inspect_programme: "Le programme de la séance a été ajouté au carnet.",
     read_letter: "La lettre d’Alice a été ajoutée au carnet.",
     acknowledge_permission: "Vous avez reconnu la condition d’Alice.",
-    inspect_waterline: "Le rapport d’humidité de 2008 a été ajouté au carnet.",
+    inspect_waterline: "Le rapport de conservation de 2008 a été ajouté au carnet.",
     relay_flood_warning: "Vous avez averti Jeanne du risque d’eau.",
     write_message: "Brouillon du message mis à jour.",
     confirm_message: "Message confirmé, mot pour mot.",
@@ -100,12 +131,14 @@ const fr: Texts = {
     programme: "Programme du 15 novembre 1996",
     letter: "Lettre d’Alice Mercier",
     archiveReport: "Rapport de conservation, 2008",
+    rowMemory: "Souvenir de Jeanne",
     key: "Clé au croissant",
     reel: "Bobine « Les lumières du Régina »",
     envelope: "Enveloppe scellée",
     message: "Votre message",
   },
   tool: {
+    unbacked: "Le joueur ne te l’a pas dit lui-même : ne le prends pas pour acquis. Demande-lui ce qu’il veut te dire, avec ses mots.",
     shown: "L’endroit est maintenant affiché à l’écran pour le joueur. Décris-le seulement avec ce que ton contexte autorise ; rien n’a changé.",
     noop: "Déjà pris en compte : ce n’est pas un échec, rien n’a changé, ne le redemande pas. Pour avancer, si le joueur le demande, utilise maintenant : {next}",
     invalid: "Cette demande n’est pas valable.",
@@ -132,9 +165,26 @@ const en: Texts = {
     finished: "The story is over.",
   },
   hints: {
-    key: ["Some objects tell two stories.", "Turn the photo over in 2026.", "The “G7” entry in your notebook can be passed on to Jeanne in 1996."],
-    cache: ["Not everything has aged the same way.", "Compare the bottom of the cabinet in 2026 with the damp report.", "Pass the damp warning on to Jeanne: the cabinet's upper shelf will stay dry."],
-    promise: ["Alice left more than a reel.", "Read her letter, then find it again in the future.", "The letter is in your notebook; read it again before choosing how to show the film."],
+    key: {
+      photo: ["Some objects tell two stories.", "Look at the back of the photo, in 2026."],
+      note: ["That note speaks of a place two people shared.", "In 1996, tell Jeanne about the note on the photo."],
+      row: ["“Our usual place”: Jeanne should remember it.", "Ask Jeanne what their usual place was."],
+      programme: ["Alice may have left a trace on a paper from the screening.", "Read the programme on the desk, in 1996."],
+      seat: ["A row, a number: they still need to be put together.", "Put together the row Jeanne mentions and the note on the programme, then propose that seat to Jeanne."],
+      search: ["Jeanne can go and look under that seat.", "Ask Jeanne to go and look for the key."],
+      open: ["The key opens something in the booth.", "Ask Jeanne to open the cabinet."],
+    },
+    cache: {
+      trace: ["Not everything has aged the same way.", "In 2026, look at the bottom of the cabinet."],
+      risk: ["What happened here in 2008 could happen to the film.", "Tell Jeanne about the water risk, or show her the report."],
+      words: ["Words can travel with the film.", "Dictate your words to Jeanne, then confirm them."],
+      place: ["Where could the water not have reached?", "The desk suffered: look for a higher place in the booth."],
+    },
+    promise: {
+      letter: ["Alice left more than a reel.", "The letter is in the cabinet: read it with Jeanne."],
+      consent: ["Alice sets a condition.", "Tell Jeanne that you accept Alice's condition."],
+      choice: ["What Jeanne left is waiting to be read.", "Read Alice's letter again before choosing how to show the film."],
+    },
   },
   refusals: {
     default: {
@@ -150,11 +200,13 @@ const en: Texts = {
       WRONG_LOCATION: "Not there.",
     },
     open_cabinet: { PREREQUISITE_MISSING: "I'm missing the key. I had it during my last round of the hall." },
-    retrieve_key: { PREREQUISITE_MISSING: "I don't know where to look. I'd need a precise clue." },
-    relay_key_location: { PREREQUISITE_MISSING: "You need a concrete clue before sending me to look for anything." },
+    retrieve_key: { PREREQUISITE_MISSING: "Look where? I'd need a precise seat." },
+    share_photo_note: { PREREQUISITE_MISSING: "What note? I haven't seen anything like that." },
+    ask_usual_place: { PREREQUISITE_MISSING: "Our place? What do you mean?" },
+    share_report: { PREREQUISITE_MISSING: "What report? I don't know what you mean." },
     read_letter: { PREREQUISITE_MISSING: "The letter is in the cabinet, with the film. It has to be opened, and we need to know which screening it's about." },
     acknowledge_permission: { PREREQUISITE_MISSING: "Read Alice's letter first." },
-    relay_flood_warning: { PREREQUISITE_MISSING: "You haven't seen anything yet that justifies this warning." },
+    relay_flood_warning: { PREREQUISITE_MISSING: "Water? What makes you say that?" },
     write_message: { PREREQUISITE_MISSING: "Before leaving words with the film, read what Alice wrote.", INVALID_ARGUMENT: "The message must be 1 to 240 characters, without control characters." },
     confirm_message: { INVALID_ARGUMENT: "The confirmed text must be exactly the displayed draft." },
     preserve_cache: { PREREQUISITE_MISSING: "Not yet: the cabinet, Alice's promise, the reported risk and your confirmed words must all come together." },
@@ -166,21 +218,31 @@ const en: Texts = {
     choose_ending: { PREREQUISITE_MISSING: "First read the recovered message and letter." },
   },
   wrongLocation: {
-    desk: "Not on the desk: according to your warning, the water would rise that high. The cabinet's upper shelf would stay dry.",
-    floor: "Not on the floor: that's the first place the water would reach. The cabinet's upper shelf would stay dry.",
-    lower_cabinet: "Not at the bottom of the cabinet: your warning mentions water at that level. The upper shelf would stay dry.",
+    desk: "Not on the desk: if water gets into the booth, that's what it will damage.",
+    drawer: "The drawer is in the desk: out of sight, not out of the water.",
+    floor: "On the floor? That's the first place the water would reach.",
+    lower_cabinet: "The bottom of the cabinet wouldn't be any safer than the desk.",
+  },
+  details: {
+    why: "Why that seat? What leads you there?",
+    seat_mismatch: "That isn't Alice's place… Go back over what you've gathered.",
+    seat: "Which seat, exactly? A row and a number.",
   },
   doorClosed: "The cabinet is closed again: it has to be reopened first.",
   cabinetSealed: "I locked it and hid the key behind the projector: it has to stay shut, for thirty years.",
   events: {
     inspect_photo: "On the back of the photo, a handwritten note.",
-    relay_key_location: "You passed the seat G7 clue on to Jeanne.",
+    share_photo_note: "You told Jeanne about the note on the photo.",
+    ask_usual_place: "Jeanne remembers Alice's usual place.",
+    propose_seat: "Jeanne agrees to look under that seat.",
+    share_report: "You showed Jeanne the report.",
+    claim_future: "You told Jeanne where you come from.",
     retrieve_key: "Jeanne found the crescent key.",
     open_cabinet: "The crescent cabinet is open.",
     inspect_programme: "The screening programme was added to the notebook.",
     read_letter: "Alice's letter was added to the notebook.",
     acknowledge_permission: "You acknowledged Alice's condition.",
-    inspect_waterline: "The 2008 damp report was added to the notebook.",
+    inspect_waterline: "The 2008 conservation report was added to the notebook.",
     relay_flood_warning: "You warned Jeanne about the water risk.",
     write_message: "Message draft updated.",
     confirm_message: "Message confirmed, word for word.",
@@ -200,12 +262,14 @@ const en: Texts = {
     programme: "Programme of 15 November 1996",
     letter: "Letter from Alice Mercier",
     archiveReport: "Conservation report, 2008",
+    rowMemory: "Jeanne's memory",
     key: "Crescent key",
     reel: "Reel “Les lumières du Régina”",
     envelope: "Sealed envelope",
     message: "Your message",
   },
   tool: {
+    unbacked: "The player has not said this themselves: do not take it for granted. Ask them what they want to tell you, in their own words.",
     shown: "The place is now shown on screen to the player. Describe it only with what your context allows; nothing changed.",
     noop: "Already taken into account: this is not a failure, nothing changed, do not ask for it again. To move on, if the player asks, now use: {next}",
     invalid: "This request is not valid.",
@@ -229,6 +293,7 @@ export function refusalText(action: string, code: FailCode, detail: string | und
   const t = texts(locale);
   if (code === "WRONG_LOCATION" && detail && t.wrongLocation[detail]) return t.wrongLocation[detail];
   if (detail === "door") return t.doorClosed;
+  if (detail && t.details[detail]) return t.details[detail];
   if (detail === "sealed") return t.cabinetSealed;
   return t.refusals[action as Action]?.[code] ?? t.refusals.default[code] ?? t.refusals.default.INVALID_ARGUMENT!;
 }

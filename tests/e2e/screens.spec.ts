@@ -11,7 +11,7 @@ test("capture key screens @screens", async ({ page, browser }) => {
   await page.waitForURL(/\/play\/run_/);
   await page.waitForTimeout(600);
   await page.screenshot(shot("02-2026-start"));
-  await hotspot(page, /Photographie sur le bureau/);
+  await hotspot(page, /^Photographie$/);
   await inDialog(page, /Retourner la photo/);
   await page.screenshot(shot("03-photo-verso"));
   await closeDialog(page);

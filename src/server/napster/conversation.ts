@@ -5,7 +5,7 @@ import "server-only";
 // Timeouts/network errors leave the lease "uncertain" until reconciled (ops:cleanup / cron).
 import type { Transaction } from "@libsql/client";
 import { sqlClient, writeTx } from "@/server/db/client";
-import { getRun } from "@/server/dal/runs";
+import { assertPlayable, getRun } from "@/server/dal/runs";
 import type { TenantContext } from "@/server/dal/context";
 import { env } from "@/server/env";
 import { HttpError } from "@/server/security/http";
@@ -64,6 +64,7 @@ export async function openConversation(ctx: TenantContext, runId: string, opts: 
   const e = env();
   if (e.CONVERSATION_MODE !== "live") throw new HttpError("LIVE_DISABLED", "Conversation en direct désactivée (mode répétition).");
   const run = await getRun(ctx, runId);
+  assertPlayable(run);
   if (run.status !== "active") throw new HttpError("RUN_FINISHED");
   const character = characterForEra(run.state.activeEra);
   const agentId = agentFor(character, locale);

@@ -24,6 +24,7 @@ export type ErrorCode =
   | "LIVE_DISABLED"
   | "QUOTA_EXCEEDED"
   | "RUN_FINISHED"
+  | "VERSION_RETIRED"
   | "INTERNAL";
 
 const STATUS: Record<ErrorCode, number> = {
@@ -43,6 +44,7 @@ const STATUS: Record<ErrorCode, number> = {
   LIVE_DISABLED: 409,
   QUOTA_EXCEEDED: 429,
   RUN_FINISHED: 409,
+  VERSION_RETIRED: 409,
   INTERNAL: 500,
 };
 

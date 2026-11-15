@@ -204,6 +204,30 @@ export const conversationLeases = sqliteTable(
   ],
 );
 
+/**
+ * The player's own turns in a live conversation (final transcript or typed line), reduced to
+ * server-computed indicators. NEVER the text: only a hash, what it mentions, a parsed seat or place.
+ * A character's tool call that records something "shared by the player" must be backed by one.
+ */
+export const playerTurns = sqliteTable(
+  "player_turns",
+  {
+    tenantId: text("tenant_id").notNull(),
+    runId: text("run_id").notNull(),
+    leaseId: text("lease_id").notNull(),
+    itemId: text("item_id").notNull(),
+    at: ms("at"),
+    textHash: text("text_hash").notNull(),
+    mentionsNote: integer("mentions_note").notNull().default(0),
+    mentionsWater: integer("mentions_water").notNull().default(0),
+    mentionsReport: integer("mentions_report").notNull().default(0),
+    mentionsFuture: integer("mentions_future").notNull().default(0),
+    seat: text("seat"),
+    location: text("location"),
+  },
+  (t) => [primaryKey({ columns: [t.leaseId, t.itemId] }), runFk(t), index("player_turns_recent").on(t.leaseId, t.at)],
+);
+
 export const providerBudgets = sqliteTable("provider_budgets", {
   scope: text("scope").primaryKey().notNull(),
   nextAllowedAt: ms("next_allowed_at"),

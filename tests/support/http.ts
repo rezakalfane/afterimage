@@ -6,6 +6,7 @@ import * as commandsRoute from "@/app/api/runs/[runId]/commands/route";
 import * as toolRoute from "@/app/api/runs/[runId]/tool/route";
 import * as convRoute from "@/app/api/runs/[runId]/conversation/route";
 import * as hbRoute from "@/app/api/runs/[runId]/heartbeat/route";
+import * as turnRoute from "@/app/api/runs/[runId]/turn/route";
 import * as intentRoute from "@/app/api/runs/[runId]/ending-intent/route";
 import * as endingRoute from "@/app/api/runs/[runId]/ending/route";
 import { createInvitation } from "@/server/auth/invitations";
@@ -61,6 +62,9 @@ export class Player {
   closeConversation(runId: string) {
     return this.req(convRoute.DELETE, `/api/runs/${runId}/conversation`, { method: "DELETE", params: { runId } });
   }
+  turn(runId: string, leaseId: string, text: string, itemId = `item_${++seq}`) {
+    return this.req(turnRoute.POST, `/api/runs/${runId}/turn`, { method: "POST", body: { leaseId, itemId, text }, params: { runId } });
+  }
   heartbeat(runId: string, leaseId: string) {
     return this.req(hbRoute.POST, `/api/runs/${runId}/heartbeat`, { method: "POST", body: { leaseId }, params: { runId } });
   }
@@ -94,8 +98,8 @@ export async function tenantWithMember(role: "owner" | "admin" | "player" = "pla
 /** Play a run from the start to the decision point through UI commands. */
 export async function playToDecision(p: Player, runId: string, message = "Les étoiles restent allumées.") {
   const steps: [string, Record<string, unknown>?][] = [
-    ["inspect_photo"], ["inspect_waterline"], ["switch_era", { era: 1996 }], ["relay_key_location"], ["retrieve_key"], ["open_cabinet"],
-    ["inspect_programme"], ["read_letter"], ["acknowledge_permission"], ["relay_flood_warning"], ["write_message", { text: message }],
+    ["inspect_photo"], ["inspect_waterline"], ["switch_era", { era: 1996 }], ["share_photo_note"], ["ask_usual_place"], ["inspect_programme"],
+    ["propose_seat", { seat: "G7" }], ["retrieve_key"], ["open_cabinet"], ["read_letter"], ["acknowledge_permission"], ["relay_flood_warning"], ["write_message", { text: message }],
   ];
   let rev = 0;
   for (const [a, args] of steps) {

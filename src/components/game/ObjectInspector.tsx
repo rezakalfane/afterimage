@@ -12,7 +12,7 @@ import type { Action, Era, PublicState } from "./types";
 
 type Act = (action: Action, args?: Record<string, unknown>) => Promise<unknown>;
 
-const LOCATION_IDS = ["upper_cabinet", "lower_cabinet", "desk", "floor"] as const;
+const LOCATION_IDS = ["drawer", "desk", "lower_cabinet", "upper_cabinet", "floor"] as const;
 
 /** Readings that run when their document is opened (pure reads, no consequence to confirm). */
 const AUTO_READ: Partial<Record<string, Action>> = { archiveReport: "inspect_waterline", programme: "inspect_programme", letter: "read_letter" };
@@ -46,7 +46,8 @@ function ActionButton({ action, args, children, can, act }: { action: Action; ar
 
 export function ObjectInspector({ id, era, view, onClose, act, openComposer }: { id: string | null; era: Era; view: PublicState; onClose: () => void; act: Act; openComposer: () => void }) {
   const t = useT();
-  const [location, setLocation] = useState("upper_cabinet");
+  const [location, setLocation] = useState("drawer");
+  const [seat, setSeat] = useState("");
   const fired = useRef<string | null>(null);
   const auto = id ? AUTO_READ[id] : undefined;
   const autoReady = Boolean(auto && view.availableActions.includes(auto));
@@ -76,7 +77,8 @@ export function ObjectInspector({ id, era, view, onClose, act, openComposer }: {
         <>
           <p className="doc__label">{t.inspector.photoBackLabel}</p>
           <p className="doc doc--hand">{n.text}</p>
-          {era === 1996 && <ActionButton can={can} act={act} action="relay_key_location">{t.inspector.photoRelay}</ActionButton>}
+          {era === 1996 && (can("share_photo_note") ? <ActionButton can={can} act={act} action="share_photo_note">{t.inspector.photoShare}</ActionButton> : <p className="muted">{t.inspector.photoShared}</p>)}
+          {era === 1996 && <ActionButton can={can} act={act} action="ask_usual_place">{t.inspector.photoAskPlace}</ActionButton>}
           {era === 2026 && <p className="muted">{t.inspector.photoNot1996}</p>}
         </>
       ) : (
@@ -95,6 +97,8 @@ export function ObjectInspector({ id, era, view, onClose, act, openComposer }: {
         <>
           <p className="doc doc--typed">{n.text}</p>
           {era === 1996 && <ActionButton can={can} act={act} action="relay_flood_warning">{t.inspector.waterRelay}</ActionButton>}
+          {era === 1996 && <ActionButton can={can} act={act} action="share_report">{t.inspector.waterReport}</ActionButton>}
+          {era === 1996 && !can("relay_flood_warning") && !can("share_report") && <p className="muted">{t.inspector.waterShared}</p>}
           {era === 2026 && <p className="muted">{t.inspector.waterNot1996}</p>}
         </>
       ) : (
@@ -138,7 +142,22 @@ export function ObjectInspector({ id, era, view, onClose, act, openComposer }: {
         <>
           <p>{t.inspector.hallDesc}</p>
           <ActionButton can={can} act={act} action="retrieve_key">{t.inspector.hallSearch}</ActionButton>
-          {!can("retrieve_key") && !view.scene.keyInHand1996 && <p className="muted">{t.inspector.hallNeedClue}</p>}
+          {!can("retrieve_key") && !view.scene.keyInHand1996 && !view.scene.cabinetOpen1996 && !view.scene.reelStoredHigh && (
+            // The player's own deduction: a free seat, checked by the server (no answer here).
+            <form
+              className="seat-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (seat.trim()) void act("propose_seat", { seat: seat.trim() });
+              }}
+            >
+              <label htmlFor="seat">{t.inspector.seatLabel}</label>
+              <div className="say">
+                <input id="seat" value={seat} maxLength={60} autoComplete="off" placeholder={t.inspector.seatPlaceholder} onChange={(e) => setSeat(e.target.value)} />
+                <button type="submit" className="btn btn--brass" disabled={!seat.trim()}>{t.inspector.seatSubmit}</button>
+              </div>
+            </form>
+          )}
         </>
       );
       break;
@@ -162,7 +181,7 @@ export function ObjectInspector({ id, era, view, onClose, act, openComposer }: {
     }
     case "projector": {
       title = t.inspector.projectorTitle;
-      body = (
+      body = era === 1996 ? <p>{t.inspector.projector1996}</p> : (
         <>
           <p>{t.inspector.projectorDesc}</p>
           <ActionButton can={can} act={act} action="find_future_key">{t.inspector.projectorSearch}</ActionButton>
@@ -225,6 +244,28 @@ export function ObjectInspector({ id, era, view, onClose, act, openComposer }: {
       ) : null;
       break;
     }
+    case "rowMemory": {
+      title = t.inspector.rowMemoryTitle;
+      const n = note("rowMemory");
+      body = n ? <p className="doc doc--hand">{n.text}</p> : null;
+      break;
+    }
+    case "reels":
+      title = t.inspector.reelsTitle;
+      body = <p>{era === 1996 ? t.inspector.reels1996 : t.inspector.reels2026}</p>;
+      break;
+    case "lamp":
+      title = t.inspector.lampTitle;
+      body = <p>{era === 1996 ? t.inspector.lamp1996 : t.inspector.lamp2026}</p>;
+      break;
+    case "splicer":
+      title = t.inspector.splicerTitle;
+      body = <p>{t.inspector.splicer1996}</p>;
+      break;
+    case "seats":
+      title = t.inspector.seatsTitle;
+      body = <p>{t.inspector.seats2026}</p>;
+      break;
     case "key":
     case "futureKey":
       title = t.inspector.keyTitle;

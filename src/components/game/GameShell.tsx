@@ -23,15 +23,15 @@ import { ObjectInspector } from "./ObjectInspector";
 import { SceneViewport } from "./SceneViewport";
 import type { Action, CommandResponse, Era, Mode, PublicState } from "./types";
 
-const HOTSPOT_TO_INSPECT: Record<string, string> = { photo: "photo", waterline: "archiveReport", projector: "projector", cabinet: "cabinet", cache: "cache", programme: "programme", hall: "hall", letter: "letter", shelf: "shelf" };
+const HOTSPOT_TO_INSPECT: Record<string, string> = { photo: "photo", waterline: "archiveReport", projector: "projector", cabinet: "cabinet", cache: "cache", programme: "programme", hall: "hall", letter: "letter", shelf: "shelf", reels: "reels", lamp: "lamp", splicer: "splicer", seats: "seats" };
 
 /** Notebook documents that open automatically when a character reveals them during a live talk. */
-const AUTO_OPEN = new Set(["photo", "archiveReport", "programme", "letter", "message", "futureLetter"]);
+const AUTO_OPEN = new Set(["photo", "archiveReport", "programme", "rowMemory", "letter", "message", "futureLetter"]);
 /** Gestures whose result is shown briefly, then the window closes by itself. Readings stay open. */
-const AUTO_CLOSE_ACTIONS = new Set<Action>(["relay_key_location", "retrieve_key", "open_cabinet", "close_cabinet", "acknowledge_permission", "relay_flood_warning", "confirm_message", "preserve_cache", "find_future_key", "recover_cache"]);
+const AUTO_CLOSE_ACTIONS = new Set<Action>(["share_photo_note", "propose_seat", "share_report", "retrieve_key", "open_cabinet", "close_cabinet", "acknowledge_permission", "relay_flood_warning", "confirm_message", "preserve_cache", "find_future_key", "recover_cache"]);
 const AUTO_CLOSE_MS = 2200;
 /** Calls that show something to read: their window stays open. Gestures close after their result. */
-const READINGS = new Set(["inspect_photo", "inspect_waterline", "inspect_programme", "read_letter", "read_message", "read_future_letter", "look_at"]);
+const READINGS = new Set(["inspect_photo", "inspect_waterline", "inspect_programme", "ask_usual_place", "read_letter", "read_message", "read_future_letter", "look_at"]);
 
 /** The inspector window matching a character's call, from the current server state. */
 function focusTarget(action: string, target: string | null, s: PublicState): string | null {
@@ -41,7 +41,7 @@ function focusTarget(action: string, target: string | null, s: PublicState): str
   const cabinet = open ? (era === 1996 ? "letter" : "cache") : "cabinet";
   if (action === "look_at") {
     const looks: Record<string, string> = {
-      hall: "hall", cabinet, projector: "projector", photo: "photo", waterline: "archiveReport", programme: "programme",
+      hall: "hall", cabinet, projector: "projector", photo: "photo", waterline: "archiveReport", programme: "programme", reels: "reels", lamp: "lamp", splicer: "splicer", seats: "seats",
       desk: era === 1996 ? "programme" : "photo",
       letter: era === 1996 ? "letter" : seen("futureLetter") ? "futureLetter" : "cache",
       message: seen("message") ? "message" : "cache",
@@ -49,7 +49,7 @@ function focusTarget(action: string, target: string | null, s: PublicState): str
     return target ? looks[target] ?? null : null;
   }
   const byAction: Record<string, string> = {
-    inspect_photo: "photo", relay_key_location: "photo", inspect_waterline: "archiveReport", relay_flood_warning: "archiveReport",
+    inspect_photo: "photo", share_photo_note: "photo", ask_usual_place: "rowMemory", propose_seat: "hall", share_report: "archiveReport", inspect_waterline: "archiveReport", relay_flood_warning: "archiveReport",
     inspect_programme: "programme", read_letter: "letter", acknowledge_permission: "letter", retrieve_key: "hall",
     find_future_key: "projector", preserve_cache: "shelf", read_message: "cache", read_future_letter: "cache",
     open_cabinet: cabinet, close_cabinet: "cabinet", recover_cache: cabinet,
@@ -76,7 +76,6 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
   const locale = useLocale();
   const [hint, setHint] = useState<string | null>(null);
   const [switching, setSwitching] = useState<Era | null>(null);
-  const [pulse, setPulse] = useState<string | null>(null);
   const [rLines, setRLines] = useState<TranscriptLine[]>([]);
   const [suggestion, setSuggestion] = useState<{ action: Action; args?: Record<string, unknown>; label: string } | null>(null);
   const [micMuted, setMicMuted] = useState(false);
@@ -228,8 +227,6 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
         if (r.hint) setHint(r.hint);
         if (r.changed && r.event && action !== "switch_era" && action !== "request_hint") {
           say(r.event.summary);
-          setPulse(action);
-          setTimeout(() => setPulse(null), 900);
           if (AUTO_CLOSE_ACTIONS.has(action)) scheduleClose();
         }
         afterState(viewRef.current, r.publicState);
@@ -383,7 +380,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
         <div className="stage__inner">
         <div className="stage__scene">
           <p className="meta"><span className="meta__place">{t.scene.place}</span><span className="meta__short">{t.scene.placeShort}</span><span>{era === 1996 ? t.scene.date1996 : t.scene.date2026}</span></p>
-          <SceneViewport era={era} view={view} pulse={pulse} onHotspot={(id) => setInspect(HOTSPOT_TO_INSPECT[id] ?? id)} />
+          <SceneViewport era={era} view={view} onHotspot={(id) => setInspect(HOTSPOT_TO_INSPECT[id] ?? id)} />
         </div>
         <CharacterPanel
           era={era}

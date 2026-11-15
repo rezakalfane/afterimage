@@ -5,7 +5,7 @@ import "server-only";
 import type { Transaction } from "@libsql/client";
 import { z } from "zod";
 import { writeTx } from "@/server/db/client";
-import { getRun, RUN_TTL } from "@/server/dal/runs";
+import { assertPlayable, getRun, RUN_TTL } from "@/server/dal/runs";
 import type { TenantContext } from "@/server/dal/context";
 import { HttpError } from "@/server/security/http";
 import { sha256 } from "@/server/security/ids";
@@ -61,6 +61,7 @@ export async function executeCommand(ctx: TenantContext, runId: string, body: Co
   return writeTx(async (tx) => {
     // 1. Ownership (tenant + id + owner), inside the transaction.
     const run = await getRun(ctx, runId, tx);
+    assertPlayable(run);
 
     // 2. Idempotency: same commandId → replay the recorded result (even if the revision moved on).
     const prior = await tx.execute({ sql: `SELECT request_hash, result_json FROM command_receipts WHERE tenant_id = ? AND run_id = ? AND command_id = ?`, args: [ctx.tenantId, runId, body.commandId] });

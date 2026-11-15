@@ -7,7 +7,7 @@ import { toolToCommand } from "@/server/napster/tools";
 import { memoryId } from "@/server/security/ids";
 import { ready } from "../support/ready";
 
-const SECRETS = ["G7", "épilogue", "Alice — 14 novembre", "étagère haute", "derrière le projecteur", "2008"];
+const SECRETS = ["G7", "rangée G", "place 7", "épilogue", "Alice — 14 novembre", "étagère haute", "derrière le projecteur", "2008"];
 
 describe("player view", () => {
   it("initial state reveals no document, ending or clue", () => {
@@ -19,7 +19,8 @@ describe("player view", () => {
     const s = transition(initialState(), { action: "inspect_photo" }, { channel: "ui" }).state;
     const v = playerView(s);
     expect(v.notebook.map((n) => n.id)).toEqual(["photo"]);
-    expect(JSON.stringify(v)).toContain("G7");
+    expect(JSON.stringify(v)).toContain("notre place habituelle"); // the photo alone never names the seat
+    expect(JSON.stringify(v)).not.toContain("G7");
     expect(JSON.stringify(v)).not.toContain(EPISODE.documents.letter);
   });
   it("endings are offered only after both readings", () => {
@@ -35,16 +36,26 @@ describe("character context", () => {
     expect(j).not.toMatch(/G7|2008|Malik|2026/);
     expect(j).not.toContain(EPISODE.documents.letter);
   });
-  it("Jeanne learns G7 only when relayed, never Malik's findings", () => {
+  it("an era switch shares nothing; the note and the row only after the player shares the note", () => {
     let s = initialState();
     s = transition(s, { action: "inspect_photo" }, { channel: "ui" }).state;
     s = transition(s, { action: "inspect_waterline" }, { channel: "ui" }).state;
     s = transition(s, { action: "switch_era", args: { era: 1996 } }, { channel: "ui" }).state;
-    expect(JSON.stringify(characterContext(s, "jeanne", null))).not.toContain("G7");
-    s = transition(s, { action: "relay_key_location" }, { channel: "ui" }).state;
-    const j = characterContext(s, "jeanne", null);
-    expect(JSON.stringify(j)).toContain("G7");
-    expect(JSON.stringify(j)).not.toContain(EPISODE.documents.archiveReport);
+    const before = JSON.stringify(characterContext(s, "jeanne", null));
+    expect(before).not.toMatch(/habituelle|rangée G|2008|2026|Malik/);
+    s = transition(s, { action: "share_photo_note" }, { channel: "ui" }).state;
+    const j = JSON.stringify(characterContext(s, "jeanne", null));
+    expect(j).toContain("notre place habituelle");
+    expect(j).toContain("rangée G"); // her memory, triggered by the note
+    expect(j).not.toContain(EPISODE.documents.archiveReport); // the report is not shared by sharing the note
+    expect(j).not.toMatch(/2026|Malik/);
+  });
+  it("a temporal claim is a claim: Jeanne gets the claim, nothing more", () => {
+    let s = transition(initialState(), { action: "switch_era", args: { era: 1996 } }, { channel: "ui" }).state;
+    s = transition(s, { action: "claim_future" }, { channel: "ui" }).state;
+    const j = JSON.stringify(characterContext(s, "jeanne", null));
+    expect(j).toContain("affirme venir de 2026");
+    expect(j).not.toMatch(/Malik|2008|habituelle/);
   });
   it("Malik never gets the personal message or the letter before recovering them", () => {
     const s = ready("Canari-A");
@@ -82,7 +93,9 @@ describe("tools", () => {
 describe("English tools (en agents)", () => {
   it("map to the same bounded commands; English values only", () => {
     expect(toolToCommand("malik", "en_malik_examine", { object: "photo" })).toEqual({ ok: true, command: { action: "inspect_photo", args: {} } });
-    expect(toolToCommand("jeanne", "en_jeanne_act", { gesture: "store", location: "upper_shelf" })).toEqual({ ok: true, command: { action: "preserve_cache", args: { location: "upper_cabinet" } } });
+    expect(toolToCommand("jeanne", "en_jeanne_act", { gesture: "store", location: "on the top shelf" })).toEqual({ ok: true, command: { action: "preserve_cache", args: { location: "upper_cabinet" } } });
+    expect(toolToCommand("jeanne", "en_jeanne_check_seat", { seat: "row G, seat seven" })).toEqual({ ok: true, command: { action: "propose_seat", args: { seat: "row G, seat seven" } } });
+    expect(toolToCommand("jeanne", "en_jeanne_use_clue", { clue: "from_the_future" })).toEqual({ ok: true, command: { action: "claim_future", args: {} } });
     expect(toolToCommand("jeanne", "en_jeanne_draft_message", { text: "Stars stay lit." })).toEqual({ ok: true, command: { action: "write_message", args: { text: "Stars stay lit." } } });
     expect(toolToCommand("malik", "en_malik_examine", { object: "trace_eau" })).toEqual({ ok: false }); // French value on English tool
     expect(toolToCommand("malik", "en_malik_examine", { objet: "photo" })).toEqual({ ok: false }); // French key

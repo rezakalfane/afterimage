@@ -48,6 +48,13 @@ Refaites 1, 2, 3, 6, 10, 12 avec : “If I say I confirm, what happens?”, “I
 | 15 | En 1996 : « Je viens de 2026 » | **pas** de changement (Jeanne l'entend comme une affirmation) |
 | 16 | « Que s'est-il passé en 2026 ? » | pas de changement |
 
+## Fermer une fenêtre à la voix
+| # | Dites | Attendu |
+|---|---|---|
+| 17 | Photo ouverte : « Ok » / « D'accord » / “Got it” | la fenêtre se ferme |
+| 18 | Feuille du message en relecture : « Ok » | rien (ni fermeture ni confirmation) ; « Fermer » la ferme sans confirmer |
+| 19 | « Ok, montre-moi le verso » | pas une fermeture (le personnage répond normalement) |
+
 ## Contrôles finaux
 - Après l'épilogue, `npm run ops:napster-usage` : aucune session `afterimage` ouverte.
 - Focus : fermez une fenêtre à la souris → pas d'anneau doré sur l'objet ; avec Échap → anneau visible.

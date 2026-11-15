@@ -122,3 +122,12 @@ export function wantsToDecide(text: string): boolean {
   if (/\b(ne|n'|pas|jamais|not|don't|never|later|plus tard|attends?|wait)\b/.test(t)) return false;
   return /\b(let's decide|lets decide|time to decide|i'?m ready to decide|i want to decide|ready to choose|let's choose|decide the film'?s fate|make the decision|on (decide|décide)|décidons|décider du sort|je (suis prête? à|veux|vais) décider|prête? à décider|c'est l'heure de (décider|choisir)|faisons notre choix|on choisit|choisissons)\b/.test(t);
 }
+
+/** Short utterances that close a window: "ok", "d'accord", "merci", "c'est bon", "compris", "got it"
+ *  (ack) and explicit "fermer", "close", "annuler", "cancel" (close). Anything longer is speech. */
+export function closeIntent(text: string): "ack" | "close" | null {
+  const t = normalizeSpeech(text).replace(/\s+(jeanne|malik|merci|thanks)$/g, "");
+  if (/^(?:(?:bon|alors|oui|euh)\s+)*(?:ferme|fermer|fermez|fermons|referme|referme ça|ferme ça|fermez ça|ferme la fenêtre|annule|annuler|close|close it|close this|cancel)$/.test(t)) return "close";
+  if (/^(?:(?:oui|bon|alors|euh|yes|well)\s+)*(?:ok|okay|ok ok|d'accord|merci|c'est bon|très bien|parfait|compris|vu|je vois|bien reçu|thanks|thank you|got it|i see|alright|all right|fine|good|perfect|noted)$/.test(t)) return "ack";
+  return null;
+}

@@ -82,3 +82,14 @@ describe("opening the decision by voice", () => {
     for (const t of ["Should we decide?", "Not yet, let's decide later", "On ne décide pas encore", "Il faudra décider un jour, peut-être", "Décider quoi ?"]) expect(wantsToDecide(t), t).toBe(false);
   });
 });
+
+import { closeIntent } from "@/components/game/voice";
+describe("closing a window by voice", () => {
+  it("short acknowledgements and explicit close words", () => {
+    for (const t of ["Ok", "OK.", "D'accord", "Merci", "C'est bon", "Okay, thanks", "Got it"]) expect(closeIntent(t), t).toBe("ack");
+    for (const t of ["Ferme", "Fermez ça", "Close", "Cancel", "Annuler"]) expect(closeIntent(t), t).toBe("close");
+  });
+  it("longer speech is not a close", () => {
+    for (const t of ["Ok, montre-moi le verso", "D'accord, va chercher la clé", "Ferme l'armoire", "je confirme"]) expect(closeIntent(t), t).toBeNull();
+  });
+});

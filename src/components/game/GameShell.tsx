@@ -8,7 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CharacterPanel } from "@/components/conversation/CharacterPanel";
 import { useLiveConversation, type TranscriptLine } from "@/components/conversation/useLiveConversation";
 import { useLocale, useT } from "@/i18n/I18nProvider";
-import { endingFromSpeech, eraFromSpeech, isConfirmation, sameTarget, wantsToDecide, type VoiceTarget } from "./voice";
+import { closeIntent, endingFromSpeech, eraFromSpeech, isConfirmation, sameTarget, wantsToDecide, type VoiceTarget } from "./voice";
 import { LanguageChoice, LanguageSwitch, setLocale } from "@/components/ui/LanguageSwitch";
 import { DisplayChoices } from "@/components/ui/DisplayChoices";
 import { Dialog } from "@/components/ui/Dialog";
@@ -75,6 +75,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
   const endingOpenRef = useRef(false);
   const selectedRef = useRef<string | null>(null);
   const sessionRef = useRef<string | null>(null);
+  const inspectRef = useRef<string | null>(null);
   const locale = useLocale();
   const [hint, setHint] = useState<string | null>(null);
   const [switching, setSwitching] = useState<Era | null>(null);
@@ -133,6 +134,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
     endingOpenRef.current = endingOpen;
     selectedRef.current = endingSelected;
     sessionRef.current = live.session;
+    inspectRef.current = inspect;
     const now = currentTarget();
     if (!now) target.current = null;
     else if (!target.current || !sameTarget(target.current, { ...now, since: target.current.since })) target.current = { ...now, since: clock() };
@@ -176,6 +178,21 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
   function onPlayerWords(text: string, meta: { itemId: string; receivedAt: number }) {
     if (heard.current.has(meta.itemId)) return trace(text, "ignoré : événement répété");
     heard.current.add(meta.itemId);
+    // "Ok" / "d'accord" / "fermer" closes the window being read. A confirmation step (message sheet,
+    // ending) only closes on an explicit "fermer"/"annuler", never on "ok".
+    const close = closeIntent(text);
+    if (close && inspectRef.current && !composerRef.current && !endingOpenRef.current) {
+      trace(text, "fenêtre fermée");
+      if (closeTimer.current) clearTimeout(closeTimer.current);
+      setInspect(null);
+      return;
+    }
+    if (close === "close" && (composerRef.current || endingOpenRef.current)) {
+      trace(text, "fenêtre fermée (rien confirmé)");
+      setComposer(false);
+      setEndingOpen(false);
+      return;
+    }
     // "2026" / "1996" (alone or as a short command): change era, as with the switch.
     const nextEra = eraFromSpeech(text, viewRef.current.activeEra);
     if (nextEra && !viewRef.current.ending) {

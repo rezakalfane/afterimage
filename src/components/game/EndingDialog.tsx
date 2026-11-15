@@ -6,7 +6,7 @@ import { useT } from "@/i18n/I18nProvider";
 import { api, commandId } from "./api";
 import type { CommandResponse, PublicState } from "./types";
 
-export function EndingDialog({ open, onClose, runId, view, onDone, confirmRef, chooseRef }: { open: boolean; onClose: () => void; runId: string; view: PublicState; onDone: (r: CommandResponse) => void | Promise<void>; confirmRef?: MutableRefObject<(() => void) | null>; chooseRef?: MutableRefObject<((id: string) => void) | null> }) {
+export function EndingDialog({ open, onClose, runId, view, onDone, confirmRef, chooseRef, onSelection }: { open: boolean; onClose: () => void; runId: string; view: PublicState; onDone: (r: CommandResponse) => void | Promise<void>; confirmRef?: MutableRefObject<(() => void) | null>; chooseRef?: MutableRefObject<((id: string) => void) | null>; onSelection?: (id: string | null) => void }) {
   const t = useT().ending;
   const [intent, setIntent] = useState<{ token: string; ending: { id: string; label: string; consequence: string; confirmation: string } } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +42,11 @@ export function EndingDialog({ open, onClose, runId, view, onDone, confirmRef, c
     if (confirmRef) confirmRef.current = open && intent && !busy ? () => void confirm() : null;
     if (chooseRef) chooseRef.current = open && !intent && !busy ? (id: string) => void choose(id) : null;
   });
+  // The selection on screen (for the voice confirmation target); cleared when closed.
+  const selected = open && intent ? intent.ending.id : null;
+  useEffect(() => {
+    onSelection?.(selected);
+  }, [selected, onSelection]);
 
   return (
     <Dialog open={open} title={t.title} onClose={() => { setIntent(null); onClose(); }} wide>

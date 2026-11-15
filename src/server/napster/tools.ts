@@ -245,3 +245,16 @@ function toolsForActionsEn(character: CharacterId, actions: Action[]): string[] 
         };
   return [...actions.map((a) => map[a]).filter((x): x is string => Boolean(x)), `en_${character}_look(object=…) — to show the player a place`];
 }
+
+/** Fields allowed in the log of a rejected tool call (explicit allow-list). Arguments are NEVER
+ *  logged: they may carry the player's personal sentence. No transcript, prompt, token or secret. */
+export function rejectedToolLog(f: { character: CharacterId; name: string; callId: string; revision: number; code: string }) {
+  const known = (TOOL_NAMES as readonly string[]).includes(f.name.replace(/^en_/, ""));
+  return {
+    character: f.character,
+    tool: known ? f.name : "unknown",
+    code: /^[A-Z_]{1,40}$/.test(f.code) ? f.code : "INVALID",
+    revision: Number.isInteger(f.revision) ? f.revision : null,
+    callId: /^[A-Za-z0-9_.:-]{1,80}$/.test(f.callId) ? f.callId : null,
+  };
+}

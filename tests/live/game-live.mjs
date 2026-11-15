@@ -16,7 +16,7 @@ async function goLive(name) {
   await waitLive(name, t);
 }
 async function waitLive(name, t = Date.now()) {
-  await p.locator(".character__head .state").filter({ hasText: /À l’écoute|répond|Micro coupé/ }).waitFor({ state: "attached", timeout: 60000 });
+  await p.locator(".character__head .state").filter({ hasText: /En conversation|répond|Micro coupé/ }).waitFor({ state: "attached", timeout: 60000 });
   log(`${name}: live after ms`, Date.now() - t);
   log(`${name}: name in header while live`, await p.locator(".character__head h2").innerText());
   const mute = p.getByRole("button", { name: "Couper le micro" });

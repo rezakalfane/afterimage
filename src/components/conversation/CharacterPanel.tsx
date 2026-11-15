@@ -27,6 +27,8 @@ export interface PanelProps {
   onSend: (text: string) => void;
   suggestion: { label: string; onAccept: () => void } | null;
   micMuted: boolean;
+  /** The era switch is reconnecting the conversation (vs a first connection). */
+  reconnecting?: boolean;
   onToggleMic: () => void;
   disabled: boolean;
 }
@@ -63,30 +65,33 @@ export function CharacterPanel({ mountRef, ...p }: PanelProps) {
   const liveUp = live && p.status === "live";
   // Only this era's character: never show the other character's lines after a switch.
   const lines = p.transcript.filter((l) => l.character === meta.character);
+  // Five distinct states, from real events only: available · connecting · reconnecting ·
+  // in conversation (answering while the character speaks) · mic muted. The dot is never "live"
+  // before the session is up.
   const state = !live
     ? c.stateRehearsal
-    : p.status === "connecting" ? c.stateConnecting
+    : p.status === "connecting" ? (p.reconnecting ? c.stateReconnecting : c.stateConnecting)
     : p.status === "closing" ? c.stateClosing
     : p.status === "error" ? c.stateError
-    : liveUp ? (p.speaking ? fmt(c.stateSpeaking, { name: meta.name }) : p.micMuted ? c.stateMuted : c.stateListening)
+    : liveUp ? (p.micMuted ? c.stateMuted : p.speaking ? fmt(c.stateSpeaking, { name: meta.name }) : c.stateListening)
     : c.stateIdle;
-  const tone = liveUp ? (p.speaking ? "speaking" : "live") : p.status === "connecting" ? "busy" : !live ? "rehearsal" : "idle";
+  const tone = !live ? "rehearsal" : liveUp ? (p.micMuted ? "muted" : p.speaking ? "speaking" : "live") : p.status === "connecting" ? "busy" : p.status === "error" ? "error" : "idle";
   const subtitle = (liveUp ? p.subtitle : lines.filter((l) => l.role === "assistant").at(-1)?.text) || "";
 
   return (
-    <aside ref={tileRef} className={`character character--${meta.character}${expanded ? " is-expanded" : ""}${tilePos ? " is-placed" : ""}${tilePos && tilePos.x > 0.5 ? " is-right" : ""}`} style={tileStyle} aria-label={`${meta.name}, ${meta.role}`}>
+    <aside ref={tileRef} className={`character character--${meta.character}${expanded || writeOpen ? " is-expanded" : ""}${writeOpen ? " is-writing" : ""}${tilePos ? " is-placed" : ""}${tilePos && tilePos.x > 0.5 ? " is-right" : ""}`} style={tileStyle} aria-label={`${meta.name}, ${meta.role}`}>
       <div className="character__tile" onPointerDown={onGripDown}>
         <header className="character__head">
-          <span className={`dot dot--${tone}`} aria-hidden="true" title={state} />
+          <span className={`dot dot--${tone}`} aria-hidden="true" />
           <div className="character__id">
             <h2 data-era={p.era}>{meta.name}</h2>
             <span>{meta.role}</span>
           </div>
           <span className={`state state--${tone}`} role="status">{state}{liveUp && !p.videoReady ? ` · ${c.stateAudio}` : ""}</span>
-          <button type="button" className="tile__icon tile__grip" aria-label={c.move} title={c.move} onKeyDown={onGripKey}>
+          <button type="button" className="tile__icon tile__grip" aria-label={c.move} data-tip={c.move} onKeyDown={onGripKey}>
             <Icon name="grip" size={18} />
           </button>
-          <button type="button" className="tile__icon" aria-pressed={expanded} aria-label={expanded ? c.collapse : c.expand} title={expanded ? c.collapse : c.expand} onClick={() => setExpanded((x) => !x)}>
+          <button type="button" className="tile__icon" aria-pressed={expanded} aria-label={expanded ? c.collapse : c.expand} data-tip={expanded ? c.collapse : c.expand} onClick={() => setExpanded((x) => !x)}>
             <Icon name={expanded ? "collapse" : "expand"} size={16} />
           </button>
         </header>
@@ -97,23 +102,49 @@ export function CharacterPanel({ mountRef, ...p }: PanelProps) {
           <div className={`character__live${liveUp ? " is-on" : ""}`} ref={mountRef} />
         </div>
 
+      <div id={drawerId} className="character__drawer" hidden={!writeOpen}>
+          {p.suggestion && (
+            <div className="suggestion">
+              <span className="muted small">{c.suggestion}</span>
+              <button type="button" className="btn btn--brass" onClick={p.suggestion.onAccept} disabled={p.disabled}>{p.suggestion.label}</button>
+            </div>
+          )}
+          <form
+            className="say"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!text.trim()) return;
+              p.onSend(text);
+              setText("");
+            }}
+          >
+            <label htmlFor="say" className="sr-only">{fmt(c.writeTo, { name: meta.name })}</label>
+            <input id="say" value={text} maxLength={500} onChange={(e) => setText(e.target.value)} placeholder={live && !liveUp ? fmt(c.writeWhenLive, { name: meta.name }) : fmt(c.writeToEllipsis, { name: meta.name })} disabled={(live && !liveUp) || p.disabled} autoComplete="off" />
+            <button type="submit" className="btn" disabled={(live && !liveUp) || p.disabled}>{c.send}</button>
+          </form>
+          <button type="button" className="btn btn--quiet character__history" aria-expanded={historyOpen} onClick={() => setHistoryOpen((o) => !o)}>
+            {lines.length ? fmt(c.historyCount, { n: lines.length }) : c.history}
+          </button>
+          {historyOpen && <History lines={lines} name={meta.name} onClose={() => setHistoryOpen(false)} />}
+        </div>
+
         <div className="character__bar">
           {live && !liveUp && p.status !== "connecting" && p.status !== "closing" && (
             <button type="button" className="btn btn--brass character__talk" onClick={async () => ((await hasMicConsent()) ? p.onStart() : setPrepOpen(true))} disabled={p.disabled}>{fmt(c.talk, { name: meta.name })}</button>
           )}
           {live && p.status === "connecting" && <button type="button" className="btn character__talk" onClick={p.onStop}>{t.common.cancel}</button>}
           {liveUp && (
-            <button type="button" className={`barbtn${p.micMuted ? " is-off" : ""}`} onClick={p.onToggleMic} aria-label={p.micMuted ? c.micUnmute : c.micMute} title={p.micMuted ? c.micUnmute : c.micMute}>
+            <button type="button" className={`barbtn${p.micMuted ? " is-off" : ""}`} onClick={p.onToggleMic} aria-label={p.micMuted ? c.micUnmute : c.micMute} aria-pressed={p.micMuted} data-tip={p.micMuted ? `${c.micShortOff} — ${c.micUnmute}` : c.micMute}>
               <Icon name={p.micMuted ? "micOff" : "mic"} size={20} /><span className="sr-only">{p.micMuted ? c.micShortOff : c.micShort}</span>
             </button>
           )}
           {(liveUp || !live) && (
-            <button type="button" className="barbtn" aria-expanded={writeOpen} aria-controls={drawerId} onClick={() => setWriteOpen((o) => !o)} aria-label={fmt(c.writeTo, { name: meta.name })} title={fmt(c.writeTo, { name: meta.name })}>
+            <button type="button" className="barbtn" aria-expanded={writeOpen} aria-controls={drawerId} onClick={() => setWriteOpen((o) => !o)} aria-label={fmt(c.writeTo, { name: meta.name })} data-tip={fmt(c.writeTo, { name: meta.name })}>
               <Icon name="keyboard" size={20} /><span className="barbtn__label">{c.writeShort}</span>
             </button>
           )}
           {liveUp && (
-            <button type="button" className="barbtn barbtn--end" onClick={p.onStop} aria-label={c.hangUp} title={c.hangUp}>
+            <button type="button" className="barbtn barbtn--end" onClick={p.onStop} aria-label={c.hangUp} data-tip={c.hangUp}>
               <Icon name="end" size={20} /><span className="sr-only">{c.endShort}</span>
             </button>
           )}
@@ -124,32 +155,6 @@ export function CharacterPanel({ mountRef, ...p }: PanelProps) {
 
       <div className={`character__subtitles${subtitle ? "" : " is-empty"}`} aria-live="polite" aria-label={c.subtitles}>
         {subtitle ? <span className="subtitle__line">{subtitle}</span> : <span className="muted">{live ? c.emptyLive : c.emptyRehearsal}</span>}
-      </div>
-
-      <div id={drawerId} className="character__drawer" hidden={!writeOpen}>
-        {p.suggestion && (
-          <div className="suggestion">
-            <span className="muted small">{c.suggestion}</span>
-            <button type="button" className="btn btn--brass" onClick={p.suggestion.onAccept} disabled={p.disabled}>{p.suggestion.label}</button>
-          </div>
-        )}
-        <form
-          className="say"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!text.trim()) return;
-            p.onSend(text);
-            setText("");
-          }}
-        >
-          <label htmlFor="say" className="sr-only">{fmt(c.writeTo, { name: meta.name })}</label>
-          <input id="say" value={text} maxLength={500} onChange={(e) => setText(e.target.value)} placeholder={live && !liveUp ? fmt(c.writeWhenLive, { name: meta.name }) : fmt(c.writeToEllipsis, { name: meta.name })} disabled={(live && !liveUp) || p.disabled} autoComplete="off" />
-          <button type="submit" className="btn" disabled={(live && !liveUp) || p.disabled}>{c.send}</button>
-        </form>
-        <button type="button" className="btn btn--quiet character__history" aria-expanded={historyOpen} onClick={() => setHistoryOpen((o) => !o)}>
-          {lines.length ? fmt(c.historyCount, { n: lines.length }) : c.history}
-        </button>
-        {historyOpen && <History lines={lines} name={meta.name} onClose={() => setHistoryOpen(false)} />}
       </div>
 
       <Dialog open={prepOpen && !liveUp} title={c.prepLabel} onClose={() => setPrepOpen(false)}>

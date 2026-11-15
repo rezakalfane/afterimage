@@ -8,10 +8,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CharacterPanel } from "@/components/conversation/CharacterPanel";
 import { useLiveConversation, type TranscriptLine } from "@/components/conversation/useLiveConversation";
 import { useLocale, useT } from "@/i18n/I18nProvider";
-import { endingFromSpeech, isConfirmation } from "./voice";
+import { endingFromSpeech, isConfirmation, sameTarget, type VoiceTarget } from "./voice";
 import { LanguageChoice, LanguageSwitch, setLocale } from "@/components/ui/LanguageSwitch";
 import { DisplayChoices } from "@/components/ui/DisplayChoices";
 import { Dialog } from "@/components/ui/Dialog";
+import { FacadeSign } from "@/components/ui/FacadeSign";
 import { ERA_META } from "./scene-config";
 import { fmt, type Locale } from "@/i18n/messages";
 import { api, ApiError, commandId } from "./api";
@@ -70,10 +71,8 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
   const [endingOpen, setEndingOpen] = useState(false);
   const composerRef = useRef(false);
   const endingOpenRef = useRef(false);
-  useEffect(() => {
-    composerRef.current = composer;
-    endingOpenRef.current = endingOpen;
-  }, [composer, endingOpen]);
+  const selectedRef = useRef<string | null>(null);
+  const sessionRef = useRef<string | null>(null);
   const locale = useLocale();
   const [hint, setHint] = useState<string | null>(null);
   const [switching, setSwitching] = useState<Era | null>(null);
@@ -81,6 +80,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
   const [rLines, setRLines] = useState<TranscriptLine[]>([]);
   const [suggestion, setSuggestion] = useState<{ action: Action; args?: Record<string, unknown>; label: string } | null>(null);
   const [micMuted, setMicMuted] = useState(false);
+  const [reconnecting, setReconnecting] = useState(false);
   const viewRef = useRef(view);
   useEffect(() => {
     viewRef.current = view;
@@ -119,10 +119,21 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
       if (!READINGS.has(action)) scheduleClose();
       else if (closeTimer.current) clearTimeout(closeTimer.current);
     },
-    onUserUtterance: (text) => onPlayerWords(text),
+    onUserUtterance: (text, meta) => onPlayerWords(text, meta),
   });
 
   const lastState = useRef<PublicState | null>(null);
+  // Keep the refs used by voice handlers current, and (re)create the confirmation target whenever
+  // the step on screen changes: a new target gets a new "since", so earlier speech cannot count.
+  useEffect(() => {
+    composerRef.current = composer;
+    endingOpenRef.current = endingOpen;
+    selectedRef.current = endingSelected;
+    sessionRef.current = live.session;
+    const now = currentTarget();
+    if (!now) target.current = null;
+    else if (!target.current || !sameTarget(target.current, { ...now, since: target.current.since })) target.current = { ...now, since: clock() };
+  });
   // Voice play: windows close a moment after a validated gesture; the decision opens itself.
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   function scheduleClose() {
@@ -141,31 +152,55 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
     }
   }
 
-  // The PLAYER's own words (speech transcript or typed text) can confirm what is on screen.
+  // Voice confirmation (player's FINAL transcript only). The step on screen is a target bound to
+  // its kind, exact content (text or ending), server revision and live session; any change, a
+  // closed panel or a new session invalidates it. Old, repeated or out-of-step events are ignored.
   const endingConfirm = useRef<(() => void) | null>(null);
   const endingChoose = useRef<((id: string) => void) | null>(null);
-  const lastVoiceAct = useRef(0);
-  function onPlayerWords(text: string) {
-    if (clock() - lastVoiceAct.current < 1500) return; // a typed line may also come back as a transcript
+  const [endingSelected, setEndingSelected] = useState<string | null>(null);
+  const target = useRef<VoiceTarget | null>(null);
+  const heard = useRef(new Set<string>());
+  function currentTarget(): Omit<VoiceTarget, "since"> | null {
     const v = viewRef.current;
+    const session = sessionRef.current;
     const draft = v.message.draft;
-    if (composerRef.current && draft && v.message.confirmed !== draft && !v.message.sealed && v.availableActions.includes("confirm_message") && isConfirmation(text, locale)) {
-      lastVoiceAct.current = clock();
-      void act("confirm_message", { text: draft });
+    if (composerRef.current && draft && v.message.confirmed !== draft && !v.message.sealed && v.availableActions.includes("confirm_message")) {
+      return { kind: "message", content: draft, revision: v.revision, session };
+    }
+    if (endingOpenRef.current && selectedRef.current) return { kind: "ending", content: selectedRef.current, revision: v.revision, session };
+    return null;
+  }
+  function onPlayerWords(text: string, meta: { itemId: string; receivedAt: number }) {
+    if (heard.current.has(meta.itemId)) return trace(text, "ignoré : événement répété");
+    heard.current.add(meta.itemId);
+    const now = currentTarget();
+    const t = target.current;
+    if (t) {
+      if (!now || !sameTarget(t, { ...now, since: t.since })) return trace(text, "ignoré : l’étape affichée a changé");
+      if (meta.receivedAt < t.since + 300) return trace(text, "ignoré : parole antérieure à l’étape");
+      if (!isConfirmation(text, locale, t.kind)) return trace(text, "ignoré : pas une confirmation explicite");
+      target.current = null; // single use
+      trace(text, t.kind === "message" ? "CONFIRMÉ : message" : `CONFIRMÉ : fin ${t.content}`);
+      if (t.kind === "message") void act("confirm_message", { text: t.content });
+      else endingConfirm.current?.();
       return;
     }
-    if (endingOpenRef.current) {
-      if (endingConfirm.current && isConfirmation(text, locale)) {
-        lastVoiceAct.current = clock();
-        endingConfirm.current();
-        return;
-      }
+    // Ending choice by voice: an explicit selection only (never a confirmation, never automatic).
+    if (endingOpenRef.current && !selectedRef.current && endingChoose.current) {
       const id = endingFromSpeech(text, locale);
-      if (id && endingChoose.current) {
-        lastVoiceAct.current = clock();
+      if (id) {
+        trace(text, `sélection : ${id} (confirmation encore requise)`);
         endingChoose.current(id);
-      }
+      } else trace(text, "ignoré : aucune fin choisie explicitement");
+      return;
     }
+    trace(text, "aucune étape de confirmation à l’écran");
+  }
+  // Diagnostic for the microphone acceptance test only (?voicedebug=1): what was heard → decision.
+  const [voiceLog, setVoiceLog] = useState<string[]>([]);
+  const [voiceDebug] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).has("voicedebug"));
+  function trace(text: string, decision: string) {
+    if (voiceDebug) setVoiceLog((l) => [...l.slice(-12), `« ${text} » → ${decision}`]);
   }
 
   const say = useCallback((text: string, tone: "info" | "warn" = "info") => {
@@ -260,6 +295,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
     // Keep talking across eras: the player already consented; connect the other era's character.
     if (wasLive && r?.ok && mode === "live") {
       setMicMuted(false);
+      setReconnecting(true);
       void live.start();
     }
   }
@@ -306,9 +342,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
     return (
       <main className={`epilogue epilogue--${ending}`} aria-label={g.epilogue}>
         <div className="epilogue__facade">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/assets/afterimage/scenes/cinema-exterior-1672.webp" alt={g.facadeAlt} />
-          <p className={`marquee marquee--${ending}`}>{g.marquee[ending]?.[0]}<small>{g.marquee[ending]?.[1]}</small></p>
+          <FacadeSign main={g.marquee[ending]?.[0] ?? ""} sub={g.marquee[ending]?.[1] ?? ""} label={g.facadeAlt} tone={ending === "sealed_archive" ? "dim" : ending === "broken_promise" ? "warn" : "lit"} slice={false} />
         </div>
         <p className="epilogue__text">{view.closing}</p>
         {view.message.recovered && (
@@ -348,7 +382,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
       <main className="stage">
         <div className="stage__inner">
         <div className="stage__scene">
-          <div className="meta"><span>{t.scene.place}</span><span>{era === 1996 ? t.scene.date1996 : t.scene.date2026}</span></div>
+          <p className="meta"><span className="meta__place">{t.scene.place}</span><span className="meta__short">{t.scene.placeShort}</span><span>{era === 1996 ? t.scene.date1996 : t.scene.date2026}</span></p>
           <SceneViewport era={era} view={view} pulse={pulse} onHotspot={(id) => setInspect(HOTSPOT_TO_INSPECT[id] ?? id)} />
         </div>
         <CharacterPanel
@@ -361,9 +395,10 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
           transcript={mode === "live" ? live.transcript : rLines}
           error={live.error}
           mountRef={liveMountRef}
-          onStart={() => { setMicMuted(false); void live.start(); }}
+          onStart={() => { setMicMuted(false); setReconnecting(false); void live.start(); }}
+          reconnecting={reconnecting}
           onStop={() => void live.stop()}
-          onSend={(t) => { onPlayerWords(t); return mode === "live" ? live.sendText(t) : void rehearse(t); }}
+          onSend={(t) => (mode === "live" ? live.sendText(t) : void rehearse(t))}
           suggestion={suggestion && view.availableActions.includes(suggestion.action) ? { label: suggestion.label, onAccept: () => { const s = suggestion; setSuggestion(null); void act(s.action, s.args); } } : null}
           micMuted={micMuted}
           onToggleMic={() => { live.setMicMuted(!micMuted); setMicMuted(!micMuted); }}
@@ -387,6 +422,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
         </div>
       </footer>
 
+      {voiceDebug && voiceLog.length > 0 && <ol className="voicedebug" aria-label="voice debug">{voiceLog.map((l, i) => <li key={i}>{l}</li>)}</ol>}
       <div className="toast" role="status" aria-live="polite">{toast && !view.ending && <p className={`toast__msg toast__msg--${toast.tone}`}>{toast.text}</p>}</div>
       {switching && <div className="timeshift" aria-live="assertive">{fmt(g.switching, { era: switching })}</div>}
 
@@ -419,7 +455,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
 
       <ObjectInspector id={inspect} era={era} view={view} onClose={() => setInspect(null)} act={async (a, args) => { const r = await act(a, args); return r; }} openComposer={() => { setInspect(null); setComposer(true); }} />
       <MessageComposer key={view.message.draft ?? "none"} open={composer} onClose={() => setComposer(false)} view={view} act={act} />
-      {canDecide && <EndingDialog confirmRef={endingConfirm} chooseRef={endingChoose} open={endingOpen} onClose={() => setEndingOpen(false)} runId={runId} view={view} onDone={async (r) => { setEndingOpen(false); await live.stop(); setView(r.publicState); }} />}
+      {canDecide && <EndingDialog confirmRef={endingConfirm} chooseRef={endingChoose} onSelection={setEndingSelected} open={endingOpen} onClose={() => setEndingOpen(false)} runId={runId} view={view} onDone={async (r) => { setEndingOpen(false); await live.stop(); setView(r.publicState); }} />}
 
     </div>
   );

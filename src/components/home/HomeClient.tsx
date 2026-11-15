@@ -6,6 +6,7 @@ import { api } from "@/components/game/api";
 import { useT } from "@/i18n/I18nProvider";
 import { LanguageChoice, LanguageSwitch } from "@/components/ui/LanguageSwitch";
 import { Dialog } from "@/components/ui/Dialog";
+import { FacadeSign } from "@/components/ui/FacadeSign";
 import { DisplayChoices } from "@/components/ui/DisplayChoices";
 
 export function HomeClient({ mode, runs, signedIn, isAdmin }: { mode: "rehearsal" | "live"; runs: { id: string; status: string; updatedAt: number }[]; signedIn: boolean; isAdmin: boolean }) {
@@ -42,9 +43,7 @@ export function HomeClient({ mode, runs, signedIn, isAdmin }: { mode: "rehearsal
   return (
     <main className="home">
       <div className="home__facade">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/assets/afterimage/scenes/cinema-exterior-1672.webp" srcSet="/assets/afterimage/scenes/cinema-exterior-960.webp 960w, /assets/afterimage/scenes/cinema-exterior-1672.webp 1672w" sizes="100vw" alt={h.facadeAlt} />
-        <p className="marquee" aria-hidden="true">{h.marquee}<small>{h.marqueeSub}</small></p>
+        <FacadeSign main={h.marquee} sub={h.marqueeSub} label={h.facadeAlt} />
       </div>
       <div className="home__panel">
         <LanguageSwitch />

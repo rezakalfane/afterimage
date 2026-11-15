@@ -18,11 +18,14 @@ export interface NotebookEntry {
 function objective(s: WorldState, locale: Locale): string {
   const o = texts(locale).objectives;
   const has = (f: Flag) => s.flags.includes(f);
+  // Worded for the era on screen: when the next step happens in the other era, say so (without
+  // revealing anything not yet discovered). Phases whose clues span both eras stay neutral.
+  const in1996 = s.activeEra === 1996;
   if (s.ending) return o.finished;
-  if (has("cache_recovered")) return o.decide;
-  if (has("cache_preserved")) return o.recover;
+  if (has("cache_recovered")) return in1996 ? o.decideGo2026 : o.decide;
+  if (has("cache_preserved")) return in1996 ? o.recoverGo2026 : o.recover;
   if (!has("cabinet_open")) return s.flags.length === 0 ? o.start : o.key;
-  if (!has("letter_read") || !has("permission_acknowledged")) return o.promise;
+  if (!has("letter_read") || !has("permission_acknowledged")) return in1996 ? o.promise : o.promiseIn1996;
   return o.cache;
 }
 

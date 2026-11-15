@@ -5,7 +5,7 @@ import { requireContext } from "@/server/dal/context";
 import { handler, HttpError, json, readJson } from "@/server/security/http";
 import { sqlClient } from "@/server/db/client";
 import { getRun } from "@/server/dal/runs";
-import { toolsForActions, toolToCommand } from "@/server/napster/tools";
+import { rejectedToolLog, toolsForActions, toolToCommand } from "@/server/napster/tools";
 import { contextUpdateText } from "@/server/napster/context";
 import { executeCommand } from "@/server/world/service";
 import { texts, type Locale } from "@/server/world/texts";
@@ -37,12 +37,7 @@ export const POST = handler(async (req, { params }: P) => {
   const locale = (lease.rows[0]?.locale === "en" ? "en" : "fr") as Locale;
   if (!character) throw new HttpError("LEASE_INVALID", "Cette conversation n’est plus active.");
   const mapped = toolToCommand(character, p.data.name, p.data.args);
-  if (!mapped.ok) {
-    // Diagnose model mistakes without logging player text: tool name + argument keys/enum-like values.
-    const a = p.data.args && typeof p.data.args === "object" ? (p.data.args as Record<string, unknown>) : {};
-    const shape = Object.fromEntries(Object.entries(a).map(([k, v]) => [k, /^(texte|text)$/.test(k) ? "<text>" : String(v).slice(0, 24)]));
-    log.info("napster.tool.rejected", { character, name: p.data.name.slice(0, 40), args: shape });
-  }
+
   const command = mapped.ok ? mapped.command : { action: "__invalid_tool__", args: {} };
   const result = await executeCommand(
     ctx,
@@ -54,6 +49,7 @@ export const POST = handler(async (req, { params }: P) => {
   // A no-op is NOT a failure (e.g. a clue already noted): say so explicitly, or the model may
   // narrate a failure that never happened.
   // The next usable tools are stated explicitly (models skim long JSON contexts).
+  if (!result.ok) log.info("napster.tool.rejected", rejectedToolLog({ character, name: p.data.name, callId: p.data.callId, revision: result.revision, code: mapped.ok ? (result.code ?? "REFUSED") : "INVALID_TOOL" }));
   const next = toolsForActions(character, result.characterContext.availableActions, locale);
   const looked = command.action === "look_at";
   const output = result.ok

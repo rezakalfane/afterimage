@@ -27,3 +27,6 @@ Status legend: ✅ tested here (command/test named) · 🟡 implemented, not yet
 | Dev dependency advisories | `npm audit`: moderate issues in `drizzle-kit` (esbuild) and `typescript-eslint` (minimatch), dev-only, not shipped | 🟡 accepted, re-check before release |
 
 Before production: run this whole list again on staging with real Turso, HTTPS, two browsers and two players, then enforce the CSP.
+
+## Logs (final pass)
+- Rejected tool calls: allow-listed fields only (`rejectedToolLog`), unit-tested so a personal sentence placed in any field never reaches the log. No arguments, transcripts, prompts, tokens or secrets. The generic logger also redacts keys matching token/secret/message/text/prompt/profile.

@@ -190,3 +190,26 @@ describe("look_at: a pure look that shows a place, never a mutation", () => {
     expect(toolToCommand("jeanne", "malik_look", { objet: "armoire" })).toEqual({ ok: false }); // not Jeanne's tool
   });
 });
+
+import { rejectedToolLog } from "@/server/napster/tools";
+describe("rejected tool log: explicit allow-list, never arguments", () => {
+  it("keeps only technical fields and hides unknown names", () => {
+    const line = rejectedToolLog({ character: "jeanne", name: "jeanne_draft_message", callId: "call_1", revision: 7, code: "INVALID_TOOL" });
+    expect(Object.keys(line).sort()).toEqual(["callId", "character", "code", "revision", "tool"]);
+    const leaky = rejectedToolLog({ character: "malik", name: "Les étoiles restent allumées", callId: "Les étoiles restent", revision: 1, code: "Les étoiles" });
+    expect(JSON.stringify(leaky)).not.toMatch(/étoiles/);
+  });
+});
+
+import { playerView } from "@/server/world/projections";
+describe("objective follows the era on screen", () => {
+  it("after storing: 1996 says go back to 2026; 2026 says look", () => {
+    const s = ready(); // decision ready, 2026
+    expect(playerView(s, "fr").objective).toMatch(/Décider comment montrer/);
+    expect(playerView({ ...s, activeEra: 1996 }, "fr").objective).toBe("Retournez en 2026 pour décider du sort du film.");
+    const stored = { ...s, flags: s.flags.filter((f) => !["future_key_found", "cache_recovered", "message_read", "future_letter_read"].includes(f)) };
+    expect(playerView({ ...stored, activeEra: 1996 }, "fr").objective).toBe("Retournez en 2026 pour découvrir ce que Jeanne a laissé.");
+    expect(playerView({ ...stored, activeEra: 1996 }, "en").objective).toBe("Go back to 2026 to discover what Jeanne left behind.");
+    expect(playerView(stored, "en").objective).toBe("Look for what Jeanne left behind.");
+  });
+});

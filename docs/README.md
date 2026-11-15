@@ -9,4 +9,5 @@
 | [NAPSTER_ACCESS_REPORT.md](NAPSTER_ACCESS_REPORT.md) | Sanitized capability matrix of the account, the 4 agents, live proofs, spend |
 | [SECURITY_CHECKLIST.md](SECURITY_CHECKLIST.md) | Threats, measures, evidence |
 | [OPERATIONS.md](OPERATIONS.md) | Accesses needed, deploy (Vercel + Turso), release migrations, backup/restore, rollback |
+| [VOICE_ACCEPTANCE.md](VOICE_ACCEPTANCE.md) | Real-microphone acceptance of voice confirmation (procedure + expected results) |
 | [DEMO.md](DEMO.md) | Three-minute jury demo |

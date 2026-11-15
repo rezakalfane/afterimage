@@ -21,7 +21,7 @@ interface Options {
   runId: string;
   onPublicState?: (state: unknown, revision: number) => void;
   /** The PLAYER's own final transcript (never the model's words): used for voice confirmations. */
-  onUserUtterance?: (text: string) => void;
+  onUserUtterance?: (text: string, meta: { itemId: string; receivedAt: number }) => void;
   /** What a character's tool call was about (accepted, refused or unchanged): the screen shows it. */
   onFocus?: (focus: { action: string; target: string | null }) => void;
   /** Debug hook for the technical proof (Playwright); not used by the game UI. */
@@ -47,6 +47,8 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUt
   const [error, setError] = useState<{ code: string; message: string } | null>(null);
   const [transcript, setTranscript] = useState<TranscriptLine[]>([]);
   const [subtitle, setSubtitle] = useState("");
+  /** The live session (lease) currently open: a voice confirmation belongs to one session. */
+  const [session, setSession] = useState<string | null>(null);
   const tRef = useRef(t);
   useEffect(() => {
     tRef.current = t;
@@ -104,7 +106,8 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUt
           const line = { role: m.role as "user" | "assistant", text: String(m.content), at: Date.now(), character: characterRef.current };
           setTranscript((t) => [...t.slice(-40), line]);
           if (m.role === "assistant") setSubtitle(line.text);
-          else cbs.current.onUserUtterance?.(line.text);
+          // FINAL transcript of the player (action "completed"): never a delta, never the character.
+          else cbs.current.onUserUtterance?.(line.text, { itemId: String(m.item_id ?? `${line.at}`), receivedAt: line.at });
         }
       } else if (ev === "provider_connection_aborted" || ev === "session_expired" || ev === "no_credits_left") {
         setError({ code: ev, message: t.liveInterrupted });
@@ -122,6 +125,7 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUt
     const inst = instanceRef.current;
     instanceRef.current = null;
     leaseRef.current = null;
+    setSession(null);
     if (!wasActive) return; // nothing started (e.g. React strict-mode remount): no server call
     setStatus("closing");
     try {
@@ -164,6 +168,7 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUt
     }
     phaseRef.current = "started";
     leaseRef.current = opened.leaseId;
+    setSession(opened.leaseId);
     characterRef.current = opened.character;
     setCharacter(opened.character);
     setSubtitle("");
@@ -234,5 +239,5 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUt
     };
   }, [runId]);
 
-  return { mountRef, status, character, speaking, videoReady, error, transcript, subtitle, start, stop, sendText, pushContext, setMicMuted };
+  return { mountRef, status, character, speaking, videoReady, error, transcript, subtitle, session, start, stop, sendText, pushContext, setMicMuted };
 }

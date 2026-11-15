@@ -8,7 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CharacterPanel } from "@/components/conversation/CharacterPanel";
 import { useLiveConversation, type TranscriptLine } from "@/components/conversation/useLiveConversation";
 import { useLocale, useT } from "@/i18n/I18nProvider";
-import { endingFromSpeech, isConfirmation, sameTarget, type VoiceTarget } from "./voice";
+import { endingFromSpeech, eraFromSpeech, isConfirmation, sameTarget, type VoiceTarget } from "./voice";
 import { LanguageChoice, LanguageSwitch, setLocale } from "@/components/ui/LanguageSwitch";
 import { DisplayChoices } from "@/components/ui/DisplayChoices";
 import { Dialog } from "@/components/ui/Dialog";
@@ -174,6 +174,13 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
   function onPlayerWords(text: string, meta: { itemId: string; receivedAt: number }) {
     if (heard.current.has(meta.itemId)) return trace(text, "ignoré : événement répété");
     heard.current.add(meta.itemId);
+    // "2026" / "1996" (alone or as a short command): change era, as with the switch.
+    const nextEra = eraFromSpeech(text, viewRef.current.activeEra);
+    if (nextEra && !viewRef.current.ending) {
+      trace(text, `époque → ${nextEra}`);
+      void switchEraRef.current?.(nextEra);
+      return;
+    }
     const now = currentTarget();
     const t = target.current;
     if (t) {
@@ -283,6 +290,10 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
     };
   }, [era0, mode, finished, runId]);
 
+  const switchEraRef = useRef<((era: Era) => Promise<void>) | null>(null);
+  useEffect(() => {
+    switchEraRef.current = switchEra;
+  });
   async function switchEra(era: Era) {
     if (era === view.activeEra || busy || view.ending) return;
     setSwitching(era);

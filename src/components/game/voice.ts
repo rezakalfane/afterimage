@@ -94,3 +94,22 @@ export interface VoiceTarget {
 export function sameTarget(a: VoiceTarget | null, b: VoiceTarget | null): boolean {
   return Boolean(a && b && a.kind === b.kind && a.content === b.content && a.revision === b.revision && a.session === b.session);
 }
+
+/** An explicit request to change era: the other year said alone or as a short command
+ *  ("2026", "en 2026", "passons en 1996", "retour en 2026", "go to 1996", "switch to 2026").
+ *  A sentence that merely mentions a year ("je viens de 2026") changes nothing. */
+const ERA_CMD = new RegExp(
+  "^(?:(?:euh|bon|alors|ok|okay|oui|uh|um|well|yes)\\s+)*" +
+    "(?:(?:on\\s+)?(?:passe|passer|passons|va|aller|allons|retourne|retourner|retournons|retour|revenir|revenons|bascule|basculer|basculons|direction|go|go back|switch|back|take me|let's go)(?:\\s+(?:en|à|a|vers|to|in))?\\s+|en\\s+|to\\s+)?" +
+    "(1996|2026)" +
+    "(?:\\s+(?:s'il (?:te|vous) pla[iî]t|please|merci|thanks))*$",
+);
+
+export function eraFromSpeech(text: string, current: 1996 | 2026): 1996 | 2026 | null {
+  if (/[?¿]/.test(text)) return null;
+  const t = normalizeSpeech(text).replace(/\b(?:(?:mille|dix[ -]neuf) )?(?:neuf )?cent quatre[ -]vingt[ -]seize\b|\bnineteen ninety[ -]six\b/g, "1996").replace(/\bdeux mille vingt[ -]six\b|\btwenty twenty[ -]six\b/g, "2026");
+  const m = ERA_CMD.exec(t);
+  if (!m) return null;
+  const era = Number(m[1]) as 1996 | 2026;
+  return era === current ? null : era;
+}

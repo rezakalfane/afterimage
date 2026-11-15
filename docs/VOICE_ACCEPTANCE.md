@@ -39,6 +39,14 @@ Dites chaque phrase, attendez la ligne du panneau, notez le résultat.
 Refaites 1, 2, 3, 6, 10, 12 avec : “If I say I confirm, what happens?”, “I don't confirm.”, “Yes… wait.”,
 “Um, yes, I confirm.”, “I choose the authorised version.”, “I confirm this choice.”
 
+## Changer d'époque à la voix
+| # | Dites | Attendu |
+|---|---|---|
+| 13 | En 1996 : « 2026 » | époque → 2026 ; Jeanne raccroche, Malik se connecte |
+| 14 | En 2026 : « On retourne en 1996 » | époque → 1996 |
+| 15 | En 1996 : « Je viens de 2026 » | **pas** de changement (Jeanne l'entend comme une affirmation) |
+| 16 | « Que s'est-il passé en 2026 ? » | pas de changement |
+
 ## Contrôles finaux
 - Après l'épilogue, `npm run ops:napster-usage` : aucune session `afterimage` ouverte.
 - Focus : fermez une fenêtre à la souris → pas d'anneau doré sur l'objet ; avec Échap → anneau visible.

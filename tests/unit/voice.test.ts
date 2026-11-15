@@ -61,3 +61,14 @@ describe("confirmation target binding", () => {
     expect(sameTarget(base, null)).toBe(false);
   });
 });
+
+import { eraFromSpeech } from "@/components/game/voice";
+describe("era switch by voice", () => {
+  it("the other year said alone or as a short command switches", () => {
+    for (const t of ["2026", "2026.", "En 2026", "Passons en 2026", "Retour en 2026, s'il vous plaît", "Go to 2026", "deux mille vingt-six"]) expect(eraFromSpeech(t, 1996), t).toBe(2026);
+    for (const t of ["1996", "On retourne en 1996", "Switch to 1996", "mille neuf cent quatre-vingt-seize"]) expect(eraFromSpeech(t, 2026), t).toBe(1996);
+  });
+  it("a mention, a question or the current year does not", () => {
+    for (const t of ["Je viens de 2026", "En 2026, la cabine est abîmée", "2026 ?", "Que s'est-il passé en 2026 ?", "1996"]) expect(eraFromSpeech(t, 1996), t).toBeNull();
+  });
+});

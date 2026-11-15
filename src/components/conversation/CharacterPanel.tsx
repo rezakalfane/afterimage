@@ -53,7 +53,7 @@ export function CharacterPanel({ mountRef, ...p }: PanelProps) {
   const [prepOpen, setPrepOpen] = useState(false);
   const live = p.mode === "live";
   const liveUp = live && p.status === "live";
-  const badge = !live ? c.badgeRehearsal : liveUp ? (p.videoReady ? c.badgeLive : c.badgeLiveAudio) : p.status === "connecting" ? c.badgeConnecting : p.status === "closing" ? c.badgeClosing : c.badgeOffline;
+  const badge = !live ? c.badgeRehearsal : liveUp ? (p.videoReady ? c.badgeLive : c.badgeLiveAudio) : p.status === "connecting" ? c.badgeConnecting : p.status === "closing" ? c.badgeClosing : null; // offline: no badge (the "En direct" badge marks a live session)
   // Only this era's character: never show the other character's last line after a switch.
   const lastLines = p.transcript.filter((l) => l.character === meta.character).slice(-6);
 
@@ -67,7 +67,7 @@ export function CharacterPanel({ mountRef, ...p }: PanelProps) {
           <h2>{meta.name}</h2>
           <span>{meta.role}</span>
         </div>
-        <span className={`badge${liveUp ? " badge--live" : !live ? " badge--rehearsal" : ""}`} role="status">{badge}</span>
+        {badge && <span className={`badge${liveUp ? " badge--live" : !live ? " badge--rehearsal" : ""}`} role="status">{badge}</span>}
       </div>
 
       <div className="character__subtitles" aria-live="polite" aria-label={c.subtitles}>

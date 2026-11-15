@@ -33,7 +33,7 @@ try {
   await p.goto(BASE + "/");
   await p.getByRole("button", { name: "Commencer" }).click();
   await p.waitForURL(/\/play\/run_/);
-  log("badge before live", await p.locator(".badge").innerText());
+  log("badge before live (none expected)", await p.locator(".badge").count());
   await goLive("Malik");
   log("video element", await p.evaluate(() => { const v = document.querySelector(".character__live video"); return v ? `${v.videoWidth}x${v.videoHeight} paused=${v.paused}` : "none"; }));
   log("Malik opening", await waitSubtitle(/Régina|reçois/));

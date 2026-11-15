@@ -108,8 +108,9 @@ export async function playToDecision(page: Page) {
   await expect(page.getByRole("button", { name: /Clé au croissant/ })).toBeVisible();
   await hotspot(page, /^Armoire$/);
   await inDialog(page, /Ouvrir l’armoire/);
-  await closeDialog(page);
-  await hotspot(page, /^Armoire$/);
+  // The window then shows what is inside, and stays open (no auto-close after opening).
+  await page.waitForTimeout(3000);
+  await expect(page.getByRole("dialog").getByRole("button", { name: /Déplier le papier/ })).toBeVisible();
   await inDialog(page, /Déplier le papier/);
   await expect(page.getByRole("dialog").locator(".paper__text")).toHaveText(PHRASE.normalize("NFC")); // exact, as text
   await inDialog(page, /Lire la lettre de l’enveloppe/);

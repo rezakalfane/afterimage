@@ -28,10 +28,10 @@ const HOTSPOT_TO_INSPECT: Record<string, string> = { photo: "photo", waterline: 
 /** Notebook documents that open automatically when a character reveals them during a live talk. */
 const AUTO_OPEN = new Set(["photo", "archiveReport", "programme", "rowMemory", "letter", "message", "futureLetter"]);
 /** Gestures whose result is shown briefly, then the window closes by itself. Readings stay open. */
-const AUTO_CLOSE_ACTIONS = new Set<Action>(["share_photo_note", "propose_seat", "share_report", "retrieve_key", "open_cabinet", "close_cabinet", "acknowledge_permission", "relay_flood_warning", "confirm_message", "preserve_cache", "find_future_key", "recover_cache"]);
+const AUTO_CLOSE_ACTIONS = new Set<Action>(["share_photo_note", "propose_seat", "share_report", "retrieve_key", "close_cabinet", "acknowledge_permission", "relay_flood_warning", "confirm_message", "preserve_cache", "find_future_key"]);
 const AUTO_CLOSE_MS = 2200;
 /** Calls that show something to read: their window stays open. Gestures close after their result. */
-const READINGS = new Set(["inspect_photo", "inspect_waterline", "inspect_programme", "ask_usual_place", "read_letter", "read_message", "read_future_letter", "look_at"]);
+const READINGS = new Set(["open_cabinet", "recover_cache", "inspect_photo", "inspect_waterline", "inspect_programme", "ask_usual_place", "read_letter", "read_message", "read_future_letter", "look_at"]);
 
 /** The inspector window matching a character's call, from the current server state. */
 function focusTarget(action: string, target: string | null, s: PublicState): string | null {
@@ -237,6 +237,11 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
         if (r.changed && r.event && action !== "switch_era" && action !== "request_hint") {
           say(r.event.summary);
           if (AUTO_CLOSE_ACTIONS.has(action)) scheduleClose();
+          // Opening the cabinet shows what is inside, and that window stays open.
+          if (action === "open_cabinet" || action === "recover_cache") {
+            if (closeTimer.current) clearTimeout(closeTimer.current);
+            setInspect(r.publicState.activeEra === 1996 ? "letter" : "cache");
+          }
         }
         afterState(viewRef.current, r.publicState);
         if (r.reaction && mode === "rehearsal") setRLines((l) => [...l, { role: "assistant", text: r.reaction!, at: Date.now(), character: r.publicState.activeEra === 1996 ? "jeanne" : "malik" }]);

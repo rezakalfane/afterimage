@@ -89,9 +89,18 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .scene__frame { position: relative; width: 100%; max-width: 100%; overflow: hidden; background: #080b0a; border: 1px solid var(--line); }
 .scene__img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; animation: fadein var(--fade) ease both; }
 .game--2026 .scene__img { filter: saturate(0.92); }
-.scene__obj { position: absolute; height: auto; pointer-events: none; filter: drop-shadow(0 6px 8px rgb(0 0 0 / 0.55)); animation: fadein var(--fade) ease both; }
+/* Objects rest on a contact line (top = base): the box is lifted by its own height, then posed. */
+.scene__obj { position: absolute; pointer-events: none; isolation: isolate; transform: translateY(-100%) rotate(var(--rot, 0deg)); transform-origin: 50% 100%; animation: fadein var(--fade) ease both; }
+.scene__obj img { display: block; width: 100%; height: auto; filter: drop-shadow(0 1px 1.5px rgb(0 0 0 / 0.7)); }
+.scene__obj::after { content: ""; position: absolute; z-index: -1; left: 4%; right: 4%; bottom: -6%; height: 16%; border-radius: 50%; background: radial-gradient(closest-side, rgb(0 0 0 / 0.62), transparent); }
+.scene__obj--lie img { transform: perspective(420px) rotateX(58deg); transform-origin: 50% 100%; }
+.scene__obj--lie::after { bottom: -4%; height: 22%; }
+.scene__obj--lean img { transform: perspective(500px) rotateX(10deg); transform-origin: 50% 100%; }
+.game--2026 .scene__obj img { filter: drop-shadow(0 1px 1.5px rgb(0 0 0 / 0.7)) saturate(0.78) brightness(0.86) hue-rotate(-6deg); }
+.game--1996 .scene__obj img { filter: drop-shadow(0 1px 1.5px rgb(0 0 0 / 0.7)) sepia(0.12) brightness(0.96); }
 .hotspot { position: absolute; border: 1px dashed transparent; background: transparent; border-radius: 3px; cursor: pointer; padding: 0; }
-.hotspot__dot { position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; border: 1.5px solid rgb(226 200 143 / 0.75); background: rgb(16 23 21 / 0.55); box-shadow: 0 0 0 5px rgb(185 155 98 / 0.12); }
+.hotspot__dot { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; border: 1.5px solid rgb(226 200 143 / 0.7); background: transparent; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.35), 0 0 0 4px rgb(185 155 98 / 0.1); }
+.hotspot:hover .hotspot__dot, .hotspot:focus-visible .hotspot__dot { border-color: var(--brass-hi); background: rgb(16 23 21 / 0.35); }
 .hotspot--ready .hotspot__dot { border-color: var(--brass-hi); box-shadow: 0 0 0 6px rgb(227 201 143 / 0.22), 0 0 18px rgb(227 201 143 / 0.45); }
 .hotspot--done .hotspot__dot { opacity: 0.55; }
 .hotspot__label { position: absolute; left: 50%; top: calc(50% + 20px); transform: translateX(-50%); white-space: nowrap; font-size: 0.78rem; padding: 3px 8px; background: rgb(16 23 21 / 0.88); border: 1px solid var(--line); opacity: 0; transition: opacity 160ms; pointer-events: none; }

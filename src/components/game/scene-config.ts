@@ -25,14 +25,14 @@ export interface Hotspot {
 
 export const HOTSPOTS: Record<Era, Hotspot[]> = {
   2026: [
-    { id: "photo", rect: { x: 0.37, y: 0.53, w: 0.1, h: 0.1 }, inspect: "photo", action: "inspect_photo" },
+    { id: "photo", rect: { x: 0.36, y: 0.56, w: 0.1, h: 0.1 }, inspect: "photo", action: "inspect_photo" },
     { id: "waterline", rect: { x: 0.79, y: 0.74, w: 0.17, h: 0.11 }, inspect: "archiveReport", action: "inspect_waterline" },
     { id: "projector", rect: { x: 0.03, y: 0.32, w: 0.2, h: 0.36 }, action: "find_future_key" },
     { id: "cabinet", rect: { x: 0.77, y: 0.1, w: 0.2, h: 0.6 }, when: "closed", action: "recover_cache" },
     { id: "cache", rect: { x: 0.79, y: 0.13, w: 0.14, h: 0.34 }, when: "open", inspect: "cache" },
   ],
   1996: [
-    { id: "programme", rect: { x: 0.47, y: 0.53, w: 0.1, h: 0.1 }, inspect: "programme", action: "inspect_programme" },
+    { id: "programme", rect: { x: 0.455, y: 0.56, w: 0.1, h: 0.1 }, inspect: "programme", action: "inspect_programme" },
     { id: "hall", rect: { x: 0.31, y: 0.22, w: 0.37, h: 0.28 }, action: "retrieve_key" },
     { id: "cabinet", rect: { x: 0.77, y: 0.1, w: 0.2, h: 0.8 }, when: "closed", action: "open_cabinet" },
     { id: "letter", rect: { x: 0.79, y: 0.5, w: 0.14, h: 0.34 }, when: "open", inspect: "letter", action: "read_letter" },
@@ -40,16 +40,24 @@ export const HOTSPOTS: Record<Era, Hotspot[]> = {
   ],
 };
 
-/** Object overlays drawn on top of the scene (DOM images, state-driven, never baked into the scene). */
+/** Object overlays drawn on top of the scene (DOM images, state-driven, never baked into the scene).
+ *  x / w: left edge and width; base: the y where the object RESTS (its contact line), so the object
+ *  sits on the desk or the shelf instead of floating. pose: "lie" = flat on a surface (perspective),
+ *  "lean" = propped against the back of the cabinet; rot: small in-plane rotation (degrees). */
+export interface Overlay { asset: string; x: number; base: number; w: number; pose?: "lie" | "lean" | "stand"; rot?: number }
 export const OVERLAYS = {
-  photo2026: { asset: "cinema-photo", rect: { x: 0.385, y: 0.55, w: 0.075 } },
-  programme1996: { asset: "screening-programme", rect: { x: 0.485, y: 0.555, w: 0.07 } },
-  reelHigh: { asset: "film-canister", rect: { x: 0.81, y: 0.33, w: 0.1 } },
-  envelopeHigh: { asset: "sealed-envelope", rect: { x: 0.84, y: 0.27, w: 0.07 } },
-  messageHigh: { asset: "message-paper", rect: { x: 0.8, y: 0.25, w: 0.06 } },
-  letterInCabinet: { asset: "consent-letter", rect: { x: 0.81, y: 0.62, w: 0.08 } },
-  reelInCabinet: { asset: "film-canister", rect: { x: 0.8, y: 0.73, w: 0.11 } },
-} as const;
+  // Desk top (both eras share the framing): contact line ≈ 0.655.
+  photo2026: { asset: "cinema-photo", x: 0.375, base: 0.655, w: 0.07, pose: "lie", rot: -9 },
+  programme1996: { asset: "screening-programme", x: 0.47, base: 0.658, w: 0.068, pose: "lie", rot: 7 },
+  // Upper shelf of the crescent cabinet: contact line ≈ 0.478.
+  envelopeHigh: { asset: "sealed-envelope", x: 0.792, base: 0.47, w: 0.058, pose: "lean", rot: -7 },
+  messageHigh: { asset: "message-paper", x: 0.884, base: 0.47, w: 0.046, pose: "lean", rot: 5 },
+  reelHigh: { asset: "film-canister", x: 0.828, base: 0.486, w: 0.074, pose: "stand" },
+  letterHigh: { asset: "consent-letter", x: 0.874, base: 0.47, w: 0.054, pose: "lean", rot: 4 },
+  // Floor of the lower compartment (1996, before Jeanne stores everything): contact line ≈ 0.84.
+  letterInCabinet: { asset: "consent-letter", x: 0.805, base: 0.83, w: 0.065, pose: "lean", rot: -4 },
+  reelInCabinet: { asset: "film-canister", x: 0.83, base: 0.848, w: 0.09, pose: "stand" },
+} satisfies Record<string, Overlay>;
 
 /** Names, roles and dates: dictionary (character.*, scene.date1996/2026). */
 export const ERA_META: Record<Era, { character: "jeanne" | "malik"; portrait: string }> = {

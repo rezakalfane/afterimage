@@ -3,7 +3,7 @@
 // image-normalized coordinates. Variants and overlays follow the SERVER projection only.
 import { useT } from "@/i18n/I18nProvider";
 import { fmt } from "@/i18n/messages";
-import { HOTSPOTS, OVERLAYS, SCENE_RATIO, objectImage, sceneImage } from "./scene-config";
+import { HOTSPOTS, OVERLAYS, SCENE_RATIO, objectImage, sceneImage, type Overlay } from "./scene-config";
 import type { Era, PublicState } from "./types";
 
 function pct(n: number) {
@@ -17,13 +17,15 @@ export function SceneViewport({ era, view, onHotspot, pulse }: { era: Era; view:
   const src = sceneImage(era, open);
   const spots = HOTSPOTS[era].filter((h) => !h.when || (h.when === "open") === open);
   const seen = new Set(view.notebook.map((n) => n.id));
-  const overlays: { key: string; asset: string; rect: { x: number; y: number; w: number }; alt: string }[] = [];
-  if (era === 2026 && !open) overlays.push({ key: "photo", ...OVERLAYS.photo2026, alt: "" });
-  if (era === 2026 && open) {
-    overlays.push({ key: "reel", ...OVERLAYS.reelHigh, alt: "" }, { key: "env", ...OVERLAYS.envelopeHigh, alt: "" }, { key: "msg", ...OVERLAYS.messageHigh, alt: "" });
+  const overlays: (Overlay & { key: string })[] = [];
+  if (era === 2026 && !open) overlays.push({ key: "photo", ...OVERLAYS.photo2026 });
+  if (era === 2026 && open) overlays.push({ key: "env", ...OVERLAYS.envelopeHigh }, { key: "msg", ...OVERLAYS.messageHigh }, { key: "reel", ...OVERLAYS.reelHigh });
+  if (era === 1996) overlays.push({ key: "prog", ...OVERLAYS.programme1996 });
+  if (era === 1996 && open) {
+    // After Jeanne stored everything (server state), the letter and the reel are on the upper shelf.
+    if (view.scene.reelStoredHigh) overlays.push({ key: "letter", ...OVERLAYS.letterHigh }, { key: "reel", ...OVERLAYS.reelHigh });
+    else overlays.push({ key: "letter", ...OVERLAYS.letterInCabinet }, { key: "reel", ...OVERLAYS.reelInCabinet });
   }
-  if (era === 1996) overlays.push({ key: "prog", ...OVERLAYS.programme1996, alt: "" });
-  if (era === 1996 && open) overlays.push({ key: "letter", ...OVERLAYS.letterInCabinet, alt: "" }, { key: "reel", ...OVERLAYS.reelInCabinet, alt: "" });
 
   return (
     <section className={`scene scene--${era}`} aria-label={fmt(t.region, { era })}>
@@ -33,8 +35,10 @@ export function SceneViewport({ era, view, onHotspot, pulse }: { era: Era; view:
           <img key={src} className="scene__img" src={`${src}-1672.webp`} alt={era === 1996 ? t.alt1996 : t.alt2026} />
         </picture>
         {overlays.map((o) => (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img key={o.key} className="scene__obj" src={objectImage(o.asset)} alt={o.alt} style={{ left: pct(o.rect.x), top: pct(o.rect.y), width: pct(o.rect.w) }} aria-hidden="true" />
+          <span key={o.key} className={`scene__obj scene__obj--${o.pose ?? "stand"}`} style={{ left: pct(o.x), top: pct(o.base), width: pct(o.w), ["--rot" as string]: `${o.rot ?? 0}deg` }} aria-hidden="true">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={objectImage(o.asset)} alt="" />
+          </span>
         ))}
         {spots.map((h) => {
           const available = h.action ? view.availableActions.includes(h.action) : false;

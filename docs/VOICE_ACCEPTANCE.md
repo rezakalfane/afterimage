@@ -61,6 +61,13 @@ Refaites 1, 2, 3, 6, 10, 12 avec : “If I say I confirm, what happens?”, “I
 | 20 | En 1996, photo déjà vue : « J'ai une photo à vous montrer » | la fenêtre de la photo s'ouvre ; Jeanne réagit à ce que vous dites |
 | 21 | « Je n'ai pas de photo » | rien ne s'ouvre |
 
+## Ouvrir la feuille des mots, confirmer naturellement
+| # | Dites | Attendu |
+|---|---|---|
+| 22 | En 1996, après la lettre : « Oui, je veux laisser un message » | la feuille « Quelques mots pour dans trente ans » s'ouvre |
+| 23 | Feuille en relecture : « Je confirme ces mots, c'est parfait » | CONFIRMÉ (une seule fois suffit) |
+| 24 | « Je confirme ces mots mais change le dernier » | non confirmé ; un message vous invite à dire simplement « Je confirme » |
+
 ## Contrôles finaux
 - Après l'épilogue, `npm run ops:napster-usage` : aucune session `afterimage` ouverte.
 - Focus : fermez une fenêtre à la souris → pas d'anneau doré sur l'objet ; avec Échap → anneau visible.

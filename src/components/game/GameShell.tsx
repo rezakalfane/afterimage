@@ -8,7 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CharacterPanel } from "@/components/conversation/CharacterPanel";
 import { useLiveConversation, type TranscriptLine } from "@/components/conversation/useLiveConversation";
 import { useLocale, useT } from "@/i18n/I18nProvider";
-import { closeIntent, showIntent, endingFromSpeech, eraFromSpeech, isConfirmation, sameTarget, wantsToDecide, type VoiceTarget } from "./voice";
+import { closeIntent, showIntent, wantsToWrite, endingFromSpeech, eraFromSpeech, isConfirmation, sameTarget, wantsToDecide, type VoiceTarget } from "./voice";
 import { LanguageChoice, LanguageSwitch, setLocale } from "@/components/ui/LanguageSwitch";
 import { DisplayChoices } from "@/components/ui/DisplayChoices";
 import { Dialog } from "@/components/ui/Dialog";
@@ -193,6 +193,17 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
       setEndingOpen(false);
       return;
     }
+    // "Je veux laisser un message": open the words sheet (writing still happens by voice or keys).
+    if (!composerRef.current && !endingOpenRef.current && wantsToWrite(text)) {
+      const v = viewRef.current;
+      if (v.activeEra === 1996 && !v.message.sealed && v.availableActions.includes("write_message")) {
+        trace(text, "feuille « Vos mots » ouverte");
+        if (closeTimer.current) clearTimeout(closeTimer.current);
+        setInspect(null);
+        setComposer(true);
+        return;
+      }
+    }
     // "J'ai une photo à vous montrer": open that document if the player has it (the character
     // still hears the sentence; sharing it with them stays their own, backed step).
     const shown = showIntent(text);
@@ -217,7 +228,11 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
     if (t) {
       if (!now || !sameTarget(t, { ...now, since: t.since })) return trace(text, "ignoré : l’étape affichée a changé");
       if (meta.receivedAt < t.since + 300) return trace(text, "ignoré : parole antérieure à l’étape");
-      if (!isConfirmation(text, locale, t.kind)) return trace(text, "ignoré : pas une confirmation explicite");
+      if (!isConfirmation(text, locale, t.kind)) {
+        // It sounded like a confirmation but was not explicit enough: say so instead of silence.
+        if (/confirm|valid|garde|keep|confie/i.test(text)) say(t.kind === "message" ? g.voiceRetryMessage : g.voiceRetryEnding, "warn");
+        return trace(text, "ignoré : pas une confirmation explicite");
+      }
       target.current = null; // single use
       trace(text, t.kind === "message" ? "CONFIRMÉ : message" : `CONFIRMÉ : fin ${t.content}`);
       if (t.kind === "message") void act("confirm_message", { text: t.content });

@@ -36,7 +36,16 @@ const PHRASES: Record<"message" | "ending", Record<VoiceLocale, string>> = {
     en: "(?:i confirm(?: it| this choice)?|confirmed|i validate(?: it)?|that's my choice|this is my choice)",
   },
 };
-const ACCEPT = (kind: "message" | "ending", l: VoiceLocale) => new RegExp(`^${FILLERS[l]}${PHRASES[kind][l]}${POLITE[l]}$`);
+/** What may follow the confirmation itself: its object, then a short approval ("c'est parfait"). */
+const OBJECT: Record<VoiceLocale, string> = {
+  fr: "(?:\\s+(?:ces mots|ces mots-là|ces mots la|le message|mon message|ce message|cette phrase|les mots|mes mots|ce choix|mon choix|tout|tout ça|tout ca))?",
+  en: "(?:\\s+(?:these words|the message|my message|this message|my words|that|this|it all|my choice|this choice))?",
+};
+const TAIL: Record<VoiceLocale, string> = {
+  fr: "(?:\\s+(?:c'est parfait|c'est bon|c'est ça|c'est ca|c'est très bien|parfait|très bien|oui|allez y|vas y|merci))*",
+  en: "(?:\\s+(?:that's perfect|that's good|perfect|great|yes|go ahead|thanks|thank you))*",
+};
+const ACCEPT = (kind: "message" | "ending", l: VoiceLocale) => new RegExp(`^${FILLERS[l]}${PHRASES[kind][l]}${OBJECT[l]}${POLITE[l]}${TAIL[l]}${POLITE[l]}$`);
 
 /** Words that make any utterance ambiguous for a confirmation (negation, doubt, hypothesis, quote). */
 const BLOCK: Record<VoiceLocale, RegExp> = {
@@ -136,9 +145,9 @@ export function closeIntent(text: string): "ack" | "close" | null {
  *  "regardez le rapport", "let me show you the letter"): which notebook document to open. Only
  *  opens what the player already has; sharing with the character stays a separate, backed step. */
 export function showIntent(text: string): "photo" | "archiveReport" | "programme" | "letter" | "message" | null {
-  const t = normalizeSpeech(text);
+  const t = normalizeSpeech(text).normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   if (/\b(ne|n'|pas|jamais|not|don't|never)\b/.test(t)) return null;
-  const verb = /\b(montre|montrer|montrez|montrons|voici|voilà|regarde|regardez|regardons|vois|voyez|j'ai (une|un|la|le)|tenez|lis|lisez|relis|relisez|show|showing|look at|here is|here's|i have|i've got|see|read|let me show)\b/;
+  const verb = /\b(montre|montrer|montrez|montrons|voici|voila|regarde|regardez|regardons|vois|voyez|j'ai (une|un|la|le)|tenez|lis|lisez|relis|relisez|show|showing|look at|here is|here's|i have|i've got|see|read|let me show)\b/;
   if (!verb.test(t)) return null;
   if (/\b(photo|photographie|photograph|picture)\b/.test(t)) return "photo";
   if (/\b(rapport|report)\b/.test(t)) return "archiveReport";
@@ -146,4 +155,13 @@ export function showIntent(text: string): "photo" | "archiveReport" | "programme
   if (/\b(lettre|letter)\b/.test(t)) return "letter";
   if (/\b(message|mots|words)\b/.test(t)) return "message";
   return null;
+}
+
+/** The player wants to leave words with the film ("je veux laisser un message", "laissons des
+ *  mots", "oui, écrivons-lui", "I'd like to leave a message"). Opens the sheet only. */
+export function wantsToWrite(text: string): boolean {
+  if (/[?¿]/.test(text)) return false;
+  const t = normalizeSpeech(text).normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (/\b(ne|n'|pas|jamais|not|don't|never|plus tard|later)\b/.test(t)) return false;
+  return /\b(laisser|laissons|laisse|ecrire|ecrivons|ecris|rediger|dicter|dicte|leave|write|dictate)\b/.test(t) && /\b(message|mot|mots|quelques mots|lettre|phrase|words?|note|a few words)\b/.test(t);
 }

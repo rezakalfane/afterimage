@@ -107,3 +107,28 @@ describe("showing a document by voice", () => {
     expect(showIntent("Je n'ai pas de photo à montrer")).toBeNull();
   });
 });
+
+import { wantsToWrite } from "@/components/game/voice";
+describe("opening the words sheet by voice", () => {
+  it("agreeing to leave a message opens it", () => {
+    for (const t of ["Oui, je veux laisser un message", "Laissons quelques mots", "D'accord, écrivons un mot", "I'd like to leave a message", "Let's write a few words"]) expect(wantsToWrite(t), t).toBe(true);
+  });
+  it("questions and refusals do not", () => {
+    for (const t of ["Je ne veux pas laisser de message", "On peut laisser un message ?", "Leave it on the desk"]) expect(wantsToWrite(t), t).toBe(false);
+  });
+});
+describe("accents at word edges", () => {
+  it("voilà / écrivons are recognised", () => {
+    expect(showIntent("Voilà la photo")).toBe("photo");
+    expect(wantsToWrite("Écrivons un message")).toBe(true);
+  });
+});
+describe("natural confirmations", () => {
+  it("with an object or a short approval", () => {
+    for (const t of ["Je confirme ces mots.", "Oui, je confirme le message", "Je confirme, c'est parfait.", "Parfait, je confirme, merci Jeanne", "Je les confie à Jeanne, c'est bon"]) expect(isConfirmation(t, "fr"), t).toBe(true);
+    for (const t of ["I confirm these words.", "Yes, I confirm, that's perfect", "Keep them, thanks"]) expect(isConfirmation(t, "en"), t).toBe(true);
+  });
+  it("still refuses negations, hypotheses and extra content", () => {
+    for (const t of ["Je confirme pas ces mots", "Si je confirme ces mots ?", "Je confirme ces mots mais change le dernier", "Je confirme ces mots et va chercher la clé"]) expect(isConfirmation(t, "fr"), t).toBe(false);
+  });
+});

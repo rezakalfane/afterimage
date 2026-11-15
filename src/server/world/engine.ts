@@ -182,6 +182,8 @@ export function transition(state: WorldState, command: Command, ctx: EngineConte
     const [era, required, flag] = simple;
     if (s.activeEra !== era) return fail("WRONG_ERA");
     if (!need(required)) return fail("PREREQUISITE_MISSING");
+    // After storing, Jeanne locked the cabinet and hid the key behind the projector: it stays shut in 1996.
+    if (a === "open_cabinet" && has("cache_preserved")) return fail("PREREQUISITE_MISSING", "sealed");
     // Reading what is inside needs the door open (the player may have closed it again).
     if (DOOR_NEEDED.has(a) && has(`door_closed_${era}`)) return fail("PREREQUISITE_MISSING", "door");
     mark(flag);

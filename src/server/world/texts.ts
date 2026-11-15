@@ -12,6 +12,7 @@ type Texts = {
   refusals: Partial<Record<Action, Partial<Record<FailCode, string>>>> & { default: Partial<Record<FailCode, string>> };
   wrongLocation: Record<string, string>;
   doorClosed: string;
+  cabinetSealed: string;
   events: Partial<Record<Action, string>>;
   notebook: Record<string, string>;
   tool: { noop: string; invalid: string; contextHeader: string; opening: string; resume: string; openingLines: Record<"jeanne" | "malik", string> };
@@ -67,6 +68,7 @@ const fr: Texts = {
     lower_cabinet: "Pas en bas de l’armoire : votre avertissement parle d’eau à ce niveau. L’étagère haute resterait au sec.",
   },
   doorClosed: "L’armoire est refermée : il faut d’abord la rouvrir.",
+  cabinetSealed: "Je l’ai refermée à clé et j’ai caché la clé derrière le projecteur : elle doit rester close, pour trente ans.",
   events: {
     inspect_photo: "Au dos de la photo, une inscription à la main.",
     relay_key_location: "Vous avez transmis l’indice du siège G7 à Jeanne.",
@@ -162,6 +164,7 @@ const en: Texts = {
     lower_cabinet: "Not at the bottom of the cabinet: your warning mentions water at that level. The upper shelf would stay dry.",
   },
   doorClosed: "The cabinet is closed again: it has to be reopened first.",
+  cabinetSealed: "I locked it and hid the key behind the projector: it has to stay shut, for thirty years.",
   events: {
     inspect_photo: "On the back of the photo, a handwritten note.",
     relay_key_location: "You passed the seat G7 clue on to Jeanne.",
@@ -218,5 +221,6 @@ export function refusalText(action: string, code: FailCode, detail: string | und
   const t = texts(locale);
   if (code === "WRONG_LOCATION" && detail && t.wrongLocation[detail]) return t.wrongLocation[detail];
   if (detail === "door") return t.doorClosed;
+  if (detail === "sealed") return t.cabinetSealed;
   return t.refusals[action as Action]?.[code] ?? t.refusals.default[code] ?? t.refusals.default.INVALID_ARGUMENT!;
 }

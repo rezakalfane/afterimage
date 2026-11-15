@@ -164,3 +164,17 @@ describe("tool argument tolerance (still validated)", () => {
     expect(toolToCommand("malik", "malik_act", { geste: "fermer_armoire" })).toMatchObject({ ok: true, command: { action: "close_cabinet" } });
   });
 });
+
+describe("1996 after storing: the cabinet stays locked", () => {
+  it("opening it is refused with a reason, not a silent no-op", () => {
+    let s = apply(initialState(), "inspect_photo");
+    s = apply(s, "inspect_waterline");
+    s = apply(s, "switch_era", { era: 1996 });
+    for (const a of ["relay_key_location", "retrieve_key", "open_cabinet", "inspect_programme", "read_letter", "acknowledge_permission", "relay_flood_warning"]) s = apply(s, a);
+    s = apply(s, "write_message", { text: "Les étoiles." });
+    s = apply(s, "confirm_message", { text: "Les étoiles." });
+    s = apply(s, "preserve_cache", { location: "upper_cabinet" });
+    expect(transition(s, { action: "open_cabinet" }, ui)).toMatchObject({ ok: false, code: "PREREQUISITE_MISSING", detail: "sealed" });
+    expect(transition(s, { action: "close_cabinet" }, ui)).toMatchObject({ ok: false, code: "PREREQUISITE_MISSING" });
+  });
+});

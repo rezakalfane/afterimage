@@ -119,7 +119,7 @@ export function characterContext(s: WorldState, character: CharacterId, lastActi
     if (has("key_location_shared")) shared.push(en ? EN.shared.jeanneRelayedG7 : "Le joueur a indiqué que la clé serait sous le siège G7.");
     if (has("flood_warning_shared")) shared.push(en ? EN.shared.jeanneFloodWarning : "Le joueur a averti d’un risque d’eau au niveau du bureau et conseillé l’étagère haute de l’armoire.");
     if (has("permission_acknowledged")) shared.push(en ? EN.shared.jeanneAcknowledged : "Le joueur a reconnu la condition d’Alice sur l’épilogue privé.");
-    observedState = { keyFound: has("key_found"), cabinetOpen: has("cabinet_open") && !has("door_closed_1996"), cachePreserved: has("cache_preserved") };
+    observedState = { keyFound: has("key_found"), cabinetOpen: has("cabinet_open") && !has("door_closed_1996") && !has("cache_preserved"), cabinetLockedForThirtyYears: has("cache_preserved"), cachePreserved: has("cache_preserved") };
     playerText = { messageDraft: has("cache_preserved") ? null : s.messageDraft, confirmedMessage: has("message_confirmed") ? s.message : null };
   } else {
     if (has("photo_seen")) documents.photoBack = doc.photoBack;

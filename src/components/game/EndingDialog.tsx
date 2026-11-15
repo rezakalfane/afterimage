@@ -6,7 +6,7 @@ import { useT } from "@/i18n/I18nProvider";
 import { api, commandId } from "./api";
 import type { CommandResponse, PublicState } from "./types";
 
-export function EndingDialog({ open, onClose, runId, view, onDone }: { open: boolean; onClose: () => void; runId: string; view: PublicState; onDone: (r: CommandResponse) => void }) {
+export function EndingDialog({ open, onClose, runId, view, onDone }: { open: boolean; onClose: () => void; runId: string; view: PublicState; onDone: (r: CommandResponse) => void | Promise<void> }) {
   const t = useT().ending;
   const [intent, setIntent] = useState<{ token: string; ending: { id: string; label: string; consequence: string; confirmation: string } } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +28,7 @@ export function EndingDialog({ open, onClose, runId, view, onDone }: { open: boo
     setBusy(true);
     try {
       const r = await api<CommandResponse>(`/api/runs/${runId}/ending`, { method: "POST", body: { token: intent.token, commandId: commandId() } });
-      if (r.ok) onDone(r);
+      if (r.ok) await onDone(r);
       else setError(r.message ?? t.failed);
     } catch (e) {
       setError((e as Error).message);

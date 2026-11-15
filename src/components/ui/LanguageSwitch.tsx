@@ -11,15 +11,15 @@ export function setLocale(l: Locale) {
   window.location.reload();
 }
 
-/** Compact FR | EN switch (game top bar). */
-export function LanguageSwitch() {
+/** Compact FR | EN switch (game top bar). `onRequest` lets the game end a live call first. */
+export function LanguageSwitch({ onRequest = setLocale }: { onRequest?: (l: Locale) => void }) {
   const locale = useLocale();
   const t = useT();
   if (ACTIVE_LOCALES.length < 2) return null;
   return (
     <nav className="lang-switch" aria-label={t.language.label}>
       {ACTIVE_LOCALES.map((l) => (
-        <button key={l} type="button" lang={l} aria-pressed={l === locale} title={NAMES[l]} onClick={() => l !== locale && setLocale(l)}>
+        <button key={l} type="button" lang={l} aria-pressed={l === locale} title={NAMES[l]} onClick={() => l !== locale && onRequest(l)}>
           {l.toUpperCase()}
         </button>
       ))}
@@ -28,7 +28,7 @@ export function LanguageSwitch() {
 }
 
 /** Radio list (settings dialog). */
-export function LanguageChoice() {
+export function LanguageChoice({ onRequest = setLocale }: { onRequest?: (l: Locale) => void }) {
   const locale = useLocale();
   const t = useT();
   return (
@@ -36,7 +36,7 @@ export function LanguageChoice() {
       <legend>{t.language.label}</legend>
       {ACTIVE_LOCALES.map((l) => (
         <label key={l} className="choice" lang={l}>
-          <input type="radio" name="locale" value={l} checked={l === locale} onChange={() => setLocale(l)} /> {NAMES[l]}
+          <input type="radio" name="locale" value={l} checked={l === locale} onChange={() => onRequest(l)} /> {NAMES[l]}
         </label>
       ))}
     </fieldset>

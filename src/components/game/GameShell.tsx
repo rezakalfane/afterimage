@@ -8,8 +8,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CharacterPanel } from "@/components/conversation/CharacterPanel";
 import { useLiveConversation, type TranscriptLine } from "@/components/conversation/useLiveConversation";
 import { useT } from "@/i18n/I18nProvider";
-import { LanguageSwitch } from "@/components/ui/LanguageSwitch";
-import { fmt } from "@/i18n/messages";
+import { LanguageChoice, LanguageSwitch, setLocale } from "@/components/ui/LanguageSwitch";
+import { DisplayChoices } from "@/components/ui/DisplayChoices";
+import { Dialog } from "@/components/ui/Dialog";
+import { ERA_META } from "./scene-config";
+import { fmt, type Locale } from "@/i18n/messages";
 import { api, ApiError, commandId } from "./api";
 import { EndingDialog } from "./EndingDialog";
 import { MessageComposer } from "./MessageComposer";
@@ -168,6 +171,22 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
     }
   }
 
+  /** Leave: the game is saved server-side; the live call is closed BEFORE navigating. */
+  async function quit() {
+    await live.stop();
+    router.push("/");
+  }
+
+  // Changing language during a live call: say so, end the call, then reload in the new language.
+  const [langPending, setLangPending] = useState<Locale | null>(null);
+  const requestLocale = (l: Locale) => (live.status === "idle" || live.status === "error" ? setLocale(l) : setLangPending(l));
+  async function confirmLocale() {
+    if (!langPending) return;
+    await live.stop();
+    setLocale(langPending);
+  }
+  const [menuOpen, setMenuOpen] = useState(false);
+
   async function newRun() {
     const r = await api<{ runId: string }>("/api/runs", { method: "POST" });
     router.push(`/play/${r.runId}`);
@@ -176,13 +195,41 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
   const era = view.activeEra;
   const canDecide = view.endings.length > 0 && !view.ending;
 
+  if (view.ending) {
+    const ending = view.ending;
+    return (
+      <main className={`epilogue epilogue--${ending}`} aria-label={g.epilogue}>
+        <div className="epilogue__facade">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/assets/afterimage/scenes/cinema-exterior-1672.webp" alt={g.facadeAlt} />
+          <p className={`marquee marquee--${ending}`}>{g.marquee[ending]?.[0]}<small>{g.marquee[ending]?.[1]}</small></p>
+        </div>
+        <p className="epilogue__text">{view.closing}</p>
+        {view.message.recovered && (
+          <figure className="sheet sheet--aged epilogue__msg">
+            <figcaption className="sheet__label">{g.wordsCaption}</figcaption>
+            <p className="paper__text">{view.message.recovered}</p>
+          </figure>
+        )}
+        <div className="btn-row">
+          <button type="button" className="btn btn--brass" onClick={newRun}>{g.anotherStory}</button>
+          <Link className="btn" href="/">{t.common.home}</Link>
+        </div>
+        <details className="epilogue__summary">
+          <summary>{g.summary}</summary>
+          <p className="muted small">{fmt(g.hintsUsed, { n: view.hints.used })}</p>
+        </details>
+      </main>
+    );
+  }
+
   return (
     <div className={`game game--${era}${switching ? " is-switching" : ""}`}>
       <header className="topbar">
         <Link href="/" className="wordmark" aria-label="AFTERIMAGE, accueil">AFTERIMAGE</Link>
         <p className="episode"><span>{g.episodeLabel}</span> {g.episode}</p>
         <div className="topbar__right">
-        <LanguageSwitch />
+        <LanguageSwitch onRequest={requestLocale} />
         <nav className="era-switch" aria-label={g.era}>
           {([1996, 2026] as Era[]).map((e) => (
             <button key={e} type="button" aria-pressed={era === e} disabled={busy || Boolean(view.ending)} onClick={() => switchEra(e)}>{e}</button>
@@ -228,42 +275,45 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
           {era === 1996 && !view.message.sealed && view.availableActions.includes("write_message") && <button type="button" className="btn" onClick={() => setComposer(true)}>{g.words}</button>}
           {canDecide && <button type="button" className="btn btn--brass" onClick={() => setEndingOpen(true)}>{g.decide}</button>}
           {!view.ending && <button type="button" className="btn" onClick={() => act("request_hint")} disabled={busy}>{g.hint}</button>}
-          <Link className="btn" href="/">{g.quit}</Link>
-          {!confirmDelete ? (
-            <button type="button" className="btn btn--quiet" onClick={() => setConfirmDelete(true)}>{g.deleteRun}</button>
-          ) : (
-            <span className="confirm-delete" role="group" aria-label={g.deleteConfirm}>
-              <span className="small">{g.deleteConfirm}</span>
-              <button type="button" className="btn btn--decision" onClick={deleteRun} disabled={busy}>{g.deleteYes}</button>
-              <button type="button" className="btn" onClick={() => setConfirmDelete(false)}>{t.common.cancel}</button>
-            </span>
-          )}
+          <button type="button" className="btn" onClick={quit} title={g.quitNote}>{g.quit}</button>
+          <button type="button" className="btn btn--quiet" onClick={() => setMenuOpen(true)}>{g.menu}</button>
         </div>
       </footer>
 
       <div className="toast" role="status" aria-live="polite">{toast && !view.ending && <p className={`toast__msg toast__msg--${toast.tone}`}>{toast.text}</p>}</div>
       {switching && <div className="timeshift" aria-live="assertive">{fmt(g.switching, { era: switching })}</div>}
 
+      <Dialog open={menuOpen} title={g.menuTitle} onClose={() => { setMenuOpen(false); setConfirmDelete(false); }}>
+        <div className="settings">
+          <LanguageChoice onRequest={(l) => { setMenuOpen(false); requestLocale(l); }} />
+          <DisplayChoices withObjects />
+          <fieldset className="choices">
+            <legend>{g.gameSection}</legend>
+            <p className="muted small">{g.quitNote}</p>
+            {!confirmDelete ? (
+              <button type="button" className="btn btn--quiet" onClick={() => setConfirmDelete(true)}>{g.deleteRun}</button>
+            ) : (
+              <span className="confirm-delete" role="group" aria-label={g.deleteConfirm}>
+                <span className="small">{g.deleteConfirm}</span>
+                <button type="button" className="btn btn--decision" onClick={deleteRun} disabled={busy}>{g.deleteYes}</button>
+                <button type="button" className="btn" onClick={() => setConfirmDelete(false)}>{t.common.cancel}</button>
+              </span>
+            )}
+          </fieldset>
+        </div>
+      </Dialog>
+      <Dialog open={Boolean(langPending)} title={g.langLiveTitle} onClose={() => setLangPending(null)}>
+        <p>{fmt(g.langLiveText, { name: t.character[ERA_META[era].character].name })}</p>
+        <div className="btn-row">
+          <button type="button" className="btn btn--brass" onClick={confirmLocale}>{g.langLiveYes}</button>
+          <button type="button" className="btn" onClick={() => setLangPending(null)}>{t.common.cancel}</button>
+        </div>
+      </Dialog>
+
       <ObjectInspector id={inspect} era={era} view={view} onClose={() => setInspect(null)} act={async (a, args) => { const r = await act(a, args); return r; }} openComposer={() => { setInspect(null); setComposer(true); }} />
       <MessageComposer key={view.message.draft ?? "none"} open={composer} onClose={() => setComposer(false)} view={view} act={act} />
-      {canDecide && <EndingDialog open={endingOpen} onClose={() => setEndingOpen(false)} runId={runId} view={view} onDone={(r) => { setEndingOpen(false); setView(r.publicState); void live.stop(); }} />}
+      {canDecide && <EndingDialog open={endingOpen} onClose={() => setEndingOpen(false)} runId={runId} view={view} onDone={async (r) => { setEndingOpen(false); await live.stop(); setView(r.publicState); }} />}
 
-      {view.ending && (
-        <section className="epilogue" aria-label={g.epilogue}>
-          <div className="epilogue__facade">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/assets/afterimage/scenes/cinema-exterior-1672.webp" alt={g.facadeAlt} />
-            <p className={`marquee marquee--${view.ending}`}>{g.marquee[view.ending]?.[0]}<small>{g.marquee[view.ending]?.[1]}</small></p>
-          </div>
-          <p className="epilogue__text">{view.closing}</p>
-          {view.message.recovered && <p className="epilogue__msg">{fmt(g.wordsCrossed, { message: view.message.recovered })}</p>}
-          <div className="btn-row">
-            <button type="button" className="btn btn--brass" onClick={newRun}>{g.anotherStory}</button>
-            <Link className="btn" href="/">{t.common.home}</Link>
-          </div>
-          <p className="muted small">{fmt(g.hintsUsed, { n: view.hints.used })}</p>
-        </section>
-      )}
     </div>
   );
 }

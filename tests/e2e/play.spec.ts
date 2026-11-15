@@ -14,8 +14,11 @@ for (const [ending, label, closing] of [
     await page.getByRole("button", { name: "Décider du sort du film" }).click();
     await page.getByRole("dialog").getByRole("button", { name: label }).click();
     await page.getByRole("dialog").getByRole("button", { name: /Je confirme|Je comprends/ }).click();
-    await expect(page.getByRole("region", { name: "Épilogue" })).toBeVisible();
+    await expect(page.getByRole("main", { name: "Épilogue" })).toBeVisible();
     await expect(page.getByText(closing)).toBeVisible();
+    // A standalone epilogue: the booth is no longer rendered behind it.
+    await expect(page.locator(".scene")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Rejouer le chapitre" })).toBeVisible();
     // Finished runs are read-only after reload.
     await page.reload();
     await expect(page.getByText(closing)).toBeVisible();
@@ -60,6 +63,12 @@ test("mobile layout is usable @mobile", async ({ page }) => {
   await inDialog(page, /Retourner la photo/);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(1);
+  // Clipped content does not scroll: also check the top-bar controls are fully on screen.
+  await page.keyboard.press("Escape");
+  for (const nav of ["Époque", "Langue"]) {
+    const box = await page.getByRole("navigation", { name: nav }).boundingBox();
+    expect(box && box.x + box.width, `${nav} switch inside the viewport`).toBeLessThanOrEqual(390);
+  }
 });
 
 test("after an era switch the panel shows only the new character's lines", async ({ page }) => {

@@ -93,3 +93,17 @@ describe("closing a window by voice", () => {
     for (const t of ["Ok, montre-moi le verso", "D'accord, va chercher la clé", "Ferme l'armoire", "je confirme"]) expect(closeIntent(t), t).toBeNull();
   });
 });
+
+import { showIntent } from "@/components/game/voice";
+describe("showing a document by voice", () => {
+  it("opens the named document", () => {
+    expect(showIntent("J'ai une photo à vous montrer")).toBe("photo");
+    expect(showIntent("I have a photo to show you")).toBe("photo");
+    expect(showIntent("Regardez ce rapport")).toBe("archiveReport");
+    expect(showIntent("Let me show you the letter")).toBe("letter");
+  });
+  it("mentions without showing, and negations, open nothing", () => {
+    expect(showIntent("La photo est sur le bureau")).toBeNull();
+    expect(showIntent("Je n'ai pas de photo à montrer")).toBeNull();
+  });
+});

@@ -55,6 +55,12 @@ Refaites 1, 2, 3, 6, 10, 12 avec : “If I say I confirm, what happens?”, “I
 | 18 | Feuille du message en relecture : « Ok » | rien (ni fermeture ni confirmation) ; « Fermer » la ferme sans confirmer |
 | 19 | « Ok, montre-moi le verso » | pas une fermeture (le personnage répond normalement) |
 
+## Montrer un document à la voix
+| # | Dites | Attendu |
+|---|---|---|
+| 20 | En 1996, photo déjà vue : « J'ai une photo à vous montrer » | la fenêtre de la photo s'ouvre ; Jeanne réagit à ce que vous dites |
+| 21 | « Je n'ai pas de photo » | rien ne s'ouvre |
+
 ## Contrôles finaux
 - Après l'épilogue, `npm run ops:napster-usage` : aucune session `afterimage` ouverte.
 - Focus : fermez une fenêtre à la souris → pas d'anneau doré sur l'objet ; avec Échap → anneau visible.

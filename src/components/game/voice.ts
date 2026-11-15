@@ -131,3 +131,19 @@ export function closeIntent(text: string): "ack" | "close" | null {
   if (/^(?:(?:oui|bon|alors|euh|yes|well)\s+)*(?:ok|okay|ok ok|d'accord|merci|c'est bon|très bien|parfait|compris|vu|je vois|bien reçu|thanks|thank you|got it|i see|alright|all right|fine|good|perfect|noted)$/.test(t)) return "ack";
   return null;
 }
+
+/** The player says they have / show / want to see a document ("j'ai une photo à vous montrer",
+ *  "regardez le rapport", "let me show you the letter"): which notebook document to open. Only
+ *  opens what the player already has; sharing with the character stays a separate, backed step. */
+export function showIntent(text: string): "photo" | "archiveReport" | "programme" | "letter" | "message" | null {
+  const t = normalizeSpeech(text);
+  if (/\b(ne|n'|pas|jamais|not|don't|never)\b/.test(t)) return null;
+  const verb = /\b(montre|montrer|montrez|montrons|voici|voilà|regarde|regardez|regardons|vois|voyez|j'ai (une|un|la|le)|tenez|lis|lisez|relis|relisez|show|showing|look at|here is|here's|i have|i've got|see|read|let me show)\b/;
+  if (!verb.test(t)) return null;
+  if (/\b(photo|photographie|photograph|picture)\b/.test(t)) return "photo";
+  if (/\b(rapport|report)\b/.test(t)) return "archiveReport";
+  if (/\b(programme|program)\b/.test(t)) return "programme";
+  if (/\b(lettre|letter)\b/.test(t)) return "letter";
+  if (/\b(message|mots|words)\b/.test(t)) return "message";
+  return null;
+}

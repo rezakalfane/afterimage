@@ -8,7 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CharacterPanel } from "@/components/conversation/CharacterPanel";
 import { useLiveConversation, type TranscriptLine } from "@/components/conversation/useLiveConversation";
 import { useLocale, useT } from "@/i18n/I18nProvider";
-import { closeIntent, endingFromSpeech, eraFromSpeech, isConfirmation, sameTarget, wantsToDecide, type VoiceTarget } from "./voice";
+import { closeIntent, showIntent, endingFromSpeech, eraFromSpeech, isConfirmation, sameTarget, wantsToDecide, type VoiceTarget } from "./voice";
 import { LanguageChoice, LanguageSwitch, setLocale } from "@/components/ui/LanguageSwitch";
 import { DisplayChoices } from "@/components/ui/DisplayChoices";
 import { Dialog } from "@/components/ui/Dialog";
@@ -192,6 +192,18 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
       setComposer(false);
       setEndingOpen(false);
       return;
+    }
+    // "J'ai une photo à vous montrer": open that document if the player has it (the character
+    // still hears the sentence; sharing it with them stays their own, backed step).
+    const shown = showIntent(text);
+    if (shown && !composerRef.current && !endingOpenRef.current) {
+      const n = viewRef.current.notebook;
+      const id = shown === "letter" && !n.some((e) => e.id === "letter") ? "futureLetter" : shown;
+      if (n.some((e) => e.id === id)) {
+        trace(text, `document ouvert : ${id}`);
+        if (closeTimer.current) clearTimeout(closeTimer.current);
+        setInspect(id);
+      }
     }
     // "2026" / "1996" (alone or as a short command): change era, as with the switch.
     const nextEra = eraFromSpeech(text, viewRef.current.activeEra);

@@ -28,6 +28,7 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent }: Option
   const leaseRef = useRef<string | null>(null);
   const seen = useRef(new Set<string>());
   const greeted = useRef(false);
+  const stopRef = useRef<(() => Promise<void>) | null>(null);
   const heartbeatTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const [status, setStatus] = useState<LiveStatus>("idle");
   const [character, setCharacter] = useState<"jeanne" | "malik" | null>(null);
@@ -37,7 +38,9 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent }: Option
   const [transcript, setTranscript] = useState<TranscriptLine[]>([]);
   const [subtitle, setSubtitle] = useState("");
   const cbs = useRef({ onPublicState, onRawEvent });
-  cbs.current = { onPublicState, onRawEvent };
+  useEffect(() => {
+    cbs.current = { onPublicState, onRawEvent };
+  }, [onPublicState, onRawEvent]);
 
   const send = useCallback((cmd: unknown) => {
     instanceRef.current?.sendCommand(cmd as Parameters<Instance["sendCommand"]>[0]);
@@ -93,7 +96,6 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent }: Option
     [handleTool],
   );
 
-  const stopRef = useRef<(() => Promise<void>) | null>(null);
   const stop = useCallback(async () => {
     if (heartbeatTimer.current) clearInterval(heartbeatTimer.current);
     heartbeatTimer.current = null;
@@ -111,7 +113,9 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent }: Option
     setSpeaking(false);
     setStatus("idle");
   }, [runId]);
-  stopRef.current = stop;
+  useEffect(() => {
+    stopRef.current = stop;
+  }, [stop]);
 
   const start = useCallback(async () => {
     if (instanceRef.current || !mountRef.current) return;

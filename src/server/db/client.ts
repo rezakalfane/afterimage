@@ -7,6 +7,7 @@ import { drizzle, type LibSQLDatabase } from "drizzle-orm/libsql";
 import { env } from "@/server/env";
 import * as appSchema from "./schema";
 import * as authSchema from "./auth-schema";
+import { serializeClient, withinTransaction } from "./serialized-client";
 
 export const schema = { ...appSchema, ...authSchema };
 export type DB = LibSQLDatabase<typeof schema>;
@@ -15,7 +16,9 @@ type Handle = { client: Client; db: DB };
 const g = globalThis as unknown as { __afterimageDb?: Handle };
 
 export function openDatabase(url: string, authToken?: string): Handle {
-  const client = createClient({ url, authToken, timeout: 5000, intMode: "number" });
+  const raw = createClient({ url, authToken, timeout: 5000, intMode: "number", ...(url.startsWith("file:") ? { concurrency: 1 } : {}) });
+  // Local file: one connection behind an async mutex (see serialized-client.ts). Remote: as is.
+  const client = url.startsWith("file:") ? serializeClient(raw) : raw;
   return { client, db: drizzle(client, { schema }) };
 }
 
@@ -46,7 +49,8 @@ export async function writeTx<T>(fn: (tx: Transaction) => Promise<T>): Promise<T
     let tx: Transaction | null = null;
     try {
       tx = await sqlClient().transaction("write");
-      const out = await fn(tx);
+      const t = tx;
+      const out = await withinTransaction(() => fn(t));
       await tx.commit();
       return out;
     } catch (e) {

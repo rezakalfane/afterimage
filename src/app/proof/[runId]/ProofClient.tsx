@@ -8,7 +8,7 @@ type ProofWindow = Window & { __proof?: Record<string, unknown> };
 export function ProofClient({ runId }: { runId: string }) {
   const events = useRef<unknown[]>([]);
   const states = useRef<unknown[]>([]);
-  const live = useLiveConversation({
+  const { mountRef, ...live } = useLiveConversation({
     runId,
     onRawEvent: (e) => events.current.push({ at: Date.now(), e }),
     onPublicState: (s, rev) => states.current.push({ rev, s }),
@@ -23,7 +23,7 @@ export function ProofClient({ runId }: { runId: string }) {
       <p data-testid="character">{live.character ?? ""}</p>
       <p data-testid="video">{live.videoReady ? "video" : "no-video"}</p>
       <p data-testid="error">{live.error?.code ?? ""}</p>
-      <div ref={live.mountRef} style={{ width: 360, height: 450, background: "#000" }} />
+      <div ref={mountRef} style={{ width: 360, height: 450, background: "#000" }} />
       <ol data-testid="transcript">{live.transcript.map((l, i) => <li key={i}>{l.role}: {l.text}</li>)}</ol>
     </main>
   );

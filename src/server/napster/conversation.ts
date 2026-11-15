@@ -18,7 +18,8 @@ import { connectionProfile, openingInstruction } from "./context";
 
 export const PROVIDER_SCOPE = "napster:webrtc";
 const RATE_SCOPE = "napster:connections"; // 1 request/s per API key, shared by create AND delete
-const RATE_GAP_MS = 1100;
+// 1 req/s per key + margin. Tests shorten it (APP_ENV=test only) to keep the suite fast.
+const RATE_GAP_MS = process.env.APP_ENV === "test" ? Number(process.env.NAPSTER_RATE_GAP_MS ?? 50) : 1100;
 const MAX_WAIT_MS = 4000;
 const RESERVE_TTL_MS = 30_000;
 export const ACTIVE_TTL_MS = 90_000;

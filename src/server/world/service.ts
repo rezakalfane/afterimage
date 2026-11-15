@@ -42,6 +42,8 @@ interface ExecOptions {
   toolCharacter?: CharacterId;
   /** Extra checks inside the same transaction (e.g. consume an ending confirmation). */
   inTx?: (tx: Transaction, run: { state: WorldState; revision: number }) => Promise<void>;
+  /** Arguments resolved inside the transaction (after inTx), e.g. the ending bound to a token. */
+  resolveArgs?: () => Record<string, unknown>;
 }
 
 function projectFor(state: WorldState, lastAction: { action: Action; summary: string } | null) {
@@ -49,7 +51,7 @@ function projectFor(state: WorldState, lastAction: { action: Action; summary: st
 }
 
 export async function executeCommand(ctx: TenantContext, runId: string, body: CommandBody, opts: ExecOptions): Promise<CommandResult> {
-  const command: Command = { action: body.action, args: body.args ?? {} };
+  let command: Command = { action: body.action, args: body.args ?? {} };
   const requestHash = sha256(JSON.stringify({ a: body.action, r: body.args ?? {}, e: body.expectedRevision ?? null, c: opts.channel, l: body.conversationLeaseId ?? null }));
   const now = Date.now();
 
@@ -80,9 +82,17 @@ export async function executeCommand(ctx: TenantContext, runId: string, body: Co
     if (body.expectedRevision !== undefined && body.expectedRevision !== run.revision) {
       throw new HttpError("REVISION_CONFLICT", "La partie a changé entre-temps.", { revision: run.revision, ...projectFor(run.state, null) });
     }
-    if (opts.channel !== "tool" && body.expectedRevision === undefined) throw new HttpError("INVALID_ARGUMENT", "expectedRevision manquant.");
+    // ending-confirmed: the single-use token already binds the revision (checked in inTx).
+    if (opts.channel === "ui" && body.expectedRevision === undefined) throw new HttpError("INVALID_ARGUMENT", "expectedRevision manquant.");
+
+    // Era switch only once the live conversation of the previous era is closed (server-enforced).
+    if (body.action === "switch_era") {
+      const open = await tx.execute({ sql: `SELECT 1 FROM conversation_leases WHERE tenant_id = ? AND run_id = ? AND status IN ('reserved','active','closing')`, args: [ctx.tenantId, runId] });
+      if (open.rows[0]) throw new HttpError("CONVERSATION_ACTIVE", "Terminez d’abord la conversation en cours.");
+    }
 
     if (opts.inTx) await opts.inTx(tx, { state: run.state, revision: run.revision });
+    if (opts.resolveArgs) command = { action: body.action, args: opts.resolveArgs() };
 
     // 5. Pure engine.
     const r = transition(run.state, command, { channel: opts.channel, character: opts.toolCharacter });

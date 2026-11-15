@@ -18,6 +18,8 @@ export function openClient(url: string, authToken?: string): Client {
 }
 
 export async function applyMigrations(client: Client) {
+  // Local file: WAL lets scripts read while the dev server writes (persistent setting).
+  if ((client as { protocol?: string }).protocol === "file") await client.execute("PRAGMA journal_mode=WAL");
   await migrate(drizzle(client), { migrationsFolder: "./drizzle" });
 }
 

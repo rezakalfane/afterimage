@@ -20,6 +20,9 @@ import type { Action, CommandResponse, Era, Mode, PublicState } from "./types";
 
 const HOTSPOT_TO_INSPECT: Record<string, string> = { photo: "photo", waterline: "archiveReport", projector: "projector", cabinet: "cabinet", cache: "cache", programme: "programme", hall: "hall", letter: "letter", shelf: "shelf" };
 
+/** Notebook documents that open automatically when a character reveals them during a live talk. */
+const AUTO_OPEN = new Set(["photo", "archiveReport", "programme", "letter", "message", "futureLetter"]);
+
 export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode; initial: PublicState }) {
   const router = useRouter();
   const t = useT();
@@ -49,8 +52,13 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
   const { mountRef: liveMountRef, ...live } = useLiveConversation({
     runId,
     onPublicState: (s) => {
-      if (s) setView(s as PublicState);
-      else void refresh(); // uncertain tool outcome: reload the canonical state
+      if (!s) return void refresh(); // uncertain tool outcome: reload the canonical state
+      const next = s as PublicState;
+      // A document the character just read by voice opens on its own (unless something is open).
+      const before = new Set(viewRef.current.notebook.map((n) => n.id));
+      const revealed = next.notebook.find((n) => !before.has(n.id) && AUTO_OPEN.has(n.id));
+      setView(next);
+      if (revealed) setInspect((cur) => cur ?? revealed.id);
     },
   });
 

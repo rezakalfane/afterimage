@@ -29,6 +29,8 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent }: Option
   const seen = useRef(new Set<string>());
   const greeted = useRef(false);
   const stopRef = useRef<(() => Promise<void>) | null>(null);
+  /** "idle" | "starting" | "started": a stop while starting must also close what the start opens. */
+  const phaseRef = useRef<"idle" | "starting" | "started">("idle");
   const heartbeatTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const [status, setStatus] = useState<LiveStatus>("idle");
   const [character, setCharacter] = useState<"jeanne" | "malik" | null>(null);
@@ -99,10 +101,13 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent }: Option
   const stop = useCallback(async () => {
     if (heartbeatTimer.current) clearInterval(heartbeatTimer.current);
     heartbeatTimer.current = null;
+    const wasActive = phaseRef.current !== "idle";
+    phaseRef.current = "idle";
     const inst = instanceRef.current;
     instanceRef.current = null;
     leaseRef.current = null;
-    setStatus((s) => (s === "idle" ? s : "closing"));
+    if (!wasActive) return; // nothing started (e.g. React strict-mode remount): no server call
+    setStatus("closing");
     try {
       inst?.destroy();
     } catch {
@@ -118,7 +123,8 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent }: Option
   }, [stop]);
 
   const start = useCallback(async () => {
-    if (instanceRef.current || !mountRef.current) return;
+    if (phaseRef.current !== "idle" || !mountRef.current) return;
+    phaseRef.current = "starting";
     setError(null);
     setStatus("connecting");
     greeted.current = false;
@@ -127,10 +133,19 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent }: Option
       opened = await api(`/api/runs/${runId}/conversation`, { method: "POST" });
     } catch (e) {
       const err = e as { code?: string; message?: string };
-      setError({ code: err.code ?? "ERROR", message: err.message ?? "Connexion impossible." });
-      setStatus("error");
+      if (phaseRef.current === "starting") {
+        phaseRef.current = "idle";
+        setError({ code: err.code ?? "ERROR", message: err.message ?? "Connexion impossible." });
+        setStatus("error");
+      }
       return;
     }
+    if (phaseRef.current !== "starting") {
+      // Cancelled while the server was opening: close what was just opened.
+      await api(`/api/runs/${runId}/conversation`, { method: "DELETE" }).catch(() => {});
+      return;
+    }
+    phaseRef.current = "started";
     leaseRef.current = opened.leaseId;
     setCharacter(opened.character);
     const { NapsterCompanionApiSdk } = await import("@touchcastllc/napster-companion-api");

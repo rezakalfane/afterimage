@@ -43,8 +43,16 @@ export const POST = handler(async (req, { params }: P) => {
     { channel: "tool", toolCharacter: character },
   );
   // Output for the model: business result + this character's projection only.
+  // A no-op is NOT a failure (e.g. a clue already noted): say so explicitly, or the model may
+  // narrate a failure that never happened.
   const output = result.ok
-    ? { ok: true, resultat: result.event?.summary ?? "Rien de nouveau.", aide: result.hint, contexte: contextUpdateText(result.characterContext) }
+    ? result.changed
+      ? { ok: true, resultat: result.event?.summary, aide: result.hint, contexte: contextUpdateText(result.characterContext) }
+      : {
+          ok: true,
+          resultat: "Déjà pris en compte : ce n’est pas un échec, rien n’a changé. Continue avec l’un des outils de availableTools si le joueur le demande.",
+          contexte: contextUpdateText(result.characterContext),
+        }
     : { ok: false, message: mapped.ok ? result.message : refusalText("", "INVALID_ARGUMENT", undefined) };
   return json({ ok: result.ok, output, revision: result.revision, publicState: result.publicState });
 });

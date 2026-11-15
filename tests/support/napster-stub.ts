@@ -2,7 +2,7 @@
 import { vi } from "vitest";
 
 export const napsterCalls: { method: string; path: string; body: unknown }[] = [];
-let mode: "ok" | "timeout" | "409" = "ok";
+let mode: "ok" | "timeout" | "409" | "slow" = "ok";
 export function napsterMode(m: typeof mode) {
   mode = m;
 }
@@ -16,6 +16,7 @@ vi.stubGlobal("fetch", async (input: RequestInfo | URL, init?: RequestInit) => {
   napsterCalls.push({ method, path, body: init?.body ? JSON.parse(String(init.body)) : null });
   if (method === "POST" && path.includes("/connections")) {
     if (mode === "timeout") throw new TypeError("fetch failed");
+    if (mode === "slow") await new Promise((r) => setTimeout(r, 400));
     if (mode === "409") return new Response(JSON.stringify({ code: "ConcurrentSessionLimitReached" }), { status: 409 });
     return new Response(JSON.stringify({ token: "tok_" + napsterCalls.length, connection: { id: "conn_" + napsterCalls.length } }), { status: 200 });
   }

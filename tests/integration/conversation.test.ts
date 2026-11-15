@@ -72,6 +72,24 @@ describe("admission", () => {
   });
 });
 
+describe("close during open (race)", () => {
+  it("a close that lands while the connection is being created: no token, provider session closed, lease closed", async () => {
+    const a = await guest("a");
+    const runId = (await a.createRun()).body.runId;
+    napsterMode("slow");
+    const opening = a.openConversation(runId);
+    await new Promise((r) => setTimeout(r, 120)); // the lease is 'reserved', the create call is in flight
+    expect((await a.closeConversation(runId)).status).toBe(200);
+    const opened = await opening;
+    expect(opened.status).toBe(409);
+    expect(opened.body.code).toBe("LEASE_INVALID");
+    expect(opened.body.token).toBeUndefined();
+    expect(napsterCalls.some((c) => c.method === "DELETE" && c.path.startsWith("/public/connections/"))).toBe(true);
+    const leases = await sqlClient().execute({ sql: `SELECT status FROM conversation_leases WHERE run_id = ?`, args: [runId] });
+    expect(leases.rows.map((r) => r.status)).toEqual(["closed"]);
+  });
+});
+
 describe("tool proposals", () => {
   it("are accepted only from the caller's active lease, for the current era's character", async () => {
     const a = await guest("a");

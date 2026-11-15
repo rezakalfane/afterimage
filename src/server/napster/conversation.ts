@@ -19,7 +19,7 @@ import { connectionProfile, openingInstruction } from "./context";
 export const PROVIDER_SCOPE = "napster:webrtc";
 const RATE_SCOPE = "napster:connections"; // 1 request/s per API key, shared by create AND delete
 // 1 req/s per key + margin. Tests shorten it (APP_ENV=test only) to keep the suite fast.
-const RATE_GAP_MS = process.env.APP_ENV === "test" ? Number(process.env.NAPSTER_RATE_GAP_MS ?? 50) : 1100;
+const RATE_GAP_MS = process.env.APP_ENV === "test" ? Number(process.env.NAPSTER_RATE_GAP_MS ?? 50) : 1500; // provider counts arrivals, not our departures
 const MAX_WAIT_MS = 4000;
 const RESERVE_TTL_MS = 30_000;
 export const ACTIVE_TTL_MS = 90_000;
@@ -96,8 +96,8 @@ export async function openConversation(ctx: TenantContext, runId: string, opts: 
   if (slot > Date.now()) await sleep(slot - Date.now());
   const context = characterContext(run.state, character, null);
   let conn: ConnectionResponse;
-  try {
-    conn = await napster<ConnectionResponse>(`/public/agents/${agentId}/connections`, {
+  const create = () =>
+    napster<ConnectionResponse>(`/public/agents/${agentId}/connections`, {
       method: "POST",
       body: {
         channelType: "webrtc",
@@ -107,6 +107,17 @@ export async function openConversation(ctx: TenantContext, runId: string, opts: 
         tags: { app: "afterimage", env: e.APP_ENV, lease: leaseId },
       },
     });
+  try {
+    try {
+      conn = await create();
+    } catch (first) {
+      // 429 = rejected, nothing was created: one retry after Retry-After, through a fresh rate slot.
+      if (!(first instanceof NapsterError && first.status === 429)) throw first;
+      await sleep(Math.max(1, first.retryAfter ?? 1) * 1000);
+      const again = await writeTx((tx) => reserveRateSlot(tx, Date.now()));
+      if (again > Date.now()) await sleep(again - Date.now());
+      conn = await create();
+    }
   } catch (err) {
     const uncertain = err instanceof NapsterUncertain;
     await sqlClient().execute({
@@ -120,10 +131,18 @@ export async function openConversation(ctx: TenantContext, runId: string, opts: 
   }
 
   // 3. Bind the connection id to the lease BEFORE handing out the token.
-  await sqlClient().execute({
+  const activated = await sqlClient().execute({
     sql: `UPDATE conversation_leases SET connection_id = ?, status = 'active', heartbeat_at = ?, expires_at = ?, updated_at = ? WHERE id = ? AND status = 'reserved'`,
     args: [conn.connection.id, Date.now(), Date.now() + ACTIVE_TTL_MS, Date.now(), leaseId],
   });
+  if (activated.rowsAffected !== 1) {
+    // The lease was closed while we were creating the connection (tab closed, era switch, cancel):
+    // close the provider session right away and never hand out its token.
+    await sqlClient().execute({ sql: `UPDATE conversation_leases SET connection_id = ?, status = 'closing', status_reason = 'cancelled_during_open', updated_at = ? WHERE id = ?`, args: [conn.connection.id, Date.now(), leaseId] });
+    await closeProviderConnection(leaseId, conn.connection.id);
+    log.info("napster.connection.cancelled_during_open", { leaseId });
+    throw new HttpError("LEASE_INVALID", "La conversation a été annulée.");
+  }
   log.info("napster.connection.opened", { leaseId, character });
   return { token: conn.token, leaseId, character, revision: run.revision };
 }

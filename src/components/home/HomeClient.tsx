@@ -18,6 +18,11 @@ function readSettings(): Settings {
 export function HomeClient({ mode, runs, signedIn, isAdmin }: { mode: "rehearsal" | "live"; runs: { id: string; status: string; updatedAt: number }[]; signedIn: boolean; isAdmin: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration flag
+    setHydrated(true);
+  }, []);
   const [error, setError] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settings, setSettings] = useState<Settings>(readSettings);
@@ -61,7 +66,7 @@ export function HomeClient({ mode, runs, signedIn, isAdmin }: { mode: "rehearsal
         <p className="home__subtitle">La dernière séance</p>
         <p className="home__pitch">Deux personnes. Le même cinéma. Trente ans d’écart. Parlez-leur, gagnez leur confiance et faites traverser le temps à ce qui mérite d’être sauvé.</p>
         <div className="btn-row">
-          <button type="button" className="btn btn--brass btn--big" onClick={start} disabled={busy}>{busy ? "Ouverture…" : "Commencer"}</button>
+          <button type="button" className="btn btn--brass btn--big" onClick={start} disabled={busy || !hydrated}>{busy ? "Ouverture…" : "Commencer"}</button>
           {resume && <Link className="btn btn--big" href={`/play/${resume.id}`}>Reprendre</Link>}
           <button type="button" className="btn" onClick={() => setSettingsOpen((v) => !v)} aria-expanded={settingsOpen}>Réglages</button>
         </div>

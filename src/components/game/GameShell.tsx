@@ -137,6 +137,19 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
     setTimeout(() => setSwitching(null), 450);
   }
 
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  async function deleteRun() {
+    setBusy(true);
+    await live.stop();
+    try {
+      await api(`/api/runs/${runId}`, { method: "DELETE" });
+      router.push("/?deleted=1");
+    } catch (e) {
+      say((e as Error).message || "Suppression impossible pour l’instant ; réessayez.", "warn");
+      setBusy(false);
+    }
+  }
+
   async function newRun() {
     const r = await api<{ runId: string }>("/api/runs", { method: "POST" });
     router.push(`/play/${r.runId}`);
@@ -174,7 +187,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
           transcript={mode === "live" ? live.transcript : rLines}
           error={live.error}
           mountRef={liveMountRef}
-          onStart={() => void live.start()}
+          onStart={() => { setMicMuted(false); void live.start(); }}
           onStop={() => void live.stop()}
           onSend={(t) => (mode === "live" ? live.sendText(t) : void rehearse(t))}
           suggestion={suggestion && view.availableActions.includes(suggestion.action) ? { label: suggestion.label, onAccept: () => { const s = suggestion; setSuggestion(null); void act(s.action, s.args); } } : null}
@@ -196,10 +209,19 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
           {canDecide && <button type="button" className="btn btn--decision" onClick={() => setEndingOpen(true)}>Décider du sort du film</button>}
           {!view.ending && <button type="button" className="btn" onClick={() => act("request_hint")} disabled={busy}>Aide</button>}
           <Link className="btn" href="/">Quitter</Link>
+          {!confirmDelete ? (
+            <button type="button" className="btn btn--quiet" onClick={() => setConfirmDelete(true)}>Supprimer ma partie</button>
+          ) : (
+            <span className="confirm-delete" role="group" aria-label="Confirmer la suppression">
+              <span className="small">Effacer définitivement cette partie ?</span>
+              <button type="button" className="btn btn--decision" onClick={deleteRun} disabled={busy}>Supprimer</button>
+              <button type="button" className="btn" onClick={() => setConfirmDelete(false)}>Annuler</button>
+            </span>
+          )}
         </div>
       </footer>
 
-      <div className="toast" role="status" aria-live="polite">{toast && <p className={`toast__msg toast__msg--${toast.tone}`}>{toast.text}</p>}</div>
+      <div className="toast" role="status" aria-live="polite">{toast && !view.ending && <p className={`toast__msg toast__msg--${toast.tone}`}>{toast.text}</p>}</div>
       {switching && <div className="timeshift" aria-live="assertive">Passage vers {switching}…</div>}
 
       <ObjectInspector id={inspect} era={era} view={view} onClose={() => setInspect(null)} act={async (a, args) => { const r = await act(a, args); return r; }} openComposer={() => { setInspect(null); setComposer(true); }} />

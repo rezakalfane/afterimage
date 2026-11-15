@@ -1,0 +1,35 @@
+{
+  "name": "afterimage",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "AFTERIMAGE \u2014 La derni\u00e8re s\u00e9ance. Interactive two-era mystery built on the Napster API (Ignite 2026 hackathon).",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "verify": "npm run typecheck && npm run test && npm run build",
+    "provision": "tsx --env-file=.env scripts/provision.ts",
+    "check-key": "tsx --env-file=.env scripts/check-key.ts"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@reduxjs/toolkit": "^2.14.0",
+    "@touchcastllc/napster-companion-api": "^2.0.0",
+    "next": "^16.4.6",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  }
+}

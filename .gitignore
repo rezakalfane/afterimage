@@ -1,0 +1,16 @@
+# secrets — the Napster API key lives here and must never be committed
+.env
+.env.*
+!.env.example
+
+# dependencies / build
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# local
+.DS_Store
+.vercel
+.claude/settings.local.json

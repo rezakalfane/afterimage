@@ -51,6 +51,10 @@
     "jeanne_look": "jeanne_look",
     "malik_look": "malik_look",
     "en_jeanne_look": "en_jeanne_look",
-    "en_malik_look": "en_malik_look"
+    "en_malik_look": "en_malik_look",
+    "jeanne_recall": "jeanne_recall",
+    "jeanne_check_seat": "jeanne_check_seat",
+    "en_jeanne_recall": "en_jeanne_recall",
+    "en_jeanne_check_seat": "en_jeanne_check_seat"
   }
 }

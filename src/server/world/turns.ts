@@ -94,3 +94,12 @@ export async function isBacked(ctx: TenantContext, runId: string, leaseId: strin
     await sleep(300);
   }
 }
+
+/** The seat the player named most recently in this session (parsed), if any. */
+export async function latestSeat(ctx: TenantContext, runId: string, leaseId: string): Promise<string | null> {
+  const r = await sqlClient().execute({
+    sql: `SELECT seat FROM player_turns WHERE tenant_id = ? AND run_id = ? AND lease_id = ? AND at >= ? AND seat IS NOT NULL ORDER BY at DESC LIMIT 1`,
+    args: [ctx.tenantId, runId, leaseId, Date.now() - WINDOW_MS],
+  });
+  return r.rows[0] ? String(r.rows[0].seat) : null;
+}

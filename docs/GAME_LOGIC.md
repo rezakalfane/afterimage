@@ -1,4 +1,6 @@
-# Game logic — La dernière séance
+# Game logic — La dernière séance (chapter v2, brief v3)
+
+> v3 (2026-11-16): G7 is split between three clues, the report no longer names the hiding place, characters only learn what the player shares (claims backed by the player's own turns), hotspots are unmarked by default. Runs of chapter v1 are retired (readable, not playable).
 
 How the episode works, generated from the code (`src/server/world/engine.ts`,
 `src/server/napster/tools.ts`, `src/content/episodes/last-screening/v1/`). The engine is pure
@@ -36,8 +38,8 @@ flowchart LR
 
 | # | Puzzle | Where the clue is | Who acts | What unlocks |
 |---|---|---|---|---|
-| 1 | **The key** | Back of the photo in 2026: "G7" | Jeanne searches under seat G7 | The 1996 cabinet opens → the letter |
-| 2 | **The cache** | Water mark + 2008 report in 2026 (damage at desk level) | Jeanne stores the film on the upper shelf | The film and the message survive 30 years |
+| 1 | **The key** | Back of the photo (2026): "La clé est à notre place habituelle. — J." · Jeanne's memory once the note is shared: Alice always chose **row G** · Programme annotation (1996): "Alice — place 7" | The player puts row and number together and proposes the seat (voice, text or the field in the Hall inspector); Jeanne searches under it | The 1996 cabinet opens → the letter |
+| 2 | **The cache** | Water mark + 2008 report (2026): "infiltration… the documents left on the desk were damaged" — no hiding place named | The player warns Jeanne (risk) or shows the report (a temporal claim); Jeanne first thinks of the drawer; the player names a higher place | The film and the message survive 30 years |
 | 3 | **The promise** | Alice's letter (1996): the epilogue stays private | Player acknowledges, writes a message, then chooses the ending | Three possible endings |
 
 In 2026, Malik must first find the key **behind the projector** (`find_future_key`); only then can he open the cabinet that Jeanne sealed.
@@ -210,3 +212,19 @@ sequenceDiagram
 
 Napster is never called inside the transaction; a repeated `callId` returns the stored
 receipt instead of acting twice.
+
+
+## v3 actions (replace `relay_key_location`)
+
+| Action | Era | Requires | Sets | Backing when a character calls it |
+|---|---|---|---|---|
+| `share_photo_note` | 1996 | `photo_seen` | `note_shared` | player's turn mentions the note/photo |
+| `ask_usual_place` | 1996 | `note_shared` | `row_learned` (Jeanne remembers row G) | — |
+| `propose_seat` (seat: free text) | 1996 | `row_learned`, `programme_seen` (else "what leads you there?") | `seat_proposed` if the seat is Alice's (else a reason, no change) | the same seat in a player's turn |
+| `retrieve_key` | 1996 | `seat_proposed` | `key_found` | — |
+| `relay_flood_warning` | 1996 | `waterline_seen` | `flood_warning_shared` | player's turn mentions water |
+| `share_report` | 1996 | `waterline_seen` | `report_shared` + `flood_warning_shared` | player's turn mentions the report |
+| `claim_future` | 1996 | — | `temporal_claim` | player's turn mentions 2026 / the future |
+| `preserve_cache` (location: free text) | 1996 | as before | `cache_preserved` only at the top of the cabinet; drawer/desk/floor/bottom explain the risk without naming the answer | the same place in a player's turn |
+
+What Jeanne receives is in three categories: facts of her world (`knownFacts`, by disclosure), claims made by the player (`sharedByPlayer`) and confirmed actions (`observedState`). An era switch, a reconnection or the player opening a document shares nothing. `tests/unit/leaks.test.ts` walks 400 random paths and checks, fr and en, that "G7", "rangée G", "place 7", "2026/Malik", "2008" and the hiding place never reach a character or the player before the flag that reveals them.

@@ -10,7 +10,7 @@ import { contextUpdateText } from "@/server/napster/context";
 import { executeCommand } from "@/server/world/service";
 import { texts, type Locale } from "@/server/world/texts";
 import { log } from "@/server/security/log";
-import { backingFor, isBacked } from "@/server/world/turns";
+import { backingFor, isBacked, latestSeat } from "@/server/world/turns";
 import { playerView } from "@/server/world/projections";
 import type { CharacterId } from "@/server/world/content";
 
@@ -49,6 +49,21 @@ export const POST = handler(async (req, { params }: P) => {
     log.info("napster.tool.rejected", rejectedToolLog({ character, name: p.data.name, callId: p.data.callId, revision: run.revision, code: "UNBACKED" }));
     return json({ ok: false, output: { ok: false, message: texts(locale).tool.unbacked }, revision: run.revision, publicState: playerView(run.state, locale), focus: null });
   }
+  // The model sometimes skips a share before the gesture that needs it. If the PLAYER's own recent
+  // turn backs that share, record it first (same proof, same validations), then the gesture.
+  if (mapped.ok) {
+    const run = await getRun(ctx, runId);
+    const has = (f: string) => run.state.flags.includes(f as never);
+    const pre: { action: string; args?: Record<string, unknown> } | null =
+      command.action === "ask_usual_place" && !has("note_shared") && (await isBacked(ctx, runId, p.data.conversationLeaseId, { column: "mentions_note" }, 0))
+        ? { action: "share_photo_note" }
+        : command.action === "retrieve_key" && !has("seat_proposed")
+          ? await latestSeat(ctx, runId, p.data.conversationLeaseId).then((seat) => (seat ? { action: "propose_seat", args: { seat } } : null))
+          : null;
+    if (pre) {
+      await executeCommand(ctx, runId, { commandId: `tool:${p.data.callId}:pre`, action: pre.action, args: pre.args, conversationLeaseId: p.data.conversationLeaseId }, { channel: "tool", toolCharacter: character, locale });
+    }
+  }
   const result = await executeCommand(
     ctx,
     runId,
@@ -73,7 +88,7 @@ export const POST = handler(async (req, { params }: P) => {
           outilsMaintenant: next,
           contexte: contextUpdateText(result.characterContext, locale),
         }
-    : { ok: false, message: mapped.ok ? result.message : texts(locale).tool.invalid };
+    : { ok: false, message: mapped.ok ? result.message : texts(locale).tool.invalid, outilsMaintenant: next };
   // What the call was about, for the player's screen only (opens that object's window).
   const focus = mapped.ok ? { action: command.action, target: typeof command.args?.target === "string" ? command.args.target : null } : null;
   return json({ ok: result.ok, output, revision: result.revision, publicState: result.publicState, focus });

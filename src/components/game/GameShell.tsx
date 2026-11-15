@@ -114,6 +114,8 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
       const s = lastState.current ?? viewRef.current;
       const id = focusTarget(action, target, s);
       if (!id || composerRef.current) return;
+      // A document window only opens if that document exists (a refused call shows nothing empty).
+      if (AUTO_OPEN.has(id) && !s.notebook.some((n) => n.id === id)) return;
       setInspect(id);
       if (!READINGS.has(action)) scheduleClose();
       else if (closeTimer.current) clearTimeout(closeTimer.current);

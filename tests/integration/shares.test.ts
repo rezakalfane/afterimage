@@ -43,6 +43,16 @@ describe("player-backed shares", () => {
     await p.turn(runId, leaseId, "Essayez la septième place de la rangée G.");
     expect((await p.tool(runId, "jeanne_check_seat", { siege: "G7" }, leaseId)).body.ok).toBe(true);
   });
+  it("a skipped share is recorded first only when the player's own turn backs it", async () => {
+    const { p, runId, leaseId } = await jeanneSession();
+    expect((await p.tool(runId, "jeanne_recall", { sujet: "place_habituelle" }, leaseId)).body.ok).toBe(false); // nothing said yet
+    await p.turn(runId, leaseId, "Au dos d’une photo, une note dit : la clé est à notre place habituelle.");
+    expect((await p.tool(runId, "jeanne_recall", { sujet: "place_habituelle" }, leaseId)).body.ok).toBe(true); // note recorded first, then the memory
+    expect((await p.tool(runId, "jeanne_examine", { objet: "programme" }, leaseId)).body.ok).toBe(true);
+    await p.turn(runId, leaseId, "Cherchez sous le siège G sept.");
+    expect((await p.tool(runId, "jeanne_act", { geste: "chercher_cle" }, leaseId)).body.ok).toBe(true); // seat checked first, then the key
+    expect((await p.getRun(runId)).body.publicState.notebook.map((n: { id: string }) => n.id)).toContain("key");
+  });
   it("turns need the caller's active lease of this run", async () => {
     const { p, runId } = await jeanneSession();
     expect((await p.turn(runId, "lease_forged", "bonjour")).status).toBe(409);

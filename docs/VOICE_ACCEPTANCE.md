@@ -10,8 +10,8 @@ l'avatar dans les haut-parleurs) et le comportement de bout en bout.
 2. Ouvrez `http://localhost:3000/?voicedebug=1`, puis **Commencer** ; gardez `?voicedebug=1` dans l'URL de la partie
    (`…/play/run_…?voicedebug=1`). Un petit panneau en haut à droite affiche chaque phrase **finale** entendue et la décision.
 3. Préparez une partie jusqu'au message : dans 2026 « Malik, regarde la photo » et « le bas de l'armoire » ;
-   en 1996 donnez G7, demandez la clé, l'armoire, le programme, la lettre, dites « j'accepte la condition d'Alice »,
-   avertissez de l'eau, puis dictez : « Jeanne, note : les étoiles restent allumées ».
+   en 1996 parlez de la note de la photo, demandez leur place habituelle, faites lire le programme, proposez le siège
+   que vous en déduisez, demandez la clé, l'armoire, la lettre, dites « j'accepte la condition d'Alice », avertissez de l'eau, puis dictez : « Jeanne, note : les étoiles restent allumées ».
 
 ## Message personnel — la feuille « Quelques mots pour dans trente ans » est affichée
 Dites chaque phrase, attendez la ligne du panneau, notez le résultat.

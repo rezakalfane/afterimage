@@ -77,7 +77,7 @@ export async function openConversation(ctx: TenantContext, runId: string, opts: 
     const mine = await tx.execute({ sql: `SELECT id, status FROM conversation_leases WHERE tenant_id = ? AND run_id = ? AND status IN ${OPEN}`, args: [ctx.tenantId, runId] });
     if (mine.rows[0]) throw new HttpError("CONVERSATION_ACTIVE", "Une conversation est déjà ouverte pour cette partie (autre onglet ?).", { leaseStatus: String(mine.rows[0].status) });
     const global = await tx.execute({ sql: `SELECT count(*) AS n FROM conversation_leases WHERE provider_scope = ? AND status IN ${OPEN}`, args: [PROVIDER_SCOPE] });
-    if (Number(global.rows[0].n) >= e.NAPSTER_MAX_ACTIVE) throw new HttpError("CAPACITY_FULL", "Toutes les places de conversation sont occupées. Vous pouvez attendre ou jouer au clavier.", undefined, 15);
+    if (Number(global.rows[0].n) >= e.NAPSTER_MAX_ACTIVE) throw new HttpError("CAPACITY_FULL", "Toutes les places de conversation sont occupées. Réessayez dans un instant ; en attendant, toutes les actions restent possibles à l’écran.", undefined, 15);
     const tenant = await tx.execute({ sql: `SELECT count(*) AS n FROM conversation_leases WHERE tenant_id = ? AND status IN ${OPEN}`, args: [ctx.tenantId] });
     if (Number(tenant.rows[0].n) >= ctx.tenantMaxSessions) throw new HttpError("CAPACITY_FULL", "Toutes les places de conversation de cet espace sont occupées.", undefined, 15);
 

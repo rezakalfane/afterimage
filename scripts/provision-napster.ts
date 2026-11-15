@@ -54,7 +54,7 @@ export const TECHNICAL_APPENDIX: Record<"fr" | "en", string> = {
 async function main() {
   console.log(`Napster provisioning — ${apply ? "APPLY" : "dry run"} — locale ${locale}`);
   const agents = await api<Array<{ id: string; name: string; functions?: string[]; language?: string }>>("/public/agents");
-  const fns = await api<{ items: Array<{ id: string; data?: { name?: string } }> }>("/public/functions");
+  const fns = await api<{ items: Array<{ id: string; data?: { name?: string } }> }>("/public/functions?pageSize=200");
   console.log(`Inventory: ${agents.length} agents, ${fns.items.length} functions`);
   for (const a of agents) console.log(`  agent ${a.id.slice(0, 8)}… ${a.name} [${a.language ?? "-"}] tools=${(a.functions ?? []).join(",")}`);
 
@@ -65,6 +65,13 @@ async function main() {
   const sessions = await api<{ items: Array<{ status: string; agent?: { id: string } | null }> }>("/public/sessions?pageSize=100");
   const open = sessions.items.filter((s) => (s.status === "pending" || s.status === "started") && s.agent && ours.includes(s.agent.id));
   if (open.length) throw new Error(`${open.length} session(s) open on these agents: close them before changing the global configuration.`);
+
+  for (const character of ["jeanne", "malik"] as const) {
+    const cid = res.companions?.[character]?.id;
+    if (!cid) continue;
+    const c = await api<{ status: string }>(`/public/companions/${cid}`);
+    if (c.status !== "readyToUse") throw new Error(`Companion ${character} is "${c.status}", not readyToUse: wait before attaching it.`);
+  }
 
   const defs: Record<string, unknown> = locale === "en" ? englishFunctionDefinitions() : functionDefinitions();
   const existing = new Set(fns.items.map((f) => f.id));
@@ -77,14 +84,16 @@ async function main() {
 
   for (const character of ["jeanne", "malik"] as const) {
     const id = res.agents[character][locale];
+    const companionId = res.companions?.[character]?.id;
     const body = {
+      ...(companionId ? { companionId } : {}),
       language: locale,
       useWebSearch: false,
       functions: toolsFor(character, locale),
       tags: { app: "afterimage", character, locale, canon: "last-screening@1" },
       providerSettings: { temperature: 0.6, instructions: PROMPTS[character][locale] + TECHNICAL_APPENDIX[locale], noiseReduction: { type: "nearField" } },
     };
-    console.log(`  PATCH agent ${character}/${locale} (${id.slice(0, 8)}…): tools=${body.functions.join(",")}, instructions ${body.providerSettings.instructions.length} chars, webSearch off`);
+    console.log(`  PATCH agent ${character}/${locale} (${id.slice(0, 8)}…): companion=${companionId?.slice(0, 8) ?? "unchanged"}…, tools=${body.functions.join(",")}, instructions ${body.providerSettings.instructions.length} chars, webSearch off`);
     if (apply) await api(`/public/agents/${id}`, "PATCH", body);
   }
 

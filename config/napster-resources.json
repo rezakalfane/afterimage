@@ -3,14 +3,18 @@
   "organization": "9ee272fc-807e-4bb8-8cd1-2225039e30ba",
   "companions": {
     "jeanne": {
-      "id": "67fe225a-5533-4c43-985c-81c9ccf2bc75",
-      "kind": "stock",
-      "note": "Catalog companion used as a stand-in. The kit portrait is artwork only."
+      "id": "16996273-188e-4710-b11f-2130570c13c6",
+      "kind": "custom-v1",
+      "source": "https://raw.githubusercontent.com/rezakalfane/afterimage/main/assets-src/afterimage/characters/jeanne-reference.png",
+      "fallbackStock": "67fe225a-5533-4c43-985c-81c9ccf2bc75",
+      "note": "Created 2026-11-15 from the kit portrait (fictional, generated)."
     },
     "malik": {
-      "id": "49a2b67d-1e38-4344-b41b-d94818949043",
-      "kind": "stock",
-      "note": "Catalog companion used as a stand-in. The kit portrait is artwork only."
+      "id": "6db06ec6-3f58-4080-a553-feb65842a3b3",
+      "kind": "custom-v1",
+      "source": "https://raw.githubusercontent.com/rezakalfane/afterimage/main/assets-src/afterimage/characters/malik-reference.png",
+      "fallbackStock": "49a2b67d-1e38-4344-b41b-d94818949043",
+      "note": "Created 2026-11-15 from the kit portrait (fictional, generated)."
     }
   },
   "agents": {

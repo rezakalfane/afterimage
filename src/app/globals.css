@@ -120,8 +120,6 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .speaking { margin-left: 0.4em; color: var(--brass-hi); font-style: normal; animation: blink 1s infinite; }
 .suggestion { padding: 6px 18px; display: grid; gap: 6px; }
 .character__controls { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 8px 18px; }
-.prep { margin: 6px 18px; padding: 12px 14px; border: 1px solid var(--brass); background: var(--ink-3); }
-.prep p { margin: 0; }
 .say { display: flex; gap: 0.5rem; padding: 8px 18px 4px; }
 .say input { flex: 1; min-width: 0; }
 .transcript { padding: 2px 18px; font-size: 0.9rem; }

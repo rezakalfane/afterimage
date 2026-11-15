@@ -2,6 +2,7 @@
 // Character panel. A static portrait is a FALLBACK, labelled as such; "En direct" is shown only
 // when the live Napster session is actually up. Rehearsal mode is labelled everywhere.
 import { useState } from "react";
+import { Dialog } from "@/components/ui/Dialog";
 import { ERA_META } from "@/components/game/scene-config";
 import { useT } from "@/i18n/I18nProvider";
 import { fmt } from "@/i18n/messages";
@@ -27,6 +28,23 @@ export interface PanelProps {
   disabled: boolean;
 }
 
+const CONSENT_KEY = "afterimage.micConsent";
+
+/** Consent already given in this browser: our own flag, or the site's microphone permission. */
+async function hasMicConsent(): Promise<boolean> {
+  try {
+    if (localStorage.getItem(CONSENT_KEY) === "1") return true;
+  } catch {
+    /* storage unavailable */
+  }
+  try {
+    const s = await navigator.permissions?.query({ name: "microphone" as PermissionName });
+    return s?.state === "granted";
+  } catch {
+    return false; // Permissions API without "microphone" (some browsers): ask once
+  }
+}
+
 export function CharacterPanel({ mountRef, ...p }: PanelProps) {
   const t = useT();
   const c = t.character;
@@ -36,7 +54,8 @@ export function CharacterPanel({ mountRef, ...p }: PanelProps) {
   const live = p.mode === "live";
   const liveUp = live && p.status === "live";
   const badge = !live ? c.badgeRehearsal : liveUp ? (p.videoReady ? c.badgeLive : c.badgeLiveAudio) : p.status === "connecting" ? c.badgeConnecting : p.status === "closing" ? c.badgeClosing : c.badgeOffline;
-  const lastLines = p.transcript.slice(-6);
+  // Only this era's character: never show the other character's last line after a switch.
+  const lastLines = p.transcript.filter((l) => l.character === meta.character).slice(-6);
 
   return (
     <aside className={`character character--${meta.character}`} aria-label={`${meta.name}, ${meta.role}`}>
@@ -65,7 +84,7 @@ export function CharacterPanel({ mountRef, ...p }: PanelProps) {
 
       <div className="character__controls">
         {live && !liveUp && p.status !== "connecting" && (
-          <button type="button" className="btn btn--brass" onClick={() => setPrepOpen(true)} disabled={p.disabled}>{fmt(c.talk, { name: meta.name })}</button>
+          <button type="button" className="btn btn--brass" onClick={async () => ((await hasMicConsent()) ? p.onStart() : setPrepOpen(true))} disabled={p.disabled}>{fmt(c.talk, { name: meta.name })}</button>
         )}
         {live && p.status === "connecting" && <button type="button" className="btn" onClick={p.onStop}>{t.common.cancel}</button>}
         {liveUp && (
@@ -76,15 +95,28 @@ export function CharacterPanel({ mountRef, ...p }: PanelProps) {
         )}
       </div>
 
-      {prepOpen && !liveUp && (
-        <div className="prep" role="dialog" aria-label={c.prepLabel}>
-          <p><strong>{fmt(c.prepStrong, { name: meta.name })}</strong> {c.prepText}</p>
-          <div className="btn-row">
-            <button type="button" className="btn btn--brass" onClick={() => { setPrepOpen(false); p.onStart(); }}>{c.prepAllow}</button>
-            <button type="button" className="btn" onClick={() => setPrepOpen(false)}>{c.prepNoMic}</button>
-          </div>
+      <Dialog open={prepOpen && !liveUp} title={c.prepLabel} onClose={() => setPrepOpen(false)}>
+        <p><strong>{fmt(c.prepStrong, { name: meta.name })}</strong> {c.prepText}</p>
+        <p className="muted small">{c.prepOnce}</p>
+        <div className="btn-row">
+          <button
+            type="button"
+            className="btn btn--brass"
+            onClick={() => {
+              try {
+                localStorage.setItem(CONSENT_KEY, "1");
+              } catch {
+                /* storage unavailable: we will ask again next time */
+              }
+              setPrepOpen(false);
+              p.onStart();
+            }}
+          >
+            {c.prepAllow}
+          </button>
+          <button type="button" className="btn" onClick={() => setPrepOpen(false)}>{c.prepNoMic}</button>
         </div>
-      )}
+      </Dialog>
 
       {p.error && <p className="warn" role="alert">{p.error.message}</p>}
 

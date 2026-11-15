@@ -11,7 +11,8 @@ import { api } from "@/components/game/api";
 import { useT } from "@/i18n/I18nProvider";
 
 export type LiveStatus = "idle" | "connecting" | "live" | "closing" | "error";
-export type TranscriptLine = { role: "user" | "assistant"; text: string; at: number };
+/** Each line belongs to ONE character: the panel only shows the current era's character. */
+export type TranscriptLine = { role: "user" | "assistant"; text: string; at: number; character: "jeanne" | "malik" };
 
 type Instance = Pick<NapsterCompanionApiInstance, "sendCommand" | "destroy" | "muteMic" | "unmuteMic">;
 type ServerEvent = { event?: string; type?: string; data?: Record<string, unknown> & { message?: Record<string, unknown> } };
@@ -36,6 +37,7 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent }: Option
   const heartbeatTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const [status, setStatus] = useState<LiveStatus>("idle");
   const [character, setCharacter] = useState<"jeanne" | "malik" | null>(null);
+  const characterRef = useRef<"jeanne" | "malik">("malik");
   const [speaking, setSpeaking] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
   const [error, setError] = useState<{ code: string; message: string } | null>(null);
@@ -90,7 +92,7 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent }: Option
         if (m.role === "assistant" && m.action === "delta") setSubtitle((s) => s + String(m.content ?? ""));
         if (m.role === "assistant" && m.action === "created" && m.response_id && !m.item_id) setSubtitle("");
         if (m.action === "completed" && (m.role === "assistant" || m.role === "user") && String(m.content ?? "").trim()) {
-          const line = { role: m.role as "user" | "assistant", text: String(m.content), at: Date.now() };
+          const line = { role: m.role as "user" | "assistant", text: String(m.content), at: Date.now(), character: characterRef.current };
           setTranscript((t) => [...t.slice(-40), line]);
           if (m.role === "assistant") setSubtitle(line.text);
         }
@@ -120,6 +122,7 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent }: Option
     await api(`/api/runs/${runId}/conversation`, { method: "DELETE" }).catch(() => {});
     setVideoReady(false);
     setSpeaking(false);
+    setSubtitle("");
     setStatus("idle");
   }, [runId]);
   useEffect(() => {
@@ -151,7 +154,9 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent }: Option
     }
     phaseRef.current = "started";
     leaseRef.current = opened.leaseId;
+    characterRef.current = opened.character;
     setCharacter(opened.character);
+    setSubtitle("");
     const { NapsterCompanionApiSdk } = await import("@touchcastllc/napster-companion-api");
     const config: Partial<NapsterCompanionApiConfig> = {
       layout: { type: "inline", mountContainer: mountRef.current },
@@ -192,7 +197,7 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent }: Option
     const t = text.trim().slice(0, 500);
     if (!t) return;
     send({ type: "send_message", data: { role: "user", text: t, trigger_response: true, delay: true } });
-    setTranscript((x) => [...x.slice(-40), { role: "user", text: t, at: Date.now() }]);
+    setTranscript((x) => [...x.slice(-40), { role: "user", text: t, at: Date.now(), character: characterRef.current }]);
   }, [send]);
 
   /** Silent context update after a UI mutation (projection of the active character only). */

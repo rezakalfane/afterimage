@@ -81,7 +81,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
           setPulse(action);
           setTimeout(() => setPulse(null), 900);
         }
-        if (r.reaction && mode === "rehearsal") setRLines((l) => [...l, { role: "assistant", text: r.reaction!, at: Date.now() }]);
+        if (r.reaction && mode === "rehearsal") setRLines((l) => [...l, { role: "assistant", text: r.reaction!, at: Date.now(), character: r.publicState.activeEra === 1996 ? "jeanne" : "malik" }]);
         if (r.contextText && live.status === "live") live.pushContext(r.contextText, true);
         return r;
       } catch (e) {
@@ -103,10 +103,10 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
   // Rehearsal conversation (server-side deterministic replies, never mutating).
   const rehearse = useCallback(
     async (text: string | null) => {
-      if (text) setRLines((l) => [...l, { role: "user", text, at: Date.now() }]);
+      if (text) setRLines((l) => [...l, { role: "user", text, at: Date.now(), character: viewRef.current.activeEra === 1996 ? "jeanne" : "malik" }]);
       try {
-        const r = await api<{ text: string; suggestion: typeof suggestion; openComposer?: boolean }>(`/api/runs/${runId}/rehearsal`, { method: "POST", body: { text } });
-        setRLines((l) => [...l, { role: "assistant", text: r.text, at: Date.now() }]);
+        const r = await api<{ text: string; character: "jeanne" | "malik"; suggestion: typeof suggestion; openComposer?: boolean }>(`/api/runs/${runId}/rehearsal`, { method: "POST", body: { text } });
+        setRLines((l) => [...l, { role: "assistant", text: r.text, at: Date.now(), character: r.character }]);
         setSuggestion(r.suggestion);
         if (r.openComposer) setComposer(true);
       } catch {
@@ -121,9 +121,9 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
   useEffect(() => {
     if (mode !== "rehearsal" || finished) return;
     let cancelled = false;
-    api<{ text: string }>(`/api/runs/${runId}/rehearsal`, { method: "POST", body: { text: null } })
+    api<{ text: string; character: "jeanne" | "malik" }>(`/api/runs/${runId}/rehearsal`, { method: "POST", body: { text: null } })
       .then((r) => {
-        if (!cancelled) setRLines((l) => [...l, { role: "assistant", text: r.text, at: Date.now() }]);
+        if (!cancelled) setRLines((l) => [...l, { role: "assistant", text: r.text, at: Date.now(), character: r.character }]);
       })
       .catch(() => {});
     return () => {
@@ -134,10 +134,16 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
   async function switchEra(era: Era) {
     if (era === view.activeEra || busy || view.ending) return;
     setSwitching(era);
+    const wasLive = live.status === "live" || live.status === "connecting";
     if (live.status !== "idle") await live.stop(); // close the old character BEFORE switching
     setSuggestion(null);
-    await act("switch_era", { era });
+    const r = await act("switch_era", { era });
     setTimeout(() => setSwitching(null), 450);
+    // Keep talking across eras: the player already consented; connect the other era's character.
+    if (wasLive && r?.ok && mode === "live") {
+      setMicMuted(false);
+      void live.start();
+    }
   }
 
   const [confirmDelete, setConfirmDelete] = useState(false);

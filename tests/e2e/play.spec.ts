@@ -62,3 +62,15 @@ test("mobile layout is usable @mobile", async ({ page }) => {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(1);
 });
+
+test("after an era switch the panel shows only the new character's lines", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Commencer" }).click();
+  await page.waitForURL(/\/play\/run_/);
+  await expect(page.locator(".character__subtitles")).toContainText("Je vous reçois");
+  await page.getByRole("navigation", { name: "Époque" }).getByRole("button", { name: "1996" }).click();
+  await expect(page.locator(".character__subtitles")).toContainText("Vous m’entendez");
+  await expect(page.locator(".character__subtitles")).not.toContainText("Je vous reçois");
+  await page.getByRole("navigation", { name: "Époque" }).getByRole("button", { name: "2026" }).click();
+  await expect(page.locator(".character__subtitles")).not.toContainText("Vous m’entendez");
+});

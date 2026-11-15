@@ -24,9 +24,11 @@
 - **Migration 0001 is hand-written** (`ALTER TABLE … ADD COLUMN`): drizzle-kit generated a table rebuild that selected the not-yet-existing column.
 - **Fonts**: Cormorant Garamond and Source Sans 3 via `next/font`, downloaded at build and self-hosted (SIL OFL 1.1).
 
+- **Own leases are taken over**: opening a conversation closes the caller's previous open lease on the same run (reload, language switch during an open, second tab), and a UI era switch closes the previous era's conversation before switching. Napster is called outside the transaction; the newest request wins and there is still one avatar per run. Before this, a lease left by a reload during an open locked the run (no talk, no era switch) until reconciliation.
+- **Server error messages** are thrown in French (reference) and translated by the route handler from `src/server/security/error-texts.ts`; a unit test fails if a thrown French message has no English entry.
+
 ## Known gaps (not hidden)
 - **Multilingual**: French and English are both active. UI strings live in `src/i18n/messages.ts`; the episode's English content is in `src/content/episodes/last-screening/v1/i18n.en.ts`; server texts, prompts, tools and rehearsal replies are keyed by locale. The player picks the language in Settings (home) or with the FR|EN switch (top bar); the choice is a cookie and the page reloads; the run state is language-free, so the game continues where it was. Leases store the session locale, so a live session keeps its agent's language. Still French only: the admin and privacy pages. The English texts need a native review.
-- Second tab: a second tab gets `CONVERSATION_ACTIVE` (read-only use of the scene still works). There is no explicit "take over" button yet.
 - The `en` prompts are my translation of the kit and need a native review.
 - CSP is report-only until the Napster media/signalling domains are observed on staging (kit §18.9).
 - Turso concurrency, backups and restores are untested: no Turso access yet.

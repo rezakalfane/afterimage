@@ -4,6 +4,8 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { env } from "@/server/env";
 import { log } from "./log";
+import { localizeError } from "./error-texts";
+import { requestLocale } from "./locale";
 
 export type ErrorCode =
   | "UNAUTHENTICATED"
@@ -96,10 +98,10 @@ export function handler<A extends unknown[]>(fn: (req: Request, ...rest: A) => P
       if (e instanceof HttpError) {
         const headers: Record<string, string> = { "X-Correlation-Id": correlationId };
         if (e.retryAfter) headers["Retry-After"] = String(e.retryAfter);
-        return json({ ok: false, code: e.code, message: e.publicMessage ?? null, correlationId, ...e.extra }, { status: STATUS[e.code], headers });
+        return json({ ok: false, code: e.code, message: localizeError(e.publicMessage, requestLocale(req)), correlationId, ...e.extra }, { status: STATUS[e.code], headers });
       }
       log.error("route.unexpected", { correlationId, path: new URL(req.url).pathname, error: e });
-      return json({ ok: false, code: "INTERNAL", message: "Une erreur inattendue est survenue.", correlationId }, { status: 500, headers: { "X-Correlation-Id": correlationId } });
+      return json({ ok: false, code: "INTERNAL", message: localizeError("Une erreur inattendue est survenue.", requestLocale(req)), correlationId }, { status: 500, headers: { "X-Correlation-Id": correlationId } });
     }
   };
 }

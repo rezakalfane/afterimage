@@ -36,11 +36,19 @@ describe("admission", () => {
     expect(open.rows.length).toBeLessThanOrEqual(2);
   });
 
-  it("a second tab gets CONVERSATION_ACTIVE; the memory id is per run+character and reused on resume", async () => {
+  it("a new open takes over the owner's previous lease; the memory id is per run+character and reused on resume", async () => {
     const a = await guest("a");
     const runId = (await a.createRun()).body.runId;
+    const o0 = await a.openConversation(runId);
+    // Same owner again (reload, language switch, second tab): the old lease is closed, never two at once.
+    const deletesBefore = napsterCalls.filter((c) => c.method === "DELETE").length;
     const o1 = await a.openConversation(runId);
-    expect((await a.openConversation(runId)).body.code).toBe("CONVERSATION_ACTIVE");
+    expect(o1.status).toBe(200);
+    expect(o1.body.leaseId).not.toBe(o0.body.leaseId);
+    expect(napsterCalls.filter((c) => c.method === "DELETE").length).toBe(deletesBefore + 1);
+    const open = await sqlClient().execute({ sql: `SELECT id FROM conversation_leases WHERE run_id = ? AND status IN ('reserved','active','closing','uncertain')`, args: [runId] });
+    expect(open.rows.map((r) => r.id)).toEqual([o1.body.leaseId]);
+    expect((await a.tool(runId, "malik_examine", { objet: "photo" }, o0.body.leaseId)).body.code).toBe("LEASE_INVALID");
     const create1 = napsterCalls.filter((c) => c.method === "POST").at(-1)!.body as Record<string, unknown>;
     expect(String(create1.externalClientId)).toMatch(/^ai_[a-f0-9]{28}$/);
     const sent = JSON.stringify(create1);
@@ -140,10 +148,10 @@ describe("tool proposals", () => {
       expect(r.body.ok).toBe(false);
       expect(r.body.revision).toBe(1);
     }
-    // Era switch is refused while the conversation is open (server-enforced).
-    expect((await a.command(runId, "switch_era", { era: 1996 }, 1)).body.code).toBe("CONVERSATION_ACTIVE");
-    await a.closeConversation(runId);
+    // Switching era from the UI ends the open conversation of the previous era first.
     expect((await a.command(runId, "switch_era", { era: 1996 }, 1)).body.ok).toBe(true);
+    const still = await sqlClient().execute({ sql: `SELECT 1 FROM conversation_leases WHERE run_id = ? AND status IN ('reserved','active','closing')`, args: [runId] });
+    expect(still.rows.length).toBe(0);
     // The old lease can no longer act.
     expect((await a.tool(runId, "jeanne_examine", { objet: "programme" }, leaseId)).body.code).toBe("LEASE_INVALID");
   });

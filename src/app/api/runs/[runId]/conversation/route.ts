@@ -12,7 +12,7 @@ type P = { params: Promise<{ runId: string }> };
 export const POST = handler(async (req, { params }: P) => {
   const ctx = await requireContext(req);
   const { runId } = await params;
-  // Only an ACTIVE locale (fr today) can be requested; anything else falls back to French.
+  // Only an ACTIVE locale can be requested; anything else falls back to French.
   const locale = pickLocale(new RegExp(`(?:^|;\\s*)${LOCALE_COOKIE}=([a-z]{2})`).exec(req.headers.get("cookie") ?? "")?.[1]);
   let opened;
   try {

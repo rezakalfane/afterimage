@@ -3,6 +3,7 @@ import { requireContext } from "@/server/dal/context";
 import { env } from "@/server/env";
 import { requestLocale } from "@/server/security/locale";
 import { contextUpdateText } from "@/server/napster/context";
+import { closeConversation } from "@/server/napster/conversation";
 import { sqlClient } from "@/server/db/client";
 import type { Locale } from "@/server/world/texts";
 import { handler, HttpError, json, readJson } from "@/server/security/http";
@@ -23,6 +24,9 @@ export const POST = handler(async (req, { params }: P) => {
   const parsed = commandBody.safeParse(await readJson(req));
   if (!parsed.success) throw new HttpError("INVALID_ARGUMENT", "Commande invalide.");
   if (parsed.data.action === "choose_ending") throw new HttpError("INVALID_ARGUMENT", "La fin se confirme via /ending.");
+  // Switching era ends the caller's conversation of the previous era (even one left behind by a
+  // reload). Done before the transaction: closing calls Napster.
+  if (parsed.data.action === "switch_era") await closeConversation(ctx, (await params).runId);
   const result = await executeCommand(ctx, (await params).runId, parsed.data, { channel: "ui", locale: requestLocale(req) });
   const live = env().CONVERSATION_MODE === "live";
   const extra =

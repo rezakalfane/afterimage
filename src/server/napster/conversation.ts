@@ -70,6 +70,15 @@ export async function openConversation(ctx: TenantContext, runId: string, opts: 
   const now = Date.now();
   const leaseId = newId("lease");
 
+  // 0. Take over the caller's own open lease on this run (left behind by a reload, a language
+  //    switch during an open, a crashed tab). The newest request wins; one avatar per run holds.
+  //    Closing calls Napster, so it happens before (outside) the admission transaction.
+  const own = await sqlClient().execute({ sql: `SELECT id FROM conversation_leases WHERE tenant_id = ? AND run_id = ? AND user_id = ? AND status IN ${OPEN}`, args: [ctx.tenantId, runId, ctx.userId] });
+  if (own.rows[0]) {
+    log.info("napster.connection.take_over", { leaseId: String(own.rows[0].id) });
+    await closeConversation(ctx, runId);
+  }
+
   // 1. Admission + identity, one write transaction.
   const { slot, externalClientId, resumed } = await writeTx(async (tx) => {
     // Expired active/reserved leases may still hold provider capacity: mark them uncertain (counted until reconciled).

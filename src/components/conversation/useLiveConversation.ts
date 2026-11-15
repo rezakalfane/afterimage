@@ -213,7 +213,8 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent }: Option
   // Close the lease if the tab goes away (keepalive survives unload).
   useEffect(() => {
     const onHide = () => {
-      if (!leaseRef.current) return;
+      // Also while the open is in flight: its lease would otherwise outlive the page.
+      if (!leaseRef.current && phaseRef.current === "idle") return;
       void fetch(`/api/runs/${runId}/conversation`, { method: "DELETE", keepalive: true, credentials: "same-origin" });
     };
     window.addEventListener("pagehide", onHide);

@@ -73,10 +73,14 @@ export async function createRun(ctx: TenantContext): Promise<RunRow> {
   return { id, tenantId: ctx.tenantId, ownerUserId: ctx.userId, revision: 0, status: "active", state, createdAt: now, updatedAt: now };
 }
 
-/** Mark the run as deleting (tombstone). The caller closes provider sessions, then purges. */
+/**
+ * Mark the run as deleting (tombstone). Idempotent: a run already 'deleting' for this owner is
+ * accepted, so a retry after a failed provider close can finish the deletion.
+ */
 export async function markRunDeleting(ctx: TenantContext, runId: string) {
-  await getRun(ctx, runId);
-  await sqlClient().execute({ sql: `UPDATE runs SET status = 'deleting', updated_at = ? WHERE tenant_id = ? AND id = ? AND owner_user_id = ?`, args: [Date.now(), ctx.tenantId, runId, ctx.userId] });
+  if (!/^run_[a-f0-9]{32}$/.test(runId)) throw new HttpError("NOT_FOUND");
+  const r = await sqlClient().execute({ sql: `UPDATE runs SET status = 'deleting', updated_at = ? WHERE tenant_id = ? AND id = ? AND owner_user_id = ?`, args: [Date.now(), ctx.tenantId, runId, ctx.userId] });
+  if (r.rowsAffected !== 1) throw new HttpError("NOT_FOUND");
 }
 
 export async function purgeRun(ctx: TenantContext, runId: string) {

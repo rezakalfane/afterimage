@@ -2,11 +2,19 @@
 import { requireContext } from "@/server/dal/context";
 import { env } from "@/server/env";
 import { contextUpdateText } from "@/server/napster/context";
+import { sqlClient } from "@/server/db/client";
+import type { Locale } from "@/server/world/texts";
 import { handler, HttpError, json, readJson } from "@/server/security/http";
 import { rehearsalReaction } from "@/server/world/rehearsal";
 import { commandBody, executeCommand } from "@/server/world/service";
 
 export const dynamic = "force-dynamic";
+
+/** Locale of the caller's open conversation for this run (scoped), else French. */
+async function liveLocale(ctx: { tenantId: string; userId: string }, runId: string): Promise<Locale> {
+  const r = await sqlClient().execute({ sql: `SELECT locale FROM conversation_leases WHERE tenant_id = ? AND run_id = ? AND user_id = ? AND status = 'active'`, args: [ctx.tenantId, runId, ctx.userId] });
+  return r.rows[0]?.locale === "en" ? "en" : "fr";
+}
 type P = { params: Promise<{ runId: string }> };
 
 export const POST = handler(async (req, { params }: P) => {
@@ -19,7 +27,7 @@ export const POST = handler(async (req, { params }: P) => {
   const extra =
     result.ok && result.changed && result.event
       ? live
-        ? { contextText: contextUpdateText(result.characterContext) } // pushed by the browser to ITS OWN live character
+        ? { contextText: contextUpdateText(result.characterContext, await liveLocale(ctx, (await params).runId)) } // pushed by the browser to ITS OWN live character
         : { reaction: rehearsalReaction(result.event.type) }
       : {};
   // characterContext stays server-side; the client gets the public projection only.

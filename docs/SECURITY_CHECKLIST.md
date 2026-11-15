@@ -14,7 +14,9 @@ Status legend: ✅ tested here (command/test named) · 🟡 implemented, not yet
 | XSS via personal message | rendered as React text only; no HTML or Markdown | ✅ e2e: `<script>` phrase shown verbatim, never executed, no JS dialog |
 | Memory leak between runs | memory id = HMAC(env, tenant, user, run, character, generation), stored once; per-character projections | ✅ unit (id properties, disjoint contexts) · ✅ live (canary word of run A absent in run B; resume recalls it in A) |
 | Private-state caching | `Cache-Control: private, no-store` on every API response; dynamic pages | ✅ code (`security/http.ts`) |
-| Secrets in bundle / logs | server modules `server-only`; lint rule forbids client imports of `@/server/*`; redacted logs; no `NEXT_PUBLIC_` secret | ✅ bundle scan (key, `X-Api-Key`, letter text, G7 verso, secret names: 0 hits in `.next/static`) · ✅ `doctor` |
+| Secrets in bundle / logs | server modules `server-only`; lint rule forbids client imports of `@/server/*`; redacted logs; no `NEXT_PUBLIC_` secret | ✅ `npm run check:bundle` (part of `verify`): secret VALUES, `X-Api-Key`, the agents endpoint, letter, G7 back, 2008 report, closing texts, canon truth, key location → 0 hits; prints counts only · ✅ `doctor` |
+| Data deletion ("Supprimer ma partie") | tombstone → close provider sessions → purge; retry finishes an interrupted deletion; maintenance purges tombstones | ✅ `conversation.test.ts` (202 when the provider close fails, retry 200, row gone; another player 404; maintenance purge) |
+| Accessibility (P0) | keyboard path, visible focus, dialogs on native `<dialog>`, DOM text, 44 px targets | ✅ `tests/e2e/a11y.spec.ts`: axe WCAG 2.1 AA (no serious or critical violation on home, game, dialog); keyboard-only path; 1280×720; 200% zoom · 🟡 screen readers not tested by hand |
 | Secrets in Git | `.env*` ignored except `.env.example` | ✅ full-history scan before publishing the public repo |
 | Forged cron | `Authorization: Bearer CRON_SECRET`, constant-time compare | 🟡 code |
 | Recording URL / SSRF | recordings disabled; no proxy route | ✅ feature off (403 on account) |

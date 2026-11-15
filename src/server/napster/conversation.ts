@@ -13,6 +13,7 @@ import { memoryId, newId } from "@/server/security/ids";
 import { log } from "@/server/security/log";
 import { characterForEra, type CharacterId } from "@/server/world/content";
 import { characterContext } from "@/server/world/projections";
+import type { Locale } from "@/server/world/texts";
 import { napster, NapsterError, NapsterUncertain, type ConnectionResponse } from "./api";
 import { connectionProfile, openingInstruction } from "./context";
 
@@ -40,10 +41,14 @@ async function reserveRateSlot(tx: Transaction, now: number): Promise<number> {
   return slot;
 }
 
-function agentFor(character: CharacterId): string {
+/** Agent for a character in a locale. fr = P0 agents; en = optional *_EN ids (P1, off unless set). */
+function agentFor(character: CharacterId, locale: Locale): string {
   const e = env();
-  const id = character === "jeanne" ? e.NAPSTER_JEANNE_AGENT_ID : e.NAPSTER_MALIK_AGENT_ID;
-  if (!id) throw new HttpError("LIVE_DISABLED");
+  const id =
+    locale === "en"
+      ? character === "jeanne" ? process.env.NAPSTER_JEANNE_AGENT_ID_EN : process.env.NAPSTER_MALIK_AGENT_ID_EN
+      : character === "jeanne" ? e.NAPSTER_JEANNE_AGENT_ID : e.NAPSTER_MALIK_AGENT_ID;
+  if (!id) throw new HttpError("LIVE_DISABLED", "Conversation en direct indisponible dans cette langue.");
   return id;
 }
 
@@ -54,13 +59,14 @@ export interface OpenedConversation {
   revision: number;
 }
 
-export async function openConversation(ctx: TenantContext, runId: string, opts: { resumed?: boolean } = {}): Promise<OpenedConversation> {
+export async function openConversation(ctx: TenantContext, runId: string, opts: { resumed?: boolean; locale?: Locale } = {}): Promise<OpenedConversation> {
+  const locale: Locale = opts.locale ?? "fr";
   const e = env();
   if (e.CONVERSATION_MODE !== "live") throw new HttpError("LIVE_DISABLED", "Conversation en direct désactivée (mode répétition).");
   const run = await getRun(ctx, runId);
   if (run.status !== "active") throw new HttpError("RUN_FINISHED");
   const character = characterForEra(run.state.activeEra);
-  const agentId = agentFor(character);
+  const agentId = agentFor(character, locale);
   const now = Date.now();
   const leaseId = newId("lease");
 
@@ -86,8 +92,8 @@ export async function openConversation(ctx: TenantContext, runId: string, opts: 
     const ecid = String(binding.rows[0].external_client_id);
     const s = await reserveRateSlot(tx, now);
     await tx.execute({
-      sql: `INSERT INTO conversation_leases (id, tenant_id, run_id, user_id, provider_scope, character_id, external_client_id, status, heartbeat_at, expires_at, created_at, updated_at) VALUES (?,?,?,?,?,?,?,'reserved',?,?,?,?)`,
-      args: [leaseId, ctx.tenantId, runId, ctx.userId, PROVIDER_SCOPE, character, ecid, now, now + RESERVE_TTL_MS, now, now],
+      sql: `INSERT INTO conversation_leases (id, tenant_id, run_id, user_id, provider_scope, character_id, external_client_id, locale, status, heartbeat_at, expires_at, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,'reserved',?,?,?,?)`,
+      args: [leaseId, ctx.tenantId, runId, ctx.userId, PROVIDER_SCOPE, character, ecid, locale, now, now + RESERVE_TTL_MS, now, now],
     });
     return { slot: s, externalClientId: ecid, resumed: hadBinding };
   });
@@ -102,8 +108,8 @@ export async function openConversation(ctx: TenantContext, runId: string, opts: 
       body: {
         channelType: "webrtc",
         externalClientId,
-        externalClientProfile: connectionProfile(context),
-        initialSpeech: openingInstruction(character, opts.resumed ?? resumed),
+        externalClientProfile: connectionProfile(context, locale),
+        initialSpeech: openingInstruction(character, opts.resumed ?? resumed, locale),
         tags: { app: "afterimage", env: e.APP_ENV, lease: leaseId },
       },
     });
@@ -149,9 +155,8 @@ export async function openConversation(ctx: TenantContext, runId: string, opts: 
 
 /** Close the caller's open conversation for this run. Idempotent. */
 export async function closeConversation(ctx: TenantContext, runId: string): Promise<{ closed: boolean }> {
-  await getRun(ctx, runId).catch((e) => {
-    if (!(e instanceof HttpError)) throw e;
-  });
+  // No getRun here: the run may already be a 'deleting' tombstone. Every statement below is
+  // scoped by tenant + run + user, so a foreign run simply matches nothing.
   const r = await sqlClient().execute({
     sql: `UPDATE conversation_leases SET status = 'closing', updated_at = ? WHERE tenant_id = ? AND run_id = ? AND user_id = ? AND status IN ${OPEN} RETURNING id, connection_id`,
     args: [Date.now(), ctx.tenantId, runId, ctx.userId],

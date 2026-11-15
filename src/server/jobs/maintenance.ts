@@ -63,10 +63,11 @@ export async function reconcileLeases(now = Date.now()) {
 }
 
 export async function purgeExpiredRuns(now = Date.now()) {
-  // Close provider sessions first: only runs without an open lease are deleted.
+  // Expired runs and interrupted deletions ('deleting' tombstones). Provider sessions are closed
+  // first (reconcileLeases): only runs without an open lease are deleted.
   const r = await sqlClient().execute({
     sql: `DELETE FROM runs WHERE id IN (
-            SELECT r.id FROM runs r WHERE r.expires_at < ?
+            SELECT r.id FROM runs r WHERE (r.expires_at < ? OR r.status = 'deleting')
             AND NOT EXISTS (SELECT 1 FROM conversation_leases l WHERE l.tenant_id = r.tenant_id AND l.run_id = r.id AND l.status IN ('reserved','active','closing','uncertain'))
             LIMIT ?)`,
     args: [now, BATCH * 4],

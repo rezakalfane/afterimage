@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Source_Sans_3 } from "next/font/google";
+import { cookies } from "next/headers";
+import { I18nProvider } from "@/i18n/I18nProvider";
+import { LOCALE_COOKIE, pickLocale } from "@/i18n/messages";
 import "./globals.css";
 
 // Fonts are downloaded at build time and self-hosted by Next.js (no call to Google while playing).
@@ -14,10 +17,14 @@ export const metadata: Metadata = {
 };
 export const viewport: Viewport = { themeColor: "#101715", colorScheme: "dark" };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Locale: only an ACTIVE locale from the cookie, else French (P0).
+  const locale = pickLocale((await cookies()).get(LOCALE_COOKIE)?.value);
   return (
-    <html lang="fr" className={`${display.variable} ${body.variable}`}>
-      <body>{children}</body>
+    <html lang={locale} className={`${display.variable} ${body.variable}`}>
+      <body>
+        <I18nProvider locale={locale}>{children}</I18nProvider>
+      </body>
     </html>
   );
 }

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "AFTERIMAGE \u2014 La derni\u00e8re s\u00e9ance. Two-era conversational mystery on the Napster API.",
+  "description": "AFTERIMAGE — La dernière séance. Two-era conversational mystery on the Napster API.",
   "scripts": {
     "setup": "tsx --conditions=react-server scripts/setup.ts",
     "dev": "next dev",
@@ -20,12 +20,13 @@
     "test:e2e": "playwright test",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "verify": "npm run lint && npm run typecheck && npm run test && npm run test:integration && npm run build",
+    "verify": "npm run lint && npm run typecheck && npm run test && npm run test:integration && npm run build && npm run check:bundle",
     "provision:napster": "tsx --conditions=react-server scripts/provision-napster.ts",
     "ops:cleanup": "tsx --conditions=react-server scripts/ops-cleanup.ts",
     "ops:bootstrap-owner": "tsx --conditions=react-server scripts/ops-bootstrap-owner.ts",
     "release:migrate": "tsx --conditions=react-server scripts/release-migrate.ts",
-    "ops:napster-usage": "tsx --conditions=react-server scripts/ops-napster-usage.ts"
+    "ops:napster-usage": "tsx --conditions=react-server scripts/ops-napster-usage.ts",
+    "check:bundle": "tsx scripts/check-bundle.ts"
   },
   "engines": {
     "node": ">=22.12 <25"
@@ -43,6 +44,7 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
     "@playwright/test": "1.64.1",
     "@types/node": "24.19.2",
     "@types/react": "19.2.18",

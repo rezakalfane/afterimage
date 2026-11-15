@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api } from "@/components/game/api";
+import { useT } from "@/i18n/I18nProvider";
 
 type Settings = { large: boolean; reduceMotion: boolean };
 const KEY = "afterimage.settings";
@@ -17,6 +18,8 @@ function readSettings(): Settings {
 
 export function HomeClient({ mode, runs, signedIn, isAdmin }: { mode: "rehearsal" | "live"; runs: { id: string; status: string; updatedAt: number }[]; signedIn: boolean; isAdmin: boolean }) {
   const router = useRouter();
+  const t = useT();
+  const h = t.home;
   const [busy, setBusy] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
@@ -44,7 +47,7 @@ export function HomeClient({ mode, runs, signedIn, isAdmin }: { mode: "rehearsal
     try {
       if (!signedIn) {
         const r = await fetch("/api/auth/sign-in/anonymous", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
-        if (!r.ok) throw new Error(r.status === 429 ? "Trop de nouvelles parties depuis cette connexion. Réessayez plus tard." : "Impossible de créer une session invitée.");
+        if (!r.ok) throw new Error(r.status === 429 ? h.tooManyGuests : h.guestFailed);
       }
       const run = await api<{ runId: string }>("/api/runs", { method: "POST" });
       router.push(`/play/${run.runId}`);
@@ -58,32 +61,32 @@ export function HomeClient({ mode, runs, signedIn, isAdmin }: { mode: "rehearsal
     <main className="home">
       <div className="home__facade">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/assets/afterimage/scenes/cinema-exterior-1672.webp" srcSet="/assets/afterimage/scenes/cinema-exterior-960.webp 960w, /assets/afterimage/scenes/cinema-exterior-1672.webp 1672w" sizes="100vw" alt="La façade art déco du Régina, la nuit, sous la pluie" />
-        <p className="marquee" aria-hidden="true">Le Régina<small>Dernière séance · 21 h 30</small></p>
+        <img src="/assets/afterimage/scenes/cinema-exterior-1672.webp" srcSet="/assets/afterimage/scenes/cinema-exterior-960.webp 960w, /assets/afterimage/scenes/cinema-exterior-1672.webp 1672w" sizes="100vw" alt={h.facadeAlt} />
+        <p className="marquee" aria-hidden="true">{h.marquee}<small>{h.marqueeSub}</small></p>
       </div>
       <div className="home__panel">
         <h1 className="home__title">AFTERIMAGE</h1>
-        <p className="home__subtitle">La dernière séance</p>
-        <p className="home__pitch">Deux personnes. Le même cinéma. Trente ans d’écart. Parlez-leur, gagnez leur confiance et faites traverser le temps à ce qui mérite d’être sauvé.</p>
+        <p className="home__subtitle">{h.subtitle}</p>
+        <p className="home__pitch">{h.pitch}</p>
         <div className="btn-row">
-          <button type="button" className="btn btn--brass btn--big" onClick={start} disabled={busy || !hydrated}>{busy ? "Ouverture…" : "Commencer"}</button>
-          {resume && <Link className="btn btn--big" href={`/play/${resume.id}`}>Reprendre</Link>}
-          <button type="button" className="btn" onClick={() => setSettingsOpen((v) => !v)} aria-expanded={settingsOpen}>Réglages</button>
+          <button type="button" className="btn btn--brass btn--big" onClick={start} disabled={busy || !hydrated}>{busy ? h.opening : h.start}</button>
+          {resume && <Link className="btn btn--big" href={`/play/${resume.id}`}>{h.resume}</Link>}
+          <button type="button" className="btn" onClick={() => setSettingsOpen((v) => !v)} aria-expanded={settingsOpen}>{h.settings}</button>
         </div>
         {settingsOpen && (
           <fieldset className="settings">
-            <legend>Réglages</legend>
-            <label><input type="checkbox" checked={settings.large} onChange={(e) => setSettings({ ...settings, large: e.target.checked })} /> Texte plus grand</label>
-            <label><input type="checkbox" checked={settings.reduceMotion} onChange={(e) => setSettings({ ...settings, reduceMotion: e.target.checked })} /> Réduire les animations</label>
-            <p className="muted small">Les sous-titres sont toujours affichés. Tout se joue aussi au clavier.</p>
+            <legend>{h.settings}</legend>
+            <label><input type="checkbox" checked={settings.large} onChange={(e) => setSettings({ ...settings, large: e.target.checked })} /> {h.largeText}</label>
+            <label><input type="checkbox" checked={settings.reduceMotion} onChange={(e) => setSettings({ ...settings, reduceMotion: e.target.checked })} /> {h.reduceMotion}</label>
+            <p className="muted small">{h.settingsNote}</p>
           </fieldset>
         )}
         {error && <p className="warn" role="alert">{error}</p>}
-        <p className="home__notice">{mode === "rehearsal" ? "Mode répétition : personnages simulés, sans connexion Napster." : "Conversations vidéo en direct avec des personnages fictifs animés par IA (Napster)."} Le micro n’est demandé qu’au moment de parler ; le clavier suffit pour jouer.</p>
+        <p className="home__notice">{mode === "rehearsal" ? h.noticeRehearsal : h.noticeLive} {h.noticeMic}</p>
         <p className="home__links">
-          {!signedIn && <Link href="/connexion">Se connecter</Link>}
-          {isAdmin && <Link href="/admin">Administration</Link>}
-          <Link href="/confidentialite">Confidentialité</Link>
+          {!signedIn && <Link href="/connexion">{h.signIn}</Link>}
+          {isAdmin && <Link href="/admin">{h.admin}</Link>}
+          <Link href="/confidentialite">{h.privacy}</Link>
         </p>
       </div>
     </main>

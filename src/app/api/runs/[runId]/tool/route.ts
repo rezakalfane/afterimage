@@ -5,10 +5,10 @@ import { requireContext } from "@/server/dal/context";
 import { handler, HttpError, json, readJson } from "@/server/security/http";
 import { sqlClient } from "@/server/db/client";
 import { getRun } from "@/server/dal/runs";
-import { toolToCommand } from "@/server/napster/tools";
+import { toolsForActions, toolToCommand } from "@/server/napster/tools";
 import { contextUpdateText } from "@/server/napster/context";
 import { executeCommand } from "@/server/world/service";
-import { refusalText } from "@/server/world/texts";
+import { texts, type Locale } from "@/server/world/texts";
 import type { CharacterId } from "@/server/world/content";
 
 export const dynamic = "force-dynamic";
@@ -29,10 +29,11 @@ export const POST = handler(async (req, { params }: P) => {
   await getRun(ctx, runId); // foreign or unknown run → 404 before anything else
   // The character is the one of the caller's lease — never an argument from the request.
   const lease = await sqlClient().execute({
-    sql: `SELECT character_id FROM conversation_leases WHERE id = ? AND tenant_id = ? AND run_id = ? AND user_id = ? AND status = 'active'`,
+    sql: `SELECT character_id, locale FROM conversation_leases WHERE id = ? AND tenant_id = ? AND run_id = ? AND user_id = ? AND status = 'active'`,
     args: [p.data.conversationLeaseId, ctx.tenantId, runId, ctx.userId],
   });
   const character = lease.rows[0]?.character_id as CharacterId | undefined;
+  const locale = (lease.rows[0]?.locale === "en" ? "en" : "fr") as Locale;
   if (!character) throw new HttpError("LEASE_INVALID", "Cette conversation n’est plus active.");
   const mapped = toolToCommand(character, p.data.name, p.data.args);
   const command = mapped.ok ? mapped.command : { action: "__invalid_tool__", args: {} };
@@ -45,14 +46,17 @@ export const POST = handler(async (req, { params }: P) => {
   // Output for the model: business result + this character's projection only.
   // A no-op is NOT a failure (e.g. a clue already noted): say so explicitly, or the model may
   // narrate a failure that never happened.
+  // The next usable tools are stated explicitly (models skim long JSON contexts).
+  const next = toolsForActions(character, result.characterContext.availableActions, locale);
   const output = result.ok
     ? result.changed
-      ? { ok: true, resultat: result.event?.summary, aide: result.hint, contexte: contextUpdateText(result.characterContext) }
+      ? { ok: true, resultat: result.event?.summary, aide: result.hint, outilsMaintenant: next, contexte: contextUpdateText(result.characterContext, locale) }
       : {
           ok: true,
-          resultat: "Déjà pris en compte : ce n’est pas un échec, rien n’a changé. Continue avec l’un des outils de availableTools si le joueur le demande.",
-          contexte: contextUpdateText(result.characterContext),
+          resultat: texts(locale).tool.noop.replace("{next}", next.join(" ; ") || "—"),
+          outilsMaintenant: next,
+          contexte: contextUpdateText(result.characterContext, locale),
         }
-    : { ok: false, message: mapped.ok ? result.message : refusalText("", "INVALID_ARGUMENT", undefined) };
+    : { ok: false, message: mapped.ok ? result.message : texts(locale).tool.invalid };
   return json({ ok: result.ok, output, revision: result.revision, publicState: result.publicState });
 });

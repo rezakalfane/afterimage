@@ -91,6 +91,20 @@ describe("English tools (en agents)", () => {
   });
 });
 
+describe("session locale", () => {
+  it("an English session gets English tools, header and opening; French stays French", async () => {
+    const { openingInstruction } = await import("@/server/napster/context");
+    const ctx = characterContext(initialState(), "malik", null);
+    const en = JSON.stringify(connectionProfile(ctx, "en"));
+    expect(en).toContain("en_malik_examine(object=photo)");
+    expect(en).not.toContain("objet=");
+    expect(contextUpdateText(ctx, "en")).toMatch(/^\[AUTHORISED CONTEXT/);
+    expect(contextUpdateText(ctx, "fr")).toMatch(/^\[CONTEXTE AUTORISÉ/);
+    expect(openingInstruction("jeanne", false, "en")).toContain("Can you hear me?");
+    expect(openingInstruction("jeanne", false, "fr")).toContain("Vous m’entendez ?");
+  });
+});
+
 describe("memory identity", () => {
   const base = { env: "local", tenantId: "t1", userId: "u1", runId: "r1", character: "malik", generation: 1 };
   it("is ≤ 32 chars, Napster-safe, stable and different per run/character/env", () => {

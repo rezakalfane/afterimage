@@ -1,17 +1,20 @@
 "use client";
 // The notebook: observations and objects per era (not a magic pocket: each card shows its year).
+import { useT } from "@/i18n/I18nProvider";
+import { fmt } from "@/i18n/messages";
 import { objectImage } from "./scene-config";
 import type { Era, NotebookEntry } from "./types";
 
 export function Notebook({ entries, era, onOpen }: { entries: NotebookEntry[]; era: Era; onOpen: (id: string) => void }) {
+  const t = useT().notebook;
   return (
-    <section className="notebook" aria-label="Carnet">
+    <section className="notebook" aria-label={t.region}>
       <div className="notebook__label">
-        <span className="eyebrow">Le carnet</span>
-        <p>{entries.length ? `${entries.length} trace${entries.length > 1 ? "s" : ""}` : "Encore vide"}</p>
+        <span className="eyebrow">{t.label}</span>
+        <p>{entries.length ? fmt(entries.length > 1 ? t.countPlural : t.count, { n: entries.length }) : t.empty}</p>
       </div>
       <ul className="notebook__items">
-        {entries.length === 0 && <li className="notebook__empty">Examinez le décor : ce que vous découvrez s’inscrit ici.</li>}
+        {entries.length === 0 && <li className="notebook__empty">{t.emptyHint}</li>}
         {entries.map((e) => (
           <li key={e.id}>
             <button type="button" className={`card${e.era !== era ? " card--other-era" : ""}`} onClick={() => onOpen(e.id)}>

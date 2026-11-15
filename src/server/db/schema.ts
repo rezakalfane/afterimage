@@ -184,6 +184,8 @@ export const conversationLeases = sqliteTable(
     providerScope: text("provider_scope").notNull(),
     characterId: text("character_id").notNull(),
     externalClientId: text("external_client_id").notNull(),
+    /** Locale of the session: selects the agent and the language of tool outputs. */
+    locale: text("locale").notNull().default("fr"),
     connectionId: text("connection_id").unique(),
     status: text("status").notNull(),
     statusReason: text("status_reason"),
@@ -195,6 +197,7 @@ export const conversationLeases = sqliteTable(
   (t) => [
     check("leases_character", sql`${t.characterId} IN ('jeanne','malik')`),
     check("leases_status", sql`${t.status} IN ('reserved','active','closing','uncertain','closed','failed')`),
+    check("leases_locale", sql`${t.locale} IN ('fr','en')`),
     runFk(t),
     uniqueIndex("one_open_lease_per_run").on(t.tenantId, t.runId).where(sql`status IN ('reserved','active','closing','uncertain')`),
     index("leases_capacity").on(t.providerScope, t.status, t.expiresAt),

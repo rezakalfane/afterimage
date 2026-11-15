@@ -7,12 +7,13 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CharacterPanel } from "@/components/conversation/CharacterPanel";
 import { useLiveConversation, type TranscriptLine } from "@/components/conversation/useLiveConversation";
+import { useT } from "@/i18n/I18nProvider";
+import { fmt } from "@/i18n/messages";
 import { api, ApiError, commandId } from "./api";
 import { EndingDialog } from "./EndingDialog";
 import { MessageComposer } from "./MessageComposer";
 import { Notebook } from "./Notebook";
 import { ObjectInspector } from "./ObjectInspector";
-import { ERA_META } from "./scene-config";
 import { SceneViewport } from "./SceneViewport";
 import type { Action, CommandResponse, Era, Mode, PublicState } from "./types";
 
@@ -20,6 +21,8 @@ const HOTSPOT_TO_INSPECT: Record<string, string> = { photo: "photo", waterline: 
 
 export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode; initial: PublicState }) {
   const router = useRouter();
+  const t = useT();
+  const g = t.game;
   const [view, setView] = useState<PublicState>(initial);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<{ text: string; tone: "info" | "warn" } | null>(null);
@@ -69,7 +72,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
         });
         setView(r.publicState);
         if (!r.ok) {
-          say(r.message ?? "Action impossible.", "warn");
+          say(r.message ?? g.actionImpossible, "warn");
           return r;
         }
         if (r.hint) setHint(r.hint);
@@ -85,16 +88,16 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
         const err = e as ApiError;
         if (err.code === "REVISION_CONFLICT" && err.body?.publicState) {
           setView(err.body.publicState as PublicState);
-          say("La partie a changé entre-temps (autre onglet ?). L’état a été rechargé : vérifiez avant de recommencer.", "warn");
+          say(g.conflict, "warn");
         } else if (err.code === "RUN_FINISHED") {
           await refresh();
-        } else say(err.message || "Connexion au serveur impossible. Rien n’a été perdu ; réessayez.", "warn");
+        } else say(err.message || t.common.serverDown, "warn");
         return null;
       } finally {
         setBusy(false);
       }
     },
-    [runId, mode, live, refresh, say],
+    [runId, mode, live, refresh, say, g, t],
   );
 
   // Rehearsal conversation (server-side deterministic replies, never mutating).
@@ -145,7 +148,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
       await api(`/api/runs/${runId}`, { method: "DELETE" });
       router.push("/?deleted=1");
     } catch (e) {
-      say((e as Error).message || "Suppression impossible pour l’instant ; réessayez.", "warn");
+      say((e as Error).message || g.deleteFailed, "warn");
       setBusy(false);
     }
   }
@@ -156,25 +159,24 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
   }
 
   const era = view.activeEra;
-  const meta = ERA_META[era];
   const canDecide = view.endings.length > 0 && !view.ending;
 
   return (
     <div className={`game game--${era}${switching ? " is-switching" : ""}`}>
       <header className="topbar">
         <Link href="/" className="wordmark" aria-label="AFTERIMAGE, accueil">AFTERIMAGE</Link>
-        <p className="episode"><span>Chapitre premier</span> La dernière séance</p>
-        <nav className="era-switch" aria-label="Époque">
+        <p className="episode"><span>{g.episodeLabel}</span> {g.episode}</p>
+        <nav className="era-switch" aria-label={g.era}>
           {([1996, 2026] as Era[]).map((e) => (
             <button key={e} type="button" aria-pressed={era === e} disabled={busy || Boolean(view.ending)} onClick={() => switchEra(e)}>{e}</button>
           ))}
         </nav>
       </header>
-      {mode === "rehearsal" && <p className="rehearsal-banner" role="note">Mode répétition — aucun appel Napster : les personnages sont simulés et les réponses sont écrites à l’avance.</p>}
+      {mode === "rehearsal" && <p className="rehearsal-banner" role="note">{g.rehearsalBanner}</p>}
 
       <main className="stage">
         <div className="stage__scene">
-          <div className="meta"><span>{meta.place}</span><span>{meta.date}</span></div>
+          <div className="meta"><span>{t.scene.place}</span><span>{era === 1996 ? t.scene.date1996 : t.scene.date2026}</span></div>
           <SceneViewport era={era} view={view} pulse={pulse} onHotspot={(id) => setInspect(HOTSPOT_TO_INSPECT[id] ?? id)} />
         </div>
         <CharacterPanel
@@ -201,47 +203,47 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
 
       <footer className="footer">
         <div>
-          <p className="objective"><span className="eyebrow">Objectif</span> {view.objective}</p>
-          {hint && <p className="hint" role="status"><span className="eyebrow">Aide</span> {hint}</p>}
+          <p className="objective"><span className="eyebrow">{g.objective}</span> {view.objective}</p>
+          {hint && <p className="hint" role="status"><span className="eyebrow">{g.hint}</span> {hint}</p>}
         </div>
         <div className="footer__actions">
-          {era === 1996 && !view.message.sealed && view.availableActions.includes("write_message") && <button type="button" className="btn" onClick={() => setComposer(true)}>Vos mots</button>}
-          {canDecide && <button type="button" className="btn btn--decision" onClick={() => setEndingOpen(true)}>Décider du sort du film</button>}
-          {!view.ending && <button type="button" className="btn" onClick={() => act("request_hint")} disabled={busy}>Aide</button>}
-          <Link className="btn" href="/">Quitter</Link>
+          {era === 1996 && !view.message.sealed && view.availableActions.includes("write_message") && <button type="button" className="btn" onClick={() => setComposer(true)}>{g.words}</button>}
+          {canDecide && <button type="button" className="btn btn--decision" onClick={() => setEndingOpen(true)}>{g.decide}</button>}
+          {!view.ending && <button type="button" className="btn" onClick={() => act("request_hint")} disabled={busy}>{g.hint}</button>}
+          <Link className="btn" href="/">{g.quit}</Link>
           {!confirmDelete ? (
-            <button type="button" className="btn btn--quiet" onClick={() => setConfirmDelete(true)}>Supprimer ma partie</button>
+            <button type="button" className="btn btn--quiet" onClick={() => setConfirmDelete(true)}>{g.deleteRun}</button>
           ) : (
-            <span className="confirm-delete" role="group" aria-label="Confirmer la suppression">
-              <span className="small">Effacer définitivement cette partie ?</span>
-              <button type="button" className="btn btn--decision" onClick={deleteRun} disabled={busy}>Supprimer</button>
-              <button type="button" className="btn" onClick={() => setConfirmDelete(false)}>Annuler</button>
+            <span className="confirm-delete" role="group" aria-label={g.deleteConfirm}>
+              <span className="small">{g.deleteConfirm}</span>
+              <button type="button" className="btn btn--decision" onClick={deleteRun} disabled={busy}>{g.deleteYes}</button>
+              <button type="button" className="btn" onClick={() => setConfirmDelete(false)}>{t.common.cancel}</button>
             </span>
           )}
         </div>
       </footer>
 
       <div className="toast" role="status" aria-live="polite">{toast && !view.ending && <p className={`toast__msg toast__msg--${toast.tone}`}>{toast.text}</p>}</div>
-      {switching && <div className="timeshift" aria-live="assertive">Passage vers {switching}…</div>}
+      {switching && <div className="timeshift" aria-live="assertive">{fmt(g.switching, { era: switching })}</div>}
 
       <ObjectInspector id={inspect} era={era} view={view} onClose={() => setInspect(null)} act={async (a, args) => { const r = await act(a, args); return r; }} openComposer={() => { setInspect(null); setComposer(true); }} />
       <MessageComposer key={view.message.draft ?? "none"} open={composer} onClose={() => setComposer(false)} view={view} act={act} />
       {canDecide && <EndingDialog open={endingOpen} onClose={() => setEndingOpen(false)} runId={runId} view={view} onDone={(r) => { setEndingOpen(false); setView(r.publicState); void live.stop(); }} />}
 
       {view.ending && (
-        <section className="epilogue" aria-label="Épilogue">
+        <section className="epilogue" aria-label={g.epilogue}>
           <div className="epilogue__facade">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/assets/afterimage/scenes/cinema-exterior-1672.webp" alt="La façade du Régina, la nuit, sous la pluie" />
-            <p className={`marquee marquee--${view.ending}`}>{view.ending === "sealed_archive" ? "Archives du Régina" : "Les lumières du Régina"}<small>{view.ending === "public_cut" ? "Un film d’Alice Mercier" : view.ending === "sealed_archive" ? "Conservé sous scellés" : "Version intégrale"}</small></p>
+            <img src="/assets/afterimage/scenes/cinema-exterior-1672.webp" alt={g.facadeAlt} />
+            <p className={`marquee marquee--${view.ending}`}>{g.marquee[view.ending]?.[0]}<small>{g.marquee[view.ending]?.[1]}</small></p>
           </div>
           <p className="epilogue__text">{view.closing}</p>
-          {view.message.recovered && <p className="epilogue__msg">Vos mots ont traversé trente ans : « {view.message.recovered} »</p>}
+          {view.message.recovered && <p className="epilogue__msg">{fmt(g.wordsCrossed, { message: view.message.recovered })}</p>}
           <div className="btn-row">
-            <button type="button" className="btn btn--brass" onClick={newRun}>Une autre histoire</button>
-            <Link className="btn" href="/">Accueil</Link>
+            <button type="button" className="btn btn--brass" onClick={newRun}>{g.anotherStory}</button>
+            <Link className="btn" href="/">{t.common.home}</Link>
           </div>
-          <p className="muted small">Aides demandées : {view.hints.used}. Cette partie est terminée et reste consultable.</p>
+          <p className="muted small">{fmt(g.hintsUsed, { n: view.hints.used })}</p>
         </section>
       )}
     </div>

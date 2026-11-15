@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { headers } from "next/headers";
+import { cookies } from "next/headers";
 import { GameShell } from "@/components/game/GameShell";
+import { LOCALE_COOKIE, messagesFor, pickLocale } from "@/i18n/messages";
 import type { PublicState } from "@/components/game/types";
 import { contextFromHeaders } from "@/server/dal/context";
 import { getRun } from "@/server/dal/runs";
@@ -25,11 +27,12 @@ export default async function PlayPage({ params }: { params: Promise<{ runId: st
     if (!(e instanceof HttpError)) throw e;
   }
   if (data) return <GameShell runId={data.id} mode={env().CONVERSATION_MODE} initial={data.initial} />;
+  const g = messagesFor(pickLocale((await cookies()).get(LOCALE_COOKIE)?.value)).game;
   return (
     <main className="page page--center">
-      <h1>{unauth ? "Votre session a expiré" : "Partie introuvable"}</h1>
-      <p>{unauth ? "Reprenez depuis l’accueil." : "Cette partie n’existe pas ou ne vous appartient pas."}</p>
-      <Link className="btn btn--brass" href="/">Retour à l’accueil</Link>
+      <h1>{unauth ? g.expiredTitle : g.notFoundTitle}</h1>
+      <p>{unauth ? g.expiredText : g.notFoundText}</p>
+      <Link className="btn btn--brass" href="/">{g.backHome}</Link>
     </main>
   );
 }

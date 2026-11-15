@@ -90,6 +90,39 @@ describe("close during open (race)", () => {
   });
 });
 
+describe("delete my run", () => {
+  it("a failed provider close returns 202; a retry finishes; maintenance purges tombstones", async () => {
+    const a = await guest("a");
+    const runId = (await a.createRun()).body.runId;
+    await a.openConversation(runId);
+    napsterMode("delete-fails");
+    expect((await a.deleteRun(runId)).status).toBe(202);
+    expect((await a.getRun(runId)).status).toBe(404); // hidden while deleting
+    napsterMode("ok");
+    expect((await a.deleteRun(runId)).status).toBe(200);
+    const left = await sqlClient().execute({ sql: `SELECT count(*) n FROM runs WHERE id = ?`, args: [runId] });
+    expect(Number(left.rows[0].n)).toBe(0);
+    // Another player cannot delete (or probe) someone else's run, even a tombstone.
+    const b = await guest("b");
+    const runB = (await b.createRun()).body.runId;
+    expect((await a.deleteRun(runB)).status).toBe(404);
+  });
+
+  it("maintenance purges a tombstone once its lease is reconciled", async () => {
+    const a = await guest("a");
+    const runId = (await a.createRun()).body.runId;
+    await a.openConversation(runId);
+    napsterMode("delete-fails");
+    expect((await a.deleteRun(runId)).status).toBe(202);
+    napsterMode("ok");
+    const { runMaintenance } = await import("@/server/jobs/maintenance");
+    await sqlClient().execute(`UPDATE provider_budgets SET next_allowed_at = 0 WHERE scope = 'lock:maintenance'`);
+    await runMaintenance();
+    const left = await sqlClient().execute({ sql: `SELECT count(*) n FROM runs WHERE id = ?`, args: [runId] });
+    expect(Number(left.rows[0].n)).toBe(0);
+  });
+});
+
 describe("tool proposals", () => {
   it("are accepted only from the caller's active lease, for the current era's character", async () => {
     const a = await guest("a");

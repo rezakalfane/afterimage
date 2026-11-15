@@ -19,9 +19,13 @@
 - **Capacity**: DB leases plus one shared rate slot (1.5 s, because Napster counts request arrivals) for create and delete. One safe retry on 429 (not created). Expired leases count as `uncertain` until reconciled. When capacity looks full, the open route reconciles once before refusing.
 - **SDK 2.0.0** differs from the online docs (token function, `layout`/`style` objects, SDK-managed mic prompt). The code follows the installed `.d.ts`.
 - **E2E on a production build**: cold dev compiles crashed or timed out the headless browser.
+- **Tool outputs state the next usable tools** (`outilsMaintenant`): live runs showed the model repeating a no-op tool and then concluding it could not act.
+- **Migration 0001 is hand-written** (`ALTER TABLE … ADD COLUMN`): drizzle-kit generated a table rebuild that selected the not-yet-existing column.
 - **Fonts**: Cormorant Garamond and Source Sans 3 via `next/font`, downloaded at build and self-hosted (SIL OFL 1.1).
 
 ## Known gaps (not hidden)
-- The game UI strings are French in the components. Server texts, prompts and tools are locale-keyed (fr, en). Extracting the UI strings to dictionaries and translating the episode content is the English pass (P1). The `en` agents are already 100% English.
+- **Multilingual structure** is in place: UI strings live in `src/i18n/messages.ts` (fr complete, en partial with French fallback), with the locale chosen server-side among the ACTIVE locales (only `fr` today). Server texts, prompts and tools are keyed by locale. Leases store the session locale, so tool outputs, context headers and the opening follow the agent's language. Still missing for an English release: the English episode content (documents, facts, hints, refusals), the remaining English UI strings, the `NAPSTER_*_AGENT_ID_EN` variables, and English e2e. The admin page and the privacy page are French only.
+- Second tab: a second tab gets `CONVERSATION_ACTIVE` (read-only use of the scene still works). There is no explicit "take over" button yet.
+- The `en` prompts are my translation of the kit and need a native review.
 - CSP is report-only until the Napster media/signalling domains are observed on staging (kit §18.9).
 - Turso concurrency, backups and restores are untested: no Turso access yet.

@@ -101,7 +101,8 @@ export function toolToCommand(character: CharacterId, toolName: string, toolArgs
 }
 
 /** Tool names an action is reachable through, used to tell the character what it can do now. */
-export function toolsForActions(character: CharacterId, actions: Action[]): string[] {
+export function toolsForActions(character: CharacterId, actions: Action[], locale: ToolLocale = "fr"): string[] {
+  if (locale === "en") return toolsForActionsEn(character, actions);
   const map: Partial<Record<Action, string>> =
     character === "jeanne"
       ? {
@@ -182,4 +183,30 @@ export function englishFunctionDefinitions(): Record<string, { data: { name: str
       "Use only if the player explicitly asks for help. Put the returned hint in your own words, without saying more."),
   ];
   return Object.fromEntries(list.map((d) => [d.data.name, d]));
+}
+
+function toolsForActionsEn(character: CharacterId, actions: Action[]): string[] {
+  const map: Partial<Record<Action, string>> =
+    character === "jeanne"
+      ? {
+          inspect_programme: "en_jeanne_examine(object=programme)",
+          read_letter: "en_jeanne_examine(object=letter)",
+          relay_key_location: "en_jeanne_use_clue(clue=seat_g7) — only if the player has just given this clue",
+          relay_flood_warning: "en_jeanne_use_clue(clue=water_risk) — only if the player has just reported this risk",
+          retrieve_key: "en_jeanne_act(gesture=look_for_key)",
+          open_cabinet: "en_jeanne_act(gesture=open_cabinet)",
+          acknowledge_permission: "en_jeanne_act(gesture=acknowledge) — only if the player explicitly acknowledges Alice's condition",
+          preserve_cache: "en_jeanne_act(gesture=store, location=…)",
+          write_message: "en_jeanne_draft_message(text=the player's exact words)",
+          request_hint: "en_world_request_hint()",
+        }
+      : {
+          inspect_photo: "en_malik_examine(object=photo)",
+          inspect_waterline: "en_malik_examine(object=waterline)",
+          recover_cache: "en_malik_act(gesture=recover_cache)",
+          read_message: "en_malik_examine(object=message)",
+          read_future_letter: "en_malik_examine(object=letter)",
+          request_hint: "en_world_request_hint()",
+        };
+  return actions.map((a) => map[a]).filter((x): x is string => Boolean(x));
 }

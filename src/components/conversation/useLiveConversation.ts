@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { NapsterCompanionApiConfig, NapsterCompanionApiInstance } from "@touchcastllc/napster-companion-api";
 import { api } from "@/components/game/api";
+import { useT } from "@/i18n/I18nProvider";
 
 export type LiveStatus = "idle" | "connecting" | "live" | "closing" | "error";
 export type TranscriptLine = { role: "user" | "assistant"; text: string; at: number };
@@ -23,6 +24,7 @@ interface Options {
 }
 
 export function useLiveConversation({ runId, onPublicState, onRawEvent }: Options) {
+  const t = useT().character;
   const mountRef = useRef<HTMLDivElement | null>(null);
   const instanceRef = useRef<Instance | null>(null);
   const leaseRef = useRef<string | null>(null);
@@ -91,11 +93,11 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent }: Option
           if (m.role === "assistant") setSubtitle(line.text);
         }
       } else if (ev === "provider_connection_aborted" || ev === "session_expired" || ev === "no_credits_left") {
-        setError({ code: ev, message: "La conversation en direct s’est interrompue. Vous pouvez continuer au clavier." });
+        setError({ code: ev, message: t.liveInterrupted });
         void stopRef.current?.();
       }
     },
-    [handleTool],
+    [handleTool, t],
   );
 
   const stop = useCallback(async () => {
@@ -135,7 +137,7 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent }: Option
       const err = e as { code?: string; message?: string };
       if (phaseRef.current === "starting") {
         phaseRef.current = "idle";
-        setError({ code: err.code ?? "ERROR", message: err.message ?? "Connexion impossible." });
+        setError({ code: err.code ?? "ERROR", message: err.message ?? t.connectFailed });
         setStatus("error");
       }
       return;
@@ -161,7 +163,7 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent }: Option
           setStatus("live");
         }
         if (s === "permissionBlocked" || s === "permissionDismissed") {
-          setError({ code: "MIC_DENIED", message: "Micro refusé : vous pouvez écrire vos messages au clavier." });
+          setError({ code: "MIC_DENIED", message: t.micDenied });
         }
       },
       onError: (e) => console.warn("[sdk]", e.message),
@@ -170,7 +172,7 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent }: Option
       // The token is handed to the SDK through a function, as required by SDK 2.x.
       instanceRef.current = await NapsterCompanionApiSdk.init(async () => opened.token, config);
     } catch (e) {
-      setError({ code: "SDK_INIT", message: "Impossible d’initialiser la conversation." });
+      setError({ code: "SDK_INIT", message: t.sdkFailed });
       await stop();
       console.warn("[sdk init]", (e as Error).message);
       return;
@@ -181,7 +183,7 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent }: Option
         if (e.code === "LEASE_INVALID") void stop();
       });
     }, 30_000);
-  }, [runId, onData, stop]);
+  }, [runId, onData, stop, t]);
 
   /** Typed input: the player writes instead of speaking. Sent as plain user text (never system). */
   const sendText = useCallback((text: string) => {

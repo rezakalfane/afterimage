@@ -2,7 +2,7 @@
 import { vi } from "vitest";
 
 export const napsterCalls: { method: string; path: string; body: unknown }[] = [];
-let mode: "ok" | "timeout" | "409" | "slow" = "ok";
+let mode: "ok" | "timeout" | "409" | "slow" | "delete-fails" = "ok";
 export function napsterMode(m: typeof mode) {
   mode = m;
 }
@@ -20,6 +20,6 @@ vi.stubGlobal("fetch", async (input: RequestInfo | URL, init?: RequestInit) => {
     if (mode === "409") return new Response(JSON.stringify({ code: "ConcurrentSessionLimitReached" }), { status: 409 });
     return new Response(JSON.stringify({ token: "tok_" + napsterCalls.length, connection: { id: "conn_" + napsterCalls.length } }), { status: 200 });
   }
-  if (method === "DELETE" && path.startsWith("/public/connections/")) return new Response("{}", { status: 200 });
+  if (method === "DELETE" && path.startsWith("/public/connections/")) return mode === "delete-fails" ? new Response("{}", { status: 503 }) : new Response("{}", { status: 200 });
   return new Response(JSON.stringify({ items: [] }), { status: 200 });
 });

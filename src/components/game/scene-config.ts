@@ -12,8 +12,8 @@ export function sceneImage(era: Era, open: boolean): string {
 export const objectImage = (asset: string, w: 240 | 640 = 240) => `/assets/afterimage/objects/${asset}-${w}.webp`;
 
 export interface Hotspot {
+  /** Label: dictionary scene.hotspots[id]. */
   id: string;
-  label: string;
   rect: { x: number; y: number; w: number; h: number };
   /** Object to inspect (opens the inspector) and/or the action it proposes. */
   inspect?: string;
@@ -25,18 +25,18 @@ export interface Hotspot {
 
 export const HOTSPOTS: Record<Era, Hotspot[]> = {
   2026: [
-    { id: "photo", label: "Photographie sur le bureau", rect: { x: 0.37, y: 0.53, w: 0.1, h: 0.1 }, inspect: "photo", action: "inspect_photo" },
-    { id: "waterline", label: "Trace d’humidité au bas de l’armoire", rect: { x: 0.79, y: 0.74, w: 0.17, h: 0.11 }, inspect: "archiveReport", action: "inspect_waterline" },
-    { id: "projector", label: "Derrière le projecteur", rect: { x: 0.03, y: 0.32, w: 0.2, h: 0.36 }, action: "recover_cache" },
-    { id: "cabinet", label: "Armoire au croissant", rect: { x: 0.77, y: 0.1, w: 0.2, h: 0.6 }, when: "closed", action: "recover_cache" },
-    { id: "cache", label: "Étagère haute de l’armoire", rect: { x: 0.79, y: 0.13, w: 0.14, h: 0.34 }, when: "open", inspect: "cache" },
+    { id: "photo", rect: { x: 0.37, y: 0.53, w: 0.1, h: 0.1 }, inspect: "photo", action: "inspect_photo" },
+    { id: "waterline", rect: { x: 0.79, y: 0.74, w: 0.17, h: 0.11 }, inspect: "archiveReport", action: "inspect_waterline" },
+    { id: "projector", rect: { x: 0.03, y: 0.32, w: 0.2, h: 0.36 }, action: "recover_cache" },
+    { id: "cabinet", rect: { x: 0.77, y: 0.1, w: 0.2, h: 0.6 }, when: "closed", action: "recover_cache" },
+    { id: "cache", rect: { x: 0.79, y: 0.13, w: 0.14, h: 0.34 }, when: "open", inspect: "cache" },
   ],
   1996: [
-    { id: "programme", label: "Programme de la séance sur le bureau", rect: { x: 0.47, y: 0.53, w: 0.1, h: 0.1 }, inspect: "programme", action: "inspect_programme" },
-    { id: "hall", label: "La salle, par la vitre de projection", rect: { x: 0.31, y: 0.22, w: 0.37, h: 0.28 }, action: "retrieve_key" },
-    { id: "cabinet", label: "Armoire au croissant", rect: { x: 0.77, y: 0.1, w: 0.2, h: 0.8 }, when: "closed", action: "open_cabinet" },
-    { id: "letter", label: "La lettre dans l’armoire", rect: { x: 0.79, y: 0.5, w: 0.14, h: 0.34 }, when: "open", inspect: "letter", action: "read_letter" },
-    { id: "shelf", label: "Étagère haute de l’armoire", rect: { x: 0.79, y: 0.13, w: 0.14, h: 0.34 }, when: "open", inspect: "shelf" },
+    { id: "programme", rect: { x: 0.47, y: 0.53, w: 0.1, h: 0.1 }, inspect: "programme", action: "inspect_programme" },
+    { id: "hall", rect: { x: 0.31, y: 0.22, w: 0.37, h: 0.28 }, action: "retrieve_key" },
+    { id: "cabinet", rect: { x: 0.77, y: 0.1, w: 0.2, h: 0.8 }, when: "closed", action: "open_cabinet" },
+    { id: "letter", rect: { x: 0.79, y: 0.5, w: 0.14, h: 0.34 }, when: "open", inspect: "letter", action: "read_letter" },
+    { id: "shelf", rect: { x: 0.79, y: 0.13, w: 0.14, h: 0.34 }, when: "open", inspect: "shelf" },
   ],
 };
 
@@ -51,7 +51,8 @@ export const OVERLAYS = {
   reelInCabinet: { asset: "film-canister", rect: { x: 0.8, y: 0.73, w: 0.11 } },
 } as const;
 
-export const ERA_META: Record<Era, { date: string; place: string; character: "jeanne" | "malik"; name: string; role: string; portrait: string }> = {
-  1996: { date: "15 novembre 1996 · 21 h 10", place: "Le Régina · cabine de projection", character: "jeanne", name: "Jeanne", role: "Projectionniste — 1996", portrait: "/assets/afterimage/characters/jeanne-reference" },
-  2026: { date: "15 novembre 2026 · 21 h 10", place: "Le Régina · cabine de projection", character: "malik", name: "Malik", role: "Archiviste — 2026", portrait: "/assets/afterimage/characters/malik-reference" },
+/** Names, roles and dates: dictionary (character.*, scene.date1996/2026). */
+export const ERA_META: Record<Era, { character: "jeanne" | "malik"; portrait: string }> = {
+  1996: { character: "jeanne", portrait: "/assets/afterimage/characters/jeanne-reference" },
+  2026: { character: "malik", portrait: "/assets/afterimage/characters/malik-reference" },
 };

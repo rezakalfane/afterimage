@@ -30,7 +30,8 @@ No key, token, session token or private URL in this file. "Documented" ≠ "test
 | Close during open | **found and fixed** | React strict-mode remount closed a `reserved` lease while the create was in flight. The server now closes the new provider session and returns no token (integration test) |
 | No-op tool output | **found and fixed** | "Rien de nouveau" was read by Jeanne as a failure. A no-op now says "déjà pris en compte, ce n’est pas un échec" |
 | Recordings (VHS) | **unavailable** | `POST …/recordings` → 403 `RecordingsApiNotEnabled` → bonus disabled (`NAPSTER_RECORDINGS_ENABLED=false`) |
-| Avatar v2 / custom companions from kit portraits | not tested | Kit portraits are artwork only; stock companions stand in |
+| Custom companions v1 from kit portraits | ✅ works | Jeanne and Malik created from the kit portraits and attached to the 4 agents (2026-11-15) |
+| Avatar v2 | ⛔ `400 CompanionV2NotEnabled` (tried 2026-11-15, nothing created) | Ask Napster support (help.napster.com or Discord) to enable v2 for the org; keep v1 meanwhile |
 | VoIP (Twilio) | documented, channel config tested | Phone bonus disabled (`NAPSTER_PHONE_ENABLED=false`) |
 | SIP | unavailable | Quota 0 |
 | Digital twins, puppeteer, Foundry | not used | Out of P0 |

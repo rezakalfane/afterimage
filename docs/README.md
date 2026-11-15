@@ -3,6 +3,7 @@
 | Doc | Topic |
 |---|---|
 | [kit/AFTERIMAGE_MASTER.md](kit/AFTERIMAGE_MASTER.md) | The production bible and specification (source of truth for the canon and product) |
+| [GAME_LOGIC.md](GAME_LOGIC.md) | The episode's logic: puzzles, dependency graph, actions table, phases, tools, knowledge, endings, hints |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Components, data flow, invariants and where they are enforced |
 | [DECISIONS.md](DECISIONS.md) | Deviations from the kit, inconsistencies fixed, choices, known gaps |
 | [NAPSTER_ACCESS_REPORT.md](NAPSTER_ACCESS_REPORT.md) | Sanitized capability matrix of the account, the 4 agents, live proofs, spend |

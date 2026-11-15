@@ -4,6 +4,13 @@
 import { useEffect, useId, useRef } from "react";
 import { useT } from "@/i18n/I18nProvider";
 
+// Last input modality (pointer vs keyboard), for focus restoration without a stray ring.
+let lastInput: "pointer" | "key" = "pointer";
+if (typeof window !== "undefined") {
+  window.addEventListener("pointerdown", () => (lastInput = "pointer"), true);
+  window.addEventListener("keydown", (e) => { if (e.key === "Tab" || e.key === "Escape" || e.key === "Enter" || e.key === " ") lastInput = "key"; }, true);
+}
+
 export function Dialog({ open, title, onClose, children, tone = "paper", wide = false }: { open: boolean; title: string; onClose: () => void; children: React.ReactNode; tone?: "paper" | "decision"; wide?: boolean }) {
   const ref = useRef<HTMLDialogElement>(null);
   const opener = useRef<Element | null>(null);
@@ -17,7 +24,8 @@ export function Dialog({ open, title, onClose, children, tone = "paper", wide = 
       d.showModal();
     } else if (!open && d.open) {
       d.close();
-      (opener.current as HTMLElement | null)?.focus?.();
+      // Back to the opener; show the focus ring only if the player is using the keyboard.
+      (opener.current as HTMLElement | null)?.focus?.({ focusVisible: lastInput === "key", preventScroll: true } as FocusOptions);
     }
   }, [open]);
   return (

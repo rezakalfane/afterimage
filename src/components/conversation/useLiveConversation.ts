@@ -20,11 +20,13 @@ type ServerEvent = { event?: string; type?: string; data?: Record<string, unknow
 interface Options {
   runId: string;
   onPublicState?: (state: unknown, revision: number) => void;
+  /** The PLAYER's own final transcript (never the model's words): used for voice confirmations. */
+  onUserUtterance?: (text: string) => void;
   /** Debug hook for the technical proof (Playwright); not used by the game UI. */
   onRawEvent?: (e: ServerEvent) => void;
 }
 
-export function useLiveConversation({ runId, onPublicState, onRawEvent }: Options) {
+export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUtterance }: Options) {
   const t = useT().character;
   const mountRef = useRef<HTMLDivElement | null>(null);
   const instanceRef = useRef<Instance | null>(null);
@@ -47,10 +49,10 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent }: Option
   useEffect(() => {
     tRef.current = t;
   }, [t]);
-  const cbs = useRef({ onPublicState, onRawEvent });
+  const cbs = useRef({ onPublicState, onRawEvent, onUserUtterance });
   useEffect(() => {
-    cbs.current = { onPublicState, onRawEvent };
-  }, [onPublicState, onRawEvent]);
+    cbs.current = { onPublicState, onRawEvent, onUserUtterance };
+  }, [onPublicState, onRawEvent, onUserUtterance]);
 
   const send = useCallback((cmd: unknown) => {
     instanceRef.current?.sendCommand(cmd as Parameters<Instance["sendCommand"]>[0]);
@@ -99,6 +101,7 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent }: Option
           const line = { role: m.role as "user" | "assistant", text: String(m.content), at: Date.now(), character: characterRef.current };
           setTranscript((t) => [...t.slice(-40), line]);
           if (m.role === "assistant") setSubtitle(line.text);
+          else cbs.current.onUserUtterance?.(line.text);
         }
       } else if (ev === "provider_connection_aborted" || ev === "session_expired" || ev === "no_credits_left") {
         setError({ code: ev, message: t.liveInterrupted });

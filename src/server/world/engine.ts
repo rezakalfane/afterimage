@@ -5,8 +5,10 @@ import "server-only";
 // state (session, lease); it is never read from a request body.
 import { ENDING_IDS, EPISODE, type CharacterId, type EndingId, type Era } from "./content";
 
-/** Kit flags + "future_key_found" (2026 key search split from opening the cabinet). */
-export type Flag = (typeof EPISODE.requiredFlags)[number] | "future_key_found";
+/** Kit flags + "future_key_found" (2026 key search split from opening the cabinet) + door states:
+ *  "door_closed_<era>" = the player closed the cabinet again after it was opened (freedom, no
+ *  canon change: opening it again only reopens the door; prerequisites are untouched). */
+export type Flag = (typeof EPISODE.requiredFlags)[number] | "future_key_found" | "door_closed_1996" | "door_closed_2026";
 export type Phase = "investigate" | "preserve" | "recover" | "decide" | "finished";
 export type HintTopic = "key" | "cache" | "promise";
 export type StorageLocation = "upper_cabinet" | "lower_cabinet" | "desk" | "floor";
@@ -47,6 +49,7 @@ export type Action =
   | "preserve_cache"
   | "find_future_key"
   | "recover_cache"
+  | "close_cabinet"
   | "read_message"
   | "read_future_letter"
   | "choose_ending"
@@ -56,7 +59,7 @@ export type Action =
 export const ACTIONS: readonly Action[] = [
   "inspect_photo", "relay_key_location", "retrieve_key", "open_cabinet", "inspect_programme", "read_letter",
   "acknowledge_permission", "inspect_waterline", "relay_flood_warning", "write_message", "confirm_message",
-  "preserve_cache", "find_future_key", "recover_cache", "read_message", "read_future_letter", "choose_ending", "switch_era", "request_hint",
+  "preserve_cache", "find_future_key", "recover_cache", "close_cabinet", "read_message", "read_future_letter", "choose_ending", "switch_era", "request_hint",
 ];
 
 export type FailCode =
@@ -112,6 +115,9 @@ const SIMPLE: Partial<Record<Action, [Era, Flag[], Flag]>> = {
   read_message: [2026, ["cache_recovered"], "message_read"],
   read_future_letter: [2026, ["cache_recovered"], "future_letter_read"],
 };
+
+/** Actions on what is inside the cabinet: refused while its door is closed. */
+const DOOR_NEEDED: ReadonlySet<Action> = new Set(["read_letter", "read_message", "read_future_letter"]);
 
 /** Actions that only the player's own UI can perform (never a model tool). */
 const UI_ONLY: ReadonlySet<Action> = new Set(["switch_era", "confirm_message"]);
@@ -176,7 +182,18 @@ export function transition(state: WorldState, command: Command, ctx: EngineConte
     const [era, required, flag] = simple;
     if (s.activeEra !== era) return fail("WRONG_ERA");
     if (!need(required)) return fail("PREREQUISITE_MISSING");
+    // Reading what is inside needs the door open (the player may have closed it again).
+    if (DOOR_NEEDED.has(a) && has(`door_closed_${era}`)) return fail("PREREQUISITE_MISSING", "door");
     mark(flag);
+    // Opening an already unlocked cabinet just reopens its door.
+    if (a === "open_cabinet" || a === "recover_cache") s.flags = s.flags.filter((f) => f !== `door_closed_${era}`);
+  } else if (a === "close_cabinet") {
+    if (!exact([])) return fail("INVALID_ARGUMENT");
+    const era = s.activeEra;
+    // 1996: only while it is open (after storing, Jeanne locked it and hid the key). 2026: once recovered.
+    const open = era === 1996 ? has("cabinet_open") && !has("cache_preserved") : has("cache_recovered");
+    if (!open) return fail("PREREQUISITE_MISSING");
+    mark(`door_closed_${era}`);
   } else if (a === "switch_era") {
     if (!exact(["era"]) || (args.era !== 1996 && args.era !== 2026)) return fail("INVALID_ARGUMENT");
     s.activeEra = args.era as Era;
@@ -203,6 +220,7 @@ export function transition(state: WorldState, command: Command, ctx: EngineConte
     if (s.activeEra !== 1996) return fail("WRONG_ERA");
     if (has("cache_preserved")) return { ok: true, changed: false, state };
     if (!need(["cabinet_open", "permission_acknowledged", "flood_warning_shared", "message_confirmed"])) return fail("PREREQUISITE_MISSING");
+    if (has("door_closed_1996")) return fail("PREREQUISITE_MISSING", "door");
     if (args.location !== "upper_cabinet") return fail("WRONG_LOCATION", String(args.location));
     s.storage = "upper_cabinet";
     mark("cache_preserved");

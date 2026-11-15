@@ -7,7 +7,8 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CharacterPanel } from "@/components/conversation/CharacterPanel";
 import { useLiveConversation, type TranscriptLine } from "@/components/conversation/useLiveConversation";
-import { useT } from "@/i18n/I18nProvider";
+import { useLocale, useT } from "@/i18n/I18nProvider";
+import { endingFromSpeech, isConfirmation } from "./voice";
 import { LanguageChoice, LanguageSwitch, setLocale } from "@/components/ui/LanguageSwitch";
 import { DisplayChoices } from "@/components/ui/DisplayChoices";
 import { Dialog } from "@/components/ui/Dialog";
@@ -25,6 +26,11 @@ const HOTSPOT_TO_INSPECT: Record<string, string> = { photo: "photo", waterline: 
 
 /** Notebook documents that open automatically when a character reveals them during a live talk. */
 const AUTO_OPEN = new Set(["photo", "archiveReport", "programme", "letter", "message", "futureLetter"]);
+/** Gestures whose result is shown briefly, then the window closes by itself. Readings stay open. */
+const AUTO_CLOSE_ACTIONS = new Set<Action>(["relay_key_location", "retrieve_key", "open_cabinet", "close_cabinet", "acknowledge_permission", "relay_flood_warning", "confirm_message", "preserve_cache", "find_future_key", "recover_cache"]);
+const AUTO_CLOSE_MS = 2200;
+/** Event-time clock (called from handlers only). */
+const clock = () => Date.now();
 
 export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode; initial: PublicState }) {
   const router = useRouter();
@@ -36,6 +42,13 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
   const [inspect, setInspect] = useState<string | null>(null);
   const [composer, setComposer] = useState(false);
   const [endingOpen, setEndingOpen] = useState(false);
+  const composerRef = useRef(false);
+  const endingOpenRef = useRef(false);
+  useEffect(() => {
+    composerRef.current = composer;
+    endingOpenRef.current = endingOpen;
+  }, [composer, endingOpen]);
+  const locale = useLocale();
   const [hint, setHint] = useState<string | null>(null);
   const [switching, setSwitching] = useState<Era | null>(null);
   const [pulse, setPulse] = useState<string | null>(null);
@@ -60,10 +73,65 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
       // A document the character just read by voice opens on its own (unless something is open).
       const before = new Set(viewRef.current.notebook.map((n) => n.id));
       const revealed = next.notebook.find((n) => !before.has(n.id) && AUTO_OPEN.has(n.id));
+      const prev = viewRef.current;
       setView(next);
       if (revealed) setInspect((cur) => cur ?? revealed.id);
+      // Jeanne just noted the words: show the sheet for review (confirm by voice or button).
+      if (next.message.draft && next.message.draft !== prev.message.draft && !next.message.sealed) {
+        setInspect(null);
+        setComposer(true);
+      }
+      // A gesture done by voice while a place was open: let the result show, then close it.
+      if (next.revision > prev.revision && !revealed) setInspect((cur) => (cur && !AUTO_OPEN.has(cur) ? (scheduleClose(), cur) : cur));
+      afterState(prev, next);
     },
+    onUserUtterance: (text) => onPlayerWords(text),
   });
+
+  // Voice play: windows close a moment after a validated gesture; the decision opens itself.
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  function scheduleClose() {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = setTimeout(() => {
+      setInspect(null);
+      setComposer(false);
+    }, AUTO_CLOSE_MS);
+  }
+  function afterState(prev: PublicState, next: PublicState) {
+    if (mode === "live" && prev.endings.length === 0 && next.endings.length > 0 && !next.ending) {
+      setTimeout(() => {
+        setInspect(null);
+        setEndingOpen(true);
+      }, AUTO_CLOSE_MS + 600);
+    }
+  }
+
+  // The PLAYER's own words (speech transcript or typed text) can confirm what is on screen.
+  const endingConfirm = useRef<(() => void) | null>(null);
+  const endingChoose = useRef<((id: string) => void) | null>(null);
+  const lastVoiceAct = useRef(0);
+  function onPlayerWords(text: string) {
+    if (clock() - lastVoiceAct.current < 1500) return; // a typed line may also come back as a transcript
+    const v = viewRef.current;
+    const draft = v.message.draft;
+    if (composerRef.current && draft && v.message.confirmed !== draft && !v.message.sealed && v.availableActions.includes("confirm_message") && isConfirmation(text, locale)) {
+      lastVoiceAct.current = clock();
+      void act("confirm_message", { text: draft });
+      return;
+    }
+    if (endingOpenRef.current) {
+      if (endingConfirm.current && isConfirmation(text, locale)) {
+        lastVoiceAct.current = clock();
+        endingConfirm.current();
+        return;
+      }
+      const id = endingFromSpeech(text, locale);
+      if (id && endingChoose.current) {
+        lastVoiceAct.current = clock();
+        endingChoose.current(id);
+      }
+    }
+  }
 
   const say = useCallback((text: string, tone: "info" | "warn" = "info") => {
     setToast({ text, tone });
@@ -92,7 +160,9 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
           say(r.event.summary);
           setPulse(action);
           setTimeout(() => setPulse(null), 900);
+          if (AUTO_CLOSE_ACTIONS.has(action)) scheduleClose();
         }
+        afterState(viewRef.current, r.publicState);
         if (r.reaction && mode === "rehearsal") setRLines((l) => [...l, { role: "assistant", text: r.reaction!, at: Date.now(), character: r.publicState.activeEra === 1996 ? "jeanne" : "malik" }]);
         if (r.contextText && live.status === "live") live.pushContext(r.contextText, true);
         return r;
@@ -109,6 +179,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
         setBusy(false);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- afterState/scheduleClose only read refs and setters
     [runId, mode, live, refresh, say, g, t],
   );
 
@@ -257,7 +328,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
           mountRef={liveMountRef}
           onStart={() => { setMicMuted(false); void live.start(); }}
           onStop={() => void live.stop()}
-          onSend={(t) => (mode === "live" ? live.sendText(t) : void rehearse(t))}
+          onSend={(t) => { onPlayerWords(t); return mode === "live" ? live.sendText(t) : void rehearse(t); }}
           suggestion={suggestion && view.availableActions.includes(suggestion.action) ? { label: suggestion.label, onAccept: () => { const s = suggestion; setSuggestion(null); void act(s.action, s.args); } } : null}
           micMuted={micMuted}
           onToggleMic={() => { live.setMicMuted(!micMuted); setMicMuted(!micMuted); }}
@@ -266,10 +337,9 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
         </div>
       </main>
 
-      <Notebook entries={view.notebook} era={era} onOpen={setInspect} />
-
       <footer className="footer">
-        <div>
+        <Notebook entries={view.notebook} era={era} onOpen={setInspect} />
+        <div className="footer__objective">
           <p className="objective"><span className="eyebrow">{g.objective}</span> {view.objective}</p>
           {hint && <p className="hint" role="status"><span className="eyebrow">{g.hint}</span> {hint}</p>}
         </div>
@@ -314,7 +384,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
 
       <ObjectInspector id={inspect} era={era} view={view} onClose={() => setInspect(null)} act={async (a, args) => { const r = await act(a, args); return r; }} openComposer={() => { setInspect(null); setComposer(true); }} />
       <MessageComposer key={view.message.draft ?? "none"} open={composer} onClose={() => setComposer(false)} view={view} act={act} />
-      {canDecide && <EndingDialog open={endingOpen} onClose={() => setEndingOpen(false)} runId={runId} view={view} onDone={async (r) => { setEndingOpen(false); await live.stop(); setView(r.publicState); }} />}
+      {canDecide && <EndingDialog confirmRef={endingConfirm} chooseRef={endingChoose} open={endingOpen} onClose={() => setEndingOpen(false)} runId={runId} view={view} onDone={async (r) => { setEndingOpen(false); await live.stop(); setView(r.publicState); }} />}
 
     </div>
   );

@@ -99,11 +99,12 @@ flowchart TD
 | `acknowledge_permission` | 1996 | `letter_read` | `permission_acknowledged` | UI, Jeanne (player agrees by voice) |
 | `relay_flood_warning` | 1996 | `waterline_seen` | `flood_warning_shared` | UI, Jeanne |
 | `write_message` | 1996 | `letter_read`, not yet preserved | draft (1–240 chars, normalized) | UI, Jeanne |
-| `confirm_message` | 1996 | draft equal to the shown text | `message_confirmed` | **UI only** |
+| `confirm_message` | 1996 | draft equal to the shown text | `message_confirmed` | **Player only** (button, or the player's own spoken/typed confirmation while the sheet is shown) |
 | `preserve_cache` | 1996 | `cabinet_open`, `permission_acknowledged`, `flood_warning_shared`, `message_confirmed` | `cache_preserved` (only `upper_cabinet`; other places → `WRONG_LOCATION`) | UI, Jeanne |
 | `find_future_key` | 2026 | `cache_preserved` | `future_key_found` | UI, Malik |
 | `recover_cache` | 2026 | `future_key_found` | `cache_recovered` | UI, Malik |
-| `read_message` | 2026 | `cache_recovered` | `message_read` | UI, Malik |
+| `close_cabinet` | current | the cabinet is open (1996 before storing; 2026 after recovering) | `door_closed_<era>`; reopened by `open_cabinet` / `recover_cache` | UI, Jeanne, Malik |
+| `read_message` | 2026 | `cache_recovered` (door open) | `message_read` | UI, Malik |
 | `read_future_letter` | 2026 | `cache_recovered` | `future_letter_read` | UI, Malik |
 | `choose_ending` | 2026 | `cache_recovered`, `message_read`, `future_letter_read` | `ending` | **UI confirmation token only** |
 | `switch_era` | any | no live conversation open | `activeEra` | **UI only** |
@@ -148,7 +149,7 @@ prefixed `en_` with English argument values.
 | `jeanne_act` | `geste: chercher_cle \| ouvrir_armoire \| noter_accord \| conserver`, `emplacement?` | `retrieve_key` / `open_cabinet` / `acknowledge_permission` / `preserve_cache` |
 | `jeanne_draft_message` | `texte` | `write_message` |
 | `malik_examine` | `objet: photo \| trace_eau \| message \| lettre` | `inspect_photo` / `inspect_waterline` / `read_message` / `read_future_letter` |
-| `malik_act` | `geste: chercher_cle \| ouvrir_armoire` | `find_future_key` / `recover_cache` |
+| `malik_act` | `geste: chercher_cle \| ouvrir_armoire \| fermer_armoire` | `find_future_key` / `recover_cache` / `close_cabinet` |
 | `world_request_hint` | — | `request_hint` |
 
 ### What each character knows

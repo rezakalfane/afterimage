@@ -9,6 +9,7 @@ import { toolsForActions, toolToCommand } from "@/server/napster/tools";
 import { contextUpdateText } from "@/server/napster/context";
 import { executeCommand } from "@/server/world/service";
 import { texts, type Locale } from "@/server/world/texts";
+import { log } from "@/server/security/log";
 import type { CharacterId } from "@/server/world/content";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +37,12 @@ export const POST = handler(async (req, { params }: P) => {
   const locale = (lease.rows[0]?.locale === "en" ? "en" : "fr") as Locale;
   if (!character) throw new HttpError("LEASE_INVALID", "Cette conversation n’est plus active.");
   const mapped = toolToCommand(character, p.data.name, p.data.args);
+  if (!mapped.ok) {
+    // Diagnose model mistakes without logging player text: tool name + argument keys/enum-like values.
+    const a = p.data.args && typeof p.data.args === "object" ? (p.data.args as Record<string, unknown>) : {};
+    const shape = Object.fromEntries(Object.entries(a).map(([k, v]) => [k, /^(texte|text)$/.test(k) ? "<text>" : String(v).slice(0, 24)]));
+    log.info("napster.tool.rejected", { character, name: p.data.name.slice(0, 40), args: shape });
+  }
   const command = mapped.ok ? mapped.command : { action: "__invalid_tool__", args: {} };
   const result = await executeCommand(
     ctx,

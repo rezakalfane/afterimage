@@ -17,7 +17,7 @@ export function Notebook({ entries, era, onOpen }: { entries: NotebookEntry[]; e
         {entries.length === 0 && <li className="notebook__empty">{t.emptyHint}</li>}
         {entries.map((e) => (
           <li key={e.id}>
-            <button type="button" className={`card${e.era !== era ? " card--other-era" : ""}`} onClick={() => onOpen(e.id)}>
+            <button type="button" className={`card${e.era !== era ? " card--other-era" : ""}`} onClick={() => onOpen(e.id)} aria-label={`${e.title}, ${e.era}`} title={`${e.title} · ${e.era}`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               {e.asset ? <img src={objectImage(e.asset as string)} alt="" aria-hidden="true" /> : <span className="card__paper" aria-hidden="true" />}
               <span className="card__text">

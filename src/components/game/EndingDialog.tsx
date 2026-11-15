@@ -1,12 +1,12 @@
 "use client";
 // Final choice, UI only: pick → server intent (single-use token) → explicit confirmation → server decision.
-import { useState } from "react";
+import { useEffect, useState, type MutableRefObject } from "react";
 import { Dialog } from "@/components/ui/Dialog";
 import { useT } from "@/i18n/I18nProvider";
 import { api, commandId } from "./api";
 import type { CommandResponse, PublicState } from "./types";
 
-export function EndingDialog({ open, onClose, runId, view, onDone }: { open: boolean; onClose: () => void; runId: string; view: PublicState; onDone: (r: CommandResponse) => void | Promise<void> }) {
+export function EndingDialog({ open, onClose, runId, view, onDone, confirmRef, chooseRef }: { open: boolean; onClose: () => void; runId: string; view: PublicState; onDone: (r: CommandResponse) => void | Promise<void>; confirmRef?: MutableRefObject<(() => void) | null>; chooseRef?: MutableRefObject<((id: string) => void) | null> }) {
   const t = useT().ending;
   const [intent, setIntent] = useState<{ token: string; ending: { id: string; label: string; consequence: string; confirmation: string } } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -37,11 +37,18 @@ export function EndingDialog({ open, onClose, runId, view, onDone }: { open: boo
     }
   }
 
+  // Voice: the player may name an ending, then confirm it out loud (same calls as the buttons).
+  useEffect(() => {
+    if (confirmRef) confirmRef.current = open && intent && !busy ? () => void confirm() : null;
+    if (chooseRef) chooseRef.current = open && !intent && !busy ? (id: string) => void choose(id) : null;
+  });
+
   return (
     <Dialog open={open} title={t.title} onClose={() => { setIntent(null); onClose(); }} wide>
       {!intent ? (
         <>
           <p>{t.intro}</p>
+          <p className="muted small">{t.voiceHint}</p>
           <ul className="endings">
             {view.endings.map((e) => (
               <li key={e.id}>
@@ -57,6 +64,7 @@ export function EndingDialog({ open, onClose, runId, view, onDone }: { open: boo
         <>
           <p className="ending__label">{intent.ending.label}</p>
           <p>{intent.ending.consequence}</p>
+          <p className="muted small">{t.voiceConfirm}</p>
           <div className="btn-row">
             <button type="button" className={`btn ${intent.ending.id === "broken_promise" ? "btn--decision" : "btn--brass"}`} disabled={busy} onClick={confirm}>{intent.ending.confirmation}</button>
             <button type="button" className="btn" disabled={busy} onClick={() => setIntent(null)}>{t.back}</button>

@@ -36,6 +36,29 @@ describe("2026: key behind the projector, then the cabinet", () => {
   });
 });
 
+describe("the cabinet can be closed again (freedom, no canon change)", () => {
+  it("1996: close, reading is refused while closed, reopen with the same gesture", () => {
+    let s = apply(initialState(), "inspect_photo");
+    s = apply(s, "switch_era", { era: 1996 });
+    for (const a of ["relay_key_location", "retrieve_key", "open_cabinet", "inspect_programme"]) s = apply(s, a);
+    s = apply(s, "close_cabinet");
+    expect(s.flags).toContain("door_closed_1996");
+    expect(transition(s, { action: "read_letter" }, ui)).toMatchObject({ ok: false, code: "PREREQUISITE_MISSING", detail: "door" });
+    expect(transition(s, { action: "close_cabinet" }, ui)).toMatchObject({ ok: true, changed: false }); // already closed
+    s = apply(s, "open_cabinet");
+    expect(s.flags).not.toContain("door_closed_1996");
+    expect(apply(s, "read_letter").flags).toContain("letter_read");
+  });
+  it("2026: close after recovering, reopen with recover_cache; cannot close a locked cabinet", () => {
+    expect(transition(initialState(), { action: "close_cabinet" }, ui)).toMatchObject({ ok: false, code: "PREREQUISITE_MISSING" });
+    let s = apply(ready(), "close_cabinet");
+    expect(availableActions(s, ui)).toContain("recover_cache");
+    expect(transition(s, { action: "read_message" }, ui)).toMatchObject({ ok: false, detail: "door" });
+    s = apply(s, "recover_cache");
+    expect(s.flags).not.toContain("door_closed_2026");
+  });
+});
+
 describe("refusals never mutate", () => {
   it("wrong era and prerequisites", () => {
     const s = initialState();
@@ -128,5 +151,16 @@ describe("hints and availability", () => {
     expect(a).toContain("inspect_photo");
     expect(a).not.toContain("open_cabinet");
     expect(availableActions(initialState(), { channel: "tool", character: "malik" })).not.toContain("switch_era");
+  });
+});
+
+import { toolToCommand } from "@/server/napster/tools";
+describe("tool argument tolerance (still validated)", () => {
+  it("a location given with another gesture is ignored; JSON-string arguments are parsed", () => {
+    expect(toolToCommand("jeanne", "jeanne_act", { geste: "chercher_cle", emplacement: "siege_g7" })).toMatchObject({ ok: true, command: { action: "retrieve_key" } });
+    expect(toolToCommand("jeanne", "jeanne_act", '{"geste":"ouvrir_armoire"}')).toMatchObject({ ok: true, command: { action: "open_cabinet" } });
+    expect(toolToCommand("jeanne", "jeanne_act", { geste: "conserver", emplacement: "siege_g7" })).toEqual({ ok: false });
+    expect(toolToCommand("jeanne", "jeanne_act", "{not json")).toEqual({ ok: false });
+    expect(toolToCommand("malik", "malik_act", { geste: "fermer_armoire" })).toMatchObject({ ok: true, command: { action: "close_cabinet" } });
   });
 });

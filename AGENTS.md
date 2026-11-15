@@ -19,7 +19,7 @@ Rules for every coding session. Rules here, history in HISTORY.md, state in HAND
 - The server engine decides; the model only proposes. Every mutation goes through `executeCommand` (auth, membership, ownership, Zod, lease, prerequisites) in one write transaction with CAS, event and idempotency receipt. Napster is never called inside a transaction.
 - Every run query is scoped by tenant + id + owner. Return 404 for foreign ids.
 - Agents' global prompts are immutable and contain no player data. Run data travels only through `externalClientProfile`, tool outputs and the player's own `send_message`.
-- Only the player confirms the message and the ending (UI channel, single-use token).
+- Only the player confirms the message and the ending (UI channel, single-use token). The player may do it by voice: the browser matches the PLAYER's own transcript (never the model's words) while the confirmation is on screen, then sends the same UI command as the button.
 - Personal text is rendered as React text, never as HTML.
 - No undiscovered canon in client code or responses: hotspot and button labels must not reveal G7, the epilogue or the key location.
 - One live avatar per run; capacity in the DB, never in process memory.

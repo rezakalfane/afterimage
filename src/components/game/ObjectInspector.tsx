@@ -226,6 +226,7 @@ export function ObjectInspector({ id, era, view, onClose, act, openComposer }: {
       break;
     }
     case "key":
+    case "futureKey":
       title = t.inspector.keyTitle;
       asset = "brass-key";
       body = <p>{t.inspector.keyDesc}</p>;
@@ -242,6 +243,7 @@ export function ObjectInspector({ id, era, view, onClose, act, openComposer }: {
       break;
   }
 
+  if (!title) return <Dialog open={false} title="" onClose={onClose}>{null}</Dialog>;
   const openNow = era === 1996 ? view.scene.cabinetOpen1996 : view.scene.cabinetOpen2026;
   const visual = asset ? (
     // eslint-disable-next-line @next/next/no-img-element
@@ -253,7 +255,12 @@ export function ObjectInspector({ id, era, view, onClose, act, openComposer }: {
     <Dialog open title={title} onClose={onClose} wide={Boolean(visual)}>
       <div className={`inspect${visual ? "" : " inspect--text"}`}>
         {visual && <div className="inspect__visual">{visual}</div>}
-        <div className="inspect__body">{body}</div>
+        <div className="inspect__body">
+          {body}
+          {(id === "letter" || id === "shelf" || id === "cache") && can("close_cabinet") && (
+            <button type="button" className="btn" onClick={() => { void act("close_cabinet"); onClose(); }}>{t.inspector.cabinetClose}</button>
+          )}
+        </div>
       </div>
     </Dialog>
   );

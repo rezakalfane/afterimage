@@ -56,6 +56,7 @@ for (const vp of VIEWPORTS) {
     await page.waitForTimeout(700);
     await shot(page, vp.id, "02-start-2026", full);
     // A long exchange: the history must not stretch the page.
+    await page.getByRole("button", { name: /^Écrire à/ }).click({ timeout: 3000 }).catch(() => {}); // open the write panel
     for (const q of ["Bonjour Malik, que voyez-vous ?", "Et sur le bureau ?", "Parlez-moi de la photo.", "Qui était Alice Mercier ?", "Que s'est-il passé en 1996 ?", "Et l'armoire ?"]) {
       await page.locator("#say").fill(q);
       await page.locator("#say").press("Enter");

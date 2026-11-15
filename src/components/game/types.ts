@@ -3,7 +3,7 @@ export type Era = 1996 | 2026;
 export type Action =
   | "inspect_photo" | "relay_key_location" | "retrieve_key" | "open_cabinet" | "inspect_programme" | "read_letter"
   | "acknowledge_permission" | "inspect_waterline" | "relay_flood_warning" | "write_message" | "confirm_message"
-  | "preserve_cache" | "find_future_key" | "recover_cache" | "read_message" | "read_future_letter" | "choose_ending" | "switch_era" | "request_hint";
+  | "preserve_cache" | "find_future_key" | "recover_cache" | "close_cabinet" | "read_message" | "read_future_letter" | "choose_ending" | "switch_era" | "request_hint";
 
 export interface NotebookEntry {
   id: string;

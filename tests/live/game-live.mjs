@@ -16,7 +16,7 @@ async function goLive(name) {
   await waitLive(name, t);
 }
 async function waitLive(name, t = Date.now()) {
-  await p.locator(".character__head .state").filter({ hasText: /À l’écoute|répond|Micro coupé/ }).waitFor({ timeout: 60000 });
+  await p.locator(".character__head .state").filter({ hasText: /À l’écoute|répond|Micro coupé/ }).waitFor({ state: "attached", timeout: 60000 });
   log(`${name}: live after ms`, Date.now() - t);
   log(`${name}: name in header while live`, await p.locator(".character__head h2").innerText());
   const mute = p.getByRole("button", { name: "Couper le micro" });
@@ -32,7 +32,9 @@ async function waitSubtitle(re, ms = 45000) {
   return (await p.locator(".character__subtitles").innerText().catch(() => ""));
 }
 async function type(text) {
-  await p.getByLabel(/Écrire à/).fill(text);
+  const write = p.getByRole("button", { name: /^Écrire à/ });
+  if ((await write.getAttribute("aria-expanded")) !== "true") await write.click();
+  await p.locator("#say").fill(text);
   await p.getByRole("button", { name: "Envoyer" }).click();
 }
 try {

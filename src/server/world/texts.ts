@@ -11,6 +11,7 @@ type Texts = {
   hints: Record<HintTopic, [string, string, string]>;
   refusals: Partial<Record<Action, Partial<Record<FailCode, string>>>> & { default: Partial<Record<FailCode, string>> };
   wrongLocation: Record<string, string>;
+  doorClosed: string;
   events: Partial<Record<Action, string>>;
   notebook: Record<string, string>;
   tool: { noop: string; invalid: string; contextHeader: string; opening: string; resume: string; openingLines: Record<"jeanne" | "malik", string> };
@@ -55,6 +56,7 @@ const fr: Texts = {
     preserve_cache: { PREREQUISITE_MISSING: "Pas encore : l’armoire, la promesse d’Alice, le risque signalé et vos mots confirmés doivent être réunis." },
     find_future_key: { PREREQUISITE_MISSING: "Il n’y a rien de nouveau à trouver ici pour l’instant." },
     recover_cache: { PREREQUISITE_MISSING: "L’armoire est fermée à clé. Il faudrait d’abord trouver la clé." },
+    close_cabinet: { PREREQUISITE_MISSING: "L’armoire est déjà fermée." },
     read_message: { PREREQUISITE_MISSING: "Aucun message n’a été retrouvé." },
     read_future_letter: { PREREQUISITE_MISSING: "Aucune lettre n’a été retrouvée." },
     choose_ending: { PREREQUISITE_MISSING: "Lisez d’abord le message et la lettre retrouvés." },
@@ -64,6 +66,7 @@ const fr: Texts = {
     floor: "Pas au sol : c’est le premier endroit que l’eau atteindrait. L’étagère haute de l’armoire resterait au sec.",
     lower_cabinet: "Pas en bas de l’armoire : votre avertissement parle d’eau à ce niveau. L’étagère haute resterait au sec.",
   },
+  doorClosed: "L’armoire est refermée : il faut d’abord la rouvrir.",
   events: {
     inspect_photo: "Au dos de la photo, une inscription à la main.",
     relay_key_location: "Vous avez transmis l’indice du siège G7 à Jeanne.",
@@ -79,6 +82,7 @@ const fr: Texts = {
     preserve_cache: "Jeanne a rangé la bobine, la lettre et vos mots sur l’étagère haute, puis a replacé la clé derrière le projecteur.",
     find_future_key: "Malik a trouvé une clé au croissant derrière le projecteur.",
     recover_cache: "Malik a ouvert l’armoire au croissant.",
+    close_cabinet: "L’armoire au croissant est refermée.",
     read_message: "Votre message a été retrouvé.",
     read_future_letter: "La lettre d’Alice a été retrouvée en 2026.",
     choose_ending: "Votre choix est confirmé.",
@@ -147,6 +151,7 @@ const en: Texts = {
     preserve_cache: { PREREQUISITE_MISSING: "Not yet: the cabinet, Alice's promise, the reported risk and your confirmed words must all come together." },
     find_future_key: { PREREQUISITE_MISSING: "There is nothing new to find here for now." },
     recover_cache: { PREREQUISITE_MISSING: "The cabinet is locked. The key must be found first." },
+    close_cabinet: { PREREQUISITE_MISSING: "The cabinet is already closed." },
     read_message: { PREREQUISITE_MISSING: "No message has been found." },
     read_future_letter: { PREREQUISITE_MISSING: "No letter has been found." },
     choose_ending: { PREREQUISITE_MISSING: "First read the recovered message and letter." },
@@ -156,6 +161,7 @@ const en: Texts = {
     floor: "Not on the floor: that's the first place the water would reach. The cabinet's upper shelf would stay dry.",
     lower_cabinet: "Not at the bottom of the cabinet: your warning mentions water at that level. The upper shelf would stay dry.",
   },
+  doorClosed: "The cabinet is closed again: it has to be reopened first.",
   events: {
     inspect_photo: "On the back of the photo, a handwritten note.",
     relay_key_location: "You passed the seat G7 clue on to Jeanne.",
@@ -171,6 +177,7 @@ const en: Texts = {
     preserve_cache: "Jeanne put the reel, the letter and your words on the upper shelf, then put the key back behind the projector.",
     find_future_key: "Malik found a crescent key behind the projector.",
     recover_cache: "Malik opened the crescent cabinet.",
+    close_cabinet: "The crescent cabinet is closed again.",
     read_message: "Your message was found.",
     read_future_letter: "Alice's letter was found in 2026.",
     choose_ending: "Your choice is confirmed.",
@@ -210,5 +217,6 @@ export function texts(locale: Locale = DEFAULT_LOCALE): Texts {
 export function refusalText(action: string, code: FailCode, detail: string | undefined, locale: Locale = DEFAULT_LOCALE): string {
   const t = texts(locale);
   if (code === "WRONG_LOCATION" && detail && t.wrongLocation[detail]) return t.wrongLocation[detail];
+  if (detail === "door") return t.doorClosed;
   return t.refusals[action as Action]?.[code] ?? t.refusals.default[code] ?? t.refusals.default.INVALID_ARGUMENT!;
 }

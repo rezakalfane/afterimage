@@ -13,7 +13,7 @@
 | 6 Mémoire | ✅ HMAC identity per run and character; no contamination (live canary); resume recalls |
 | 7 Signature | ✅ exact sentence end to end; no video generation required |
 | 8 Résilience | ✅ reload, network cut, retries, uncertain creates, close-during-open race, 429, maintenance |
-| 9 Finition | 🟡 visual pass done (screens in var/screens); accessibility tested (axe, keyboard, zoom); fr + en complete (Settings modal, FR|EN switch); sound not done (optional) |
+| 9 Finition | 🟡 finishing pass done (brief v2: layout, identity, objects, inspections, message, epilogue, menu); captures in var/screens/before|after (`SCREENS_DIR=… npx playwright test --project=capture`); not done: ambient sound, VoiceOver pass, 3-person playtest |
 | 10 Release | ⏳ prepared (docs/OPERATIONS.md); needs a Turso account and approval for the Vercel projects |
 | 11 Bonus | ⛔ off (Recordings 403; phone and v2 untested) |
 | 12 Soumission | 🟡 README, demo script; the video is still to record |

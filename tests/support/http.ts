@@ -104,7 +104,7 @@ export async function playToDecision(p: Player, runId: string, message = "Les é
     rev = r.body.revision;
   }
   const draft = (await p.getRun(runId)).body.publicState.message.draft;
-  for (const [a, args] of [["confirm_message", { text: draft }], ["preserve_cache", { location: "upper_cabinet" }], ["switch_era", { era: 2026 }], ["recover_cache"], ["read_message"], ["read_future_letter"]] as [string, Record<string, unknown>?][]) {
+  for (const [a, args] of [["confirm_message", { text: draft }], ["preserve_cache", { location: "upper_cabinet" }], ["switch_era", { era: 2026 }], ["find_future_key"], ["recover_cache"], ["read_message"], ["read_future_letter"]] as [string, Record<string, unknown>?][]) {
     const r = await p.command(runId, a, args, rev);
     if (!r.body.ok) throw new Error(`${a}: ${JSON.stringify(r.body)}`);
     rev = r.body.revision;

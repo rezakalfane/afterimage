@@ -86,8 +86,16 @@ export async function playToDecision(page: Page) {
 
   // Énigme 3 — retrouver et décider
   await era(page, "2026");
+  // The cabinet stays locked until the key is found behind the projector.
+  await hotspot(page, /Armoire au croissant/);
+  await expect(page.getByRole("dialog").getByText(/Il faudrait d’abord trouver la clé/)).toBeVisible();
+  await closeDialog(page);
   await hotspot(page, /Derrière le projecteur/);
   await inDialog(page, /Chercher derrière le projecteur/);
+  await closeDialog(page);
+  await expect(page.getByRole("button", { name: /Clé au croissant/ })).toBeVisible();
+  await hotspot(page, /Armoire au croissant/);
+  await inDialog(page, /Ouvrir l’armoire/);
   await closeDialog(page);
   await hotspot(page, /Étagère haute de l’armoire/);
   await inDialog(page, /Déplier le papier/);

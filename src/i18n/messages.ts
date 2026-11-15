@@ -4,7 +4,7 @@
 export type Locale = "fr" | "en";
 export const DEFAULT_LOCALE: Locale = "fr";
 /** Locales offered to players. English joins once its content and e2e pass (agents are ready). */
-export const ACTIVE_LOCALES: Locale[] = ["fr"];
+export const ACTIVE_LOCALES: Locale[] = ["fr", "en"];
 export const LOCALE_COOKIE = "afterimage_locale";
 
 const fr = {
@@ -12,7 +12,7 @@ const fr = {
   home: {
     subtitle: "La dernière séance",
     pitch: "Deux personnes. Le même cinéma. Trente ans d’écart. Parlez-leur, gagnez leur confiance et faites traverser le temps à ce qui mérite d’être sauvé.",
-    start: "Commencer", opening: "Ouverture…", resume: "Reprendre", settings: "Réglages",
+    start: "Commencer", opening: "Ouverture…", resume: "Reprendre", settings: "Réglages", display: "Affichage",
     largeText: "Texte plus grand", reduceMotion: "Réduire les animations", settingsNote: "Les sous-titres sont toujours affichés. Tout se joue aussi au clavier.",
     noticeRehearsal: "Mode répétition : personnages simulés, sans connexion Napster.",
     noticeLive: "Conversations vidéo en direct avec des personnages fictifs animés par IA (Napster).",
@@ -71,7 +71,7 @@ const fr = {
     acknowledge: "Je reconnais la condition d’Alice", acknowledged: "Vous avez reconnu la condition d’Alice.",
     hallTitle: "La salle", hallDesc: "Par la vitre, les fauteuils rouges dans la pénombre. Quelque part, la clé du dernier tour de salle.", hallSearch: "Demander à Jeanne d’aller chercher la clé à l’endroit indiqué", hallNeedClue: "Chercher où ? Il faudrait un indice précis.",
     cabinetTitle: "Armoire au croissant", cabinet1996: "Fermée à clé. La poignée en laiton a la forme d’un croissant de lune.", cabinetOpen: "Ouvrir l’armoire", cabinetNoKey: "« Il me manque la clé. Je l’avais pendant mon dernier tour de salle. »",
-    cabinet2026: "Fermée depuis longtemps. Le bas du bois a souffert de l’eau.", cabinetSearch2026: "Chercher si quelque chose a changé",
+    cabinet2026: "Fermée depuis longtemps. Le bas du bois a souffert de l’eau.", cabinetLocked2026: "Fermée à clé. Il faudrait d’abord trouver la clé.",
     projectorTitle: "Le projecteur", projectorDesc: "Le vieux projecteur 35 mm, couvert de poussière.", projectorSearch: "Chercher derrière le projecteur", projectorNothing: "Rien de particulier derrière le projecteur, pour l’instant.",
     shelfTitle: "Mettre à l’abri", shelfSealed: "La bobine, la lettre et vos mots sont rangés. Voyez votre carnet.", shelfAsk: "Jeanne peut ranger la bobine, la lettre et votre message pour trente ans. Où ?",
     shelfLocation: "Emplacement", shelfStore: "Demander à Jeanne de tout ranger ici", shelfMissing: "Il manque encore quelque chose avant de tout ranger. L’aide peut vous orienter.", shelfWrite: "Écrire vos mots",
@@ -88,6 +88,7 @@ const fr = {
     defaultText: "Les étoiles restent allumées.",
   },
   ending: { title: "Que faire du film ?", intro: "Le film est sauvé. Il reste à décider comment le rendre au monde. Ce choix est définitif pour cette partie.", back: "Revenir aux choix", failed: "Choix impossible." },
+  language: { label: "Langue" },
   auth: {
     signInTitle: "Se connecter", email: "Email", password: "Mot de passe", submit: "Se connecter", tooMany: "Trop de tentatives. Réessayez dans quelques minutes.", badCredentials: "Email ou mot de passe incorrect.",
     signInNote: "Les comptes sont créés sur invitation. Pour jouer sans compte :", signInNoteLink: "accueil → Commencer",
@@ -99,11 +100,95 @@ const fr = {
 export type Messages = typeof fr;
 type DeepPartial<T> = { [K in keyof T]?: T[K] extends Record<string, unknown> ? DeepPartial<T[K]> : T[K] };
 
-// English: interface strings translated; to be reviewed with the English content pass.
+// English: complete interface translation (to be reviewed with a native speaker).
 const en: DeepPartial<Messages> = {
   common: { close: "Close", cancel: "Cancel", back: "Back", home: "Home", loading: "Loading…", serverDown: "Cannot reach the server. Nothing was lost; please try again." },
-  home: { start: "Start", resume: "Resume", settings: "Settings", signIn: "Sign in", privacy: "Privacy" },
-  game: { objective: "Objective", hint: "Hint", words: "Your words", quit: "Leave", deleteRun: "Delete my game" },
+  home: {
+    subtitle: "The Last Screening",
+    pitch: "Two people. The same cinema. Thirty years apart. Talk to them, earn their trust and carry across time what deserves to be saved.",
+    start: "Start", opening: "Opening…", resume: "Resume", settings: "Settings", display: "Display",
+    largeText: "Larger text", reduceMotion: "Reduce motion", settingsNote: "Subtitles are always shown. Everything can also be played with the keyboard.",
+    noticeRehearsal: "Rehearsal mode: simulated characters, no Napster connection.",
+    noticeLive: "Live video conversations with fictional AI-animated characters (Napster).",
+    noticeMic: "The microphone is only requested when you talk; every action can also be done on screen.",
+    signIn: "Sign in", admin: "Administration", privacy: "Privacy",
+    marquee: "Le Régina", marqueeSub: "Last screening · 9:30 pm",
+    facadeAlt: "The art deco façade of Le Régina, at night, in the rain",
+    tooManyGuests: "Too many new games from this connection. Please try again later.", guestFailed: "Could not create a guest session.",
+  },
+  game: {
+    episodeLabel: "Chapter one", episode: "The Last Screening", era: "Era",
+    rehearsalBanner: "Rehearsal mode — no Napster call: the characters are simulated and their replies are written in advance.",
+    objective: "Objective", hint: "Hint", words: "Your words", decide: "Decide the film's fate", quit: "Leave",
+    deleteRun: "Delete my game", deleteConfirm: "Permanently erase this game?", deleteYes: "Delete", deleteFailed: "Deletion is not possible right now; please try again.",
+    conflict: "The game changed in the meantime (another tab?). The state was reloaded: check before trying again.",
+    actionImpossible: "Action not possible.", switching: "Moving to {era}…",
+    epilogue: "Epilogue", facadeAlt: "The façade of Le Régina, at night, in the rain", anotherStory: "Another story",
+    wordsCrossed: "Your words crossed thirty years: “{message}”", hintsUsed: "Hints requested: {n}. This game is over and remains viewable.",
+    marquee: { public_cut: ["Les lumières du Régina", "A film by Alice Mercier"], sealed_archive: ["Régina Archives", "Kept under seal"], broken_promise: ["Les lumières du Régina", "Full version"] },
+    notFoundTitle: "Game not found", notFoundText: "This game does not exist or does not belong to you.", expiredTitle: "Your session has expired", expiredText: "Start again from the home page.", backHome: "Back to home",
+  },
+  scene: {
+    region: "Interactive set, projection booth, {era}", list: "Things to examine",
+    alt1996: "Projection booth in 1996, warm light, projector on the left, desk in the middle, crescent cabinet on the right",
+    alt2026: "The same booth in 2026, cold and dusty, projector on the left, desk, crescent cabinet on the right",
+    hotspots: {
+      photo: "Photograph on the desk", waterline: "Damp mark at the bottom of the cabinet", projector: "Behind the projector", cabinet: "Crescent cabinet",
+      cache: "Cabinet's upper shelf", programme: "Screening programme on the desk", hall: "The hall, through the projection window", letter: "The letter in the cabinet", shelf: "Cabinet's upper shelf",
+    },
+    place: "Le Régina · projection booth", date1996: "15 November 1996 · 9:10 pm", date2026: "15 November 2026 · 9:10 pm",
+  },
+  character: {
+    jeanne: { name: "Jeanne", role: "Projectionist — 1996" }, malik: { name: "Malik", role: "Archivist — 2026" },
+    portraitAlt: "Reference portrait of {name}, a fictional character",
+    badgeRehearsal: "Rehearsal mode · simulated character, no Napster connection", badgeLive: "Live", badgeLiveAudio: "Live · audio", badgeConnecting: "Connecting…", badgeClosing: "Closing…", badgeOffline: "Reference portrait · offline",
+    subtitles: "Subtitles", emptyLive: "Talk to the character or write to them.", emptyRehearsal: "Write to the character, or examine the set.",
+    suggestion: "Suggestion (rehearsal mode):", talk: "Talk to {name}", micOn: "Mic on", micOff: "Mic muted", hangUp: "Hang up",
+    prepLabel: "Talk with the microphone", prepStrong: "The microphone is only used to talk to {name}.",
+    prepText: "The game records neither your voice nor your camera. The conversation goes through Napster, live; once connected, you can also type. Without a microphone, every action remains possible on screen.",
+    prepOnce: "You are only asked once: afterwards, “Talk to…” and era changes reconnect directly.",
+    prepAllow: "Allow the microphone and talk", prepNoMic: "Continue without microphone",
+    writeTo: "Write to {name}", writeToEllipsis: "Write to {name}…", writeWhenLive: "Start the conversation to write to {name}", send: "Send",
+    lastExchanges: "Latest exchanges", you: "You", disclosure: "Fictional characters animated by AI.",
+    micDenied: "Microphone denied: the live conversation needs the microphone. You can continue with the on-screen actions (set, notebook, buttons).",
+    liveInterrupted: "The live conversation was interrupted. You can continue with the on-screen actions.",
+    connectFailed: "Could not connect.", sdkFailed: "Could not start the conversation.",
+  },
+  notebook: { label: "The notebook", region: "Notebook", empty: "Still empty", emptyHint: "Examine the set: what you discover is written here.", count: "{n} clue", countPlural: "{n} clues" },
+  inspector: {
+    photoTitle: "Photograph of Le Régina", photoDesc: "An old photograph of the façade, lying on the desk.", photoTurn: "Turn the photo over", photoBackLabel: "On the back, handwritten:",
+    photoRelay: "Pass this clue on to Jeanne", photoNot1996: "Jeanne, in 1996, does not know this inscription yet. Go to 1996 to pass it on to her.", photoOtherEra: "The photo is in the 2026 booth.",
+    waterTitle: "Damp mark", waterDesc: "The cabinet's wood bears a pale line. A file lies next to it.", waterRead: "Read the conservation report",
+    waterRelay: "Warn Jeanne about the water risk", waterNot1996: "In 1996, nobody knows yet what the water will do here.",
+    programmeTitle: "Screening programme", programmeDesc: "A folded programme on the desk.", programmeRead: "Read the programme",
+    letterTitle: "Letter from Alice Mercier", letterDesc: "An open envelope, a letter folded in two.", letterRead: "Read the letter", letterNeedProgramme: "First we'd need to know which screening this is about.",
+    acknowledge: "I acknowledge Alice's condition", acknowledged: "You acknowledged Alice's condition.",
+    hallTitle: "The hall", hallDesc: "Through the window, the red seats in the half-light. Somewhere, the key from the last round of the hall.", hallSearch: "Ask Jeanne to look for the key at the place you gave", hallNeedClue: "Look where? A precise clue is needed.",
+    cabinetTitle: "Crescent cabinet", cabinet1996: "Locked. The brass handle is shaped like a crescent moon.", cabinetOpen: "Open the cabinet", cabinetNoKey: "“I'm missing the key. I had it during my last round of the hall.”",
+    cabinet2026: "Locked for a long time. The bottom of the wood has suffered from water.", cabinetLocked2026: "Locked. The key must be found first.",
+    projectorTitle: "The projector", projectorDesc: "The old 35 mm projector, covered in dust.", projectorSearch: "Look behind the projector", projectorNothing: "Nothing special behind the projector, for now.",
+    shelfTitle: "Put it safely away", shelfSealed: "The reel, the letter and your words are put away. See your notebook.", shelfAsk: "Jeanne can put the reel, the letter and your message away for thirty years. Where?",
+    shelfLocation: "Location", shelfStore: "Ask Jeanne to put everything here", shelfMissing: "Something is still missing before putting everything away. The hint can guide you.", shelfWrite: "Write your words",
+    locations: { upper_cabinet: "Cabinet's upper shelf", lower_cabinet: "Bottom of the cabinet", desk: "On the desk", floor: "On the floor, under the desk" },
+    cacheTitle: "What Jeanne left", cacheReel: "The reel “Les lumières du Régina”", cacheEnvelope: "A sealed envelope", cachePaper: "A folded piece of paper",
+    cacheMessageCaption: "Your message, thirty years later", cacheUnfold: "Unfold the paper", cacheReadLetter: "Read the letter in the envelope",
+    messageTitle: "Your message", keyTitle: "Crescent key", keyDesc: "A small brass key. It opens the crescent cabinet.",
+    reelTitle: "The reel", reelDesc: "“Les lumières du Régina”, a film by Alice Mercier. Thirty years kept dry.", envelopeTitle: "Sealed envelope", envelopeDesc: "It held Alice's letter.",
+  },
+  composer: {
+    title: "Your words, for thirty years from now", sealed: "The message is sealed with the film. For other words, start a new game.", needLetter: "Before leaving words with the film, read what Alice wrote.",
+    label: "Write or dictate to Jeanne a sentence of 1 to {max} characters.", save: "Save this draft", draftCaption: "Draft kept by the game (exactly these words)",
+    confirmed: "Confirmed, word for word. You can ask Jeanne to put everything away.", confirm: "I confirm these exact words", note: "Any change cancels the confirmation, until the film is put away.",
+    defaultText: "The stars stay lit.",
+  },
+  ending: { title: "What to do with the film?", intro: "The film is saved. It remains to decide how to give it back to the world. This choice is final for this game.", back: "Back to the choices", failed: "Choice not possible." },
+  auth: {
+    signInTitle: "Sign in", email: "Email", password: "Password", submit: "Sign in", tooMany: "Too many attempts. Please try again in a few minutes.", badCredentials: "Incorrect email or password.",
+    signInNote: "Accounts are created by invitation. To play without an account:", signInNoteLink: "home → Start",
+    inviteTitle: "Invitation", inviteEmail: "Email (the invited one)", inviteName: "Display name", invitePassword: "Password (12 characters minimum)", invitePassword2: "Confirm the password",
+    inviteSubmit: "Create my account", inviteMismatch: "The two passwords differ.", inviteInvalid: "Invalid, expired or already used invitation (check the email).", inviteTooMany: "Too many attempts.", inviteFailed: "Could not create the account (12-character minimum password).",
+  },
+  language: { label: "Language" },
 };
 
 function merge<T extends Record<string, unknown>>(base: T, over: DeepPartial<T> | undefined): T {

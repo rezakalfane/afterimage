@@ -12,7 +12,7 @@ describe("commands", () => {
   it("refuses early actions without mutating, with a safe French message", async () => {
     const a = await guest("a");
     const runId = (await a.createRun()).body.runId;
-    const r = await a.command(runId, "recover_cache", undefined, 0);
+    const r = await a.command(runId, "find_future_key", undefined, 0);
     expect(r.status).toBe(422);
     expect(r.body).toMatchObject({ ok: false, code: "PREREQUISITE_MISSING", revision: 0 });
     expect(r.body.message).toMatch(/rien de nouveau/i);

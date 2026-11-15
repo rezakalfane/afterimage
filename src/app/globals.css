@@ -58,8 +58,8 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .home__pitch { font-size: 1.1rem; max-width: 34ch; }
 .home__notice { margin-top: 2rem; color: var(--muted); font-size: 0.9rem; max-width: 46ch; }
 .home__links { display: flex; gap: 1.2rem; flex-wrap: wrap; font-size: 0.95rem; }
-.settings { margin-top: 1rem; border: 1px solid var(--line); padding: 0.8rem 1rem; display: grid; gap: 0.5rem; }
-.settings label { display: flex; gap: 0.5em; align-items: center; min-height: 44px; }
+.settings { display: grid; gap: 1rem; }
+.settings legend { font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--brass); margin-bottom: 0.3rem; }
 
 /* Pages */
 .page { max-width: 640px; margin: 0 auto; padding: 48px 20px; }
@@ -238,3 +238,10 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .admin__invite { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 1rem; }
 .admin__invite input, .admin__invite select { min-height: 44px; padding: 0 0.6em; background: #0b100f; border: 1px solid var(--line); }
 .admin__link code { overflow-wrap: anywhere; background: var(--ink-3); padding: 2px 6px; }
+
+/* Language switch */
+.topbar__right { display: flex; align-items: center; gap: 12px; }
+.lang-switch { display: inline-flex; gap: 2px; border: 1px solid var(--line); padding: 3px; align-self: flex-start; }
+.lang-switch button { min-height: 36px; min-width: 44px; border: 0; background: transparent; color: var(--muted); cursor: pointer; letter-spacing: 0.1em; font-size: 0.8rem; }
+.lang-switch button[aria-pressed="true"] { background: var(--ivory); color: var(--ink); }
+.home__panel .lang-switch { margin-bottom: 1.5rem; }

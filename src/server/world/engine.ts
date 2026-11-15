@@ -5,7 +5,8 @@ import "server-only";
 // state (session, lease); it is never read from a request body.
 import { ENDING_IDS, EPISODE, type CharacterId, type EndingId, type Era } from "./content";
 
-export type Flag = (typeof EPISODE.requiredFlags)[number];
+/** Kit flags + "future_key_found" (2026 key search split from opening the cabinet). */
+export type Flag = (typeof EPISODE.requiredFlags)[number] | "future_key_found";
 export type Phase = "investigate" | "preserve" | "recover" | "decide" | "finished";
 export type HintTopic = "key" | "cache" | "promise";
 export type StorageLocation = "upper_cabinet" | "lower_cabinet" | "desk" | "floor";
@@ -44,6 +45,7 @@ export type Action =
   | "write_message"
   | "confirm_message"
   | "preserve_cache"
+  | "find_future_key"
   | "recover_cache"
   | "read_message"
   | "read_future_letter"
@@ -54,7 +56,7 @@ export type Action =
 export const ACTIONS: readonly Action[] = [
   "inspect_photo", "relay_key_location", "retrieve_key", "open_cabinet", "inspect_programme", "read_letter",
   "acknowledge_permission", "inspect_waterline", "relay_flood_warning", "write_message", "confirm_message",
-  "preserve_cache", "recover_cache", "read_message", "read_future_letter", "choose_ending", "switch_era", "request_hint",
+  "preserve_cache", "find_future_key", "recover_cache", "read_message", "read_future_letter", "choose_ending", "switch_era", "request_hint",
 ];
 
 export type FailCode =
@@ -105,7 +107,8 @@ const SIMPLE: Partial<Record<Action, [Era, Flag[], Flag]>> = {
   acknowledge_permission: [1996, ["letter_read"], "permission_acknowledged"],
   inspect_waterline: [2026, [], "waterline_seen"],
   relay_flood_warning: [1996, ["waterline_seen"], "flood_warning_shared"],
-  recover_cache: [2026, ["cache_preserved"], "cache_recovered"],
+  find_future_key: [2026, ["cache_preserved"], "future_key_found"],
+  recover_cache: [2026, ["future_key_found"], "cache_recovered"],
   read_message: [2026, ["cache_recovered"], "message_read"],
   read_future_letter: [2026, ["cache_recovered"], "future_letter_read"],
 };

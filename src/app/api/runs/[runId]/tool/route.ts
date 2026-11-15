@@ -41,7 +41,7 @@ export const POST = handler(async (req, { params }: P) => {
     ctx,
     runId,
     { commandId: `tool:${p.data.callId}`, action: command.action, args: command.args, conversationLeaseId: p.data.conversationLeaseId },
-    { channel: "tool", toolCharacter: character },
+    { channel: "tool", toolCharacter: character, locale },
   );
   // Output for the model: business result + this character's projection only.
   // A no-op is NOT a failure (e.g. a clue already noted): say so explicitly, or the model may

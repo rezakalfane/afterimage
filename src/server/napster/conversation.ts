@@ -100,7 +100,7 @@ export async function openConversation(ctx: TenantContext, runId: string, opts: 
 
   // 2. Provider call, outside any transaction, at our reserved slot.
   if (slot > Date.now()) await sleep(slot - Date.now());
-  const context = characterContext(run.state, character, null);
+  const context = characterContext(run.state, character, null, locale);
   let conn: ConnectionResponse;
   const create = () =>
     napster<ConnectionResponse>(`/public/agents/${agentId}/connections`, {

@@ -70,7 +70,9 @@ async function main() {
     const cid = res.companions?.[character]?.id;
     if (!cid) continue;
     const c = await api<{ status: string }>(`/public/companions/${cid}`);
-    if (c.status !== "readyToUse") throw new Error(`Companion ${character} is "${c.status}", not readyToUse: wait before attaching it.`);
+    // A generated companion reports readyToUse, then "completed" once it is in use on an agent.
+    const attached = agents.some((a) => (a as { companionId?: string }).companionId === cid);
+    if (c.status !== "readyToUse" && !(attached && c.status === "completed")) throw new Error(`Companion ${character} is "${c.status}", not readyToUse: wait before attaching it.`);
   }
 
   const defs: Record<string, unknown> = locale === "en" ? englishFunctionDefinitions() : functionDefinitions();

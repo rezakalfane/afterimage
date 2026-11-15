@@ -6,6 +6,7 @@
 3. **Tool channel**: `request_hint` and `acknowledge_permission` are allowed from the character's tools (the player may ask or agree by voice). `switch_era` and `confirm_message` are UI-only. `choose_ending` is reachable only through `ending-confirmed`, and an `ending-confirmed` context cannot run anything else.
 4. **Message normalization**: NFC, CRLF→LF, trim; 1–240 code points; control characters and bidi overrides refused. The stored value is shown back before confirmation.
 5. **Preserving twice** is an idempotent no-op instead of a refusal.
+6. **The 2026 key is found before the cabinet opens**: new action `find_future_key` (2026, requires `cache_preserved`, sets `future_key_found`, the key is behind the projector). `recover_cache` now requires `future_key_found`. In playtests Malik opened the cabinet without any key, which broke the symmetry with Jeanne's G7 puzzle. Malik's tool `malik_act` takes `geste: chercher_cle | ouvrir_armoire` (en `gesture: look_for_key | open_cabinet`).
 
 ## Kit inconsistencies fixed
 - `characters.json` → Jeanne `initialKnown` contained "elle ignore qu'elle est sous G7", which leaked G7 into Jeanne's context and contradicted her `unknown` list ("G7 avant transmission"). It now reads "Elle a égaré la clé et ignore où elle se trouve."
@@ -24,7 +25,7 @@
 - **Fonts**: Cormorant Garamond and Source Sans 3 via `next/font`, downloaded at build and self-hosted (SIL OFL 1.1).
 
 ## Known gaps (not hidden)
-- **Multilingual structure** is in place: UI strings live in `src/i18n/messages.ts` (fr complete, en partial with French fallback), with the locale chosen server-side among the ACTIVE locales (only `fr` today). Server texts, prompts and tools are keyed by locale. Leases store the session locale, so tool outputs, context headers and the opening follow the agent's language. Still missing for an English release: the English episode content (documents, facts, hints, refusals), the remaining English UI strings, the `NAPSTER_*_AGENT_ID_EN` variables, and English e2e. The admin page and the privacy page are French only.
+- **Multilingual**: French and English are both active. UI strings live in `src/i18n/messages.ts`; the episode's English content is in `src/content/episodes/last-screening/v1/i18n.en.ts`; server texts, prompts, tools and rehearsal replies are keyed by locale. The player picks the language in Settings (home) or with the FR|EN switch (top bar); the choice is a cookie and the page reloads; the run state is language-free, so the game continues where it was. Leases store the session locale, so a live session keeps its agent's language. Still French only: the admin and privacy pages. The English texts need a native review.
 - Second tab: a second tab gets `CONVERSATION_ACTIVE` (read-only use of the scene still works). There is no explicit "take over" button yet.
 - The `en` prompts are my translation of the kit and need a native review.
 - CSP is report-only until the Napster media/signalling domains are observed on staging (kit §18.9).

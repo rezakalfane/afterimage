@@ -23,6 +23,19 @@ describe("complete paths", () => {
   });
 });
 
+describe("2026: key behind the projector, then the cabinet", () => {
+  it("the cabinet cannot be opened before finding the key", () => {
+    let s = ready();
+    s = { ...s, flags: s.flags.filter((f) => !["future_key_found", "cache_recovered", "message_read", "future_letter_read"].includes(f)) };
+    expect(transition(s, { action: "recover_cache" }, ui)).toMatchObject({ ok: false, code: "PREREQUISITE_MISSING" });
+    s = apply(s, "find_future_key");
+    expect(apply(s, "recover_cache").flags).toContain("cache_recovered");
+  });
+  it("the key cannot be found before Jeanne stored the cache", () => {
+    expect(transition(initialState(), { action: "find_future_key" }, ui)).toMatchObject({ code: "PREREQUISITE_MISSING" });
+  });
+});
+
 describe("refusals never mutate", () => {
   it("wrong era and prerequisites", () => {
     const s = initialState();

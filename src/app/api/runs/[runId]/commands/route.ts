@@ -1,6 +1,7 @@
 // UI commands (buttons, keyboard). Same validation and engine as tool proposals.
 import { requireContext } from "@/server/dal/context";
 import { env } from "@/server/env";
+import { requestLocale } from "@/server/security/locale";
 import { contextUpdateText } from "@/server/napster/context";
 import { sqlClient } from "@/server/db/client";
 import type { Locale } from "@/server/world/texts";
@@ -22,13 +23,13 @@ export const POST = handler(async (req, { params }: P) => {
   const parsed = commandBody.safeParse(await readJson(req));
   if (!parsed.success) throw new HttpError("INVALID_ARGUMENT", "Commande invalide.");
   if (parsed.data.action === "choose_ending") throw new HttpError("INVALID_ARGUMENT", "La fin se confirme via /ending.");
-  const result = await executeCommand(ctx, (await params).runId, parsed.data, { channel: "ui" });
+  const result = await executeCommand(ctx, (await params).runId, parsed.data, { channel: "ui", locale: requestLocale(req) });
   const live = env().CONVERSATION_MODE === "live";
   const extra =
     result.ok && result.changed && result.event
       ? live
         ? { contextText: contextUpdateText(result.characterContext, await liveLocale(ctx, (await params).runId)) } // pushed by the browser to ITS OWN live character
-        : { reaction: rehearsalReaction(result.event.type) }
+        : { reaction: rehearsalReaction(result.event.type, requestLocale(req)) }
       : {};
   // characterContext stays server-side; the client gets the public projection only.
   const { characterContext: _omit, ...publicResult } = result;

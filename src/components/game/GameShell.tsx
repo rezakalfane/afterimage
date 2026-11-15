@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CharacterPanel } from "@/components/conversation/CharacterPanel";
 import { useLiveConversation, type TranscriptLine } from "@/components/conversation/useLiveConversation";
 import { useT } from "@/i18n/I18nProvider";
+import { LanguageSwitch } from "@/components/ui/LanguageSwitch";
 import { fmt } from "@/i18n/messages";
 import { api, ApiError, commandId } from "./api";
 import { EndingDialog } from "./EndingDialog";
@@ -172,11 +173,14 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
       <header className="topbar">
         <Link href="/" className="wordmark" aria-label="AFTERIMAGE, accueil">AFTERIMAGE</Link>
         <p className="episode"><span>{g.episodeLabel}</span> {g.episode}</p>
+        <div className="topbar__right">
+        <LanguageSwitch />
         <nav className="era-switch" aria-label={g.era}>
           {([1996, 2026] as Era[]).map((e) => (
             <button key={e} type="button" aria-pressed={era === e} disabled={busy || Boolean(view.ending)} onClick={() => switchEra(e)}>{e}</button>
           ))}
         </nav>
+        </div>
       </header>
       {mode === "rehearsal" && <p className="rehearsal-banner" role="note">{g.rehearsalBanner}</p>}
 

@@ -31,7 +31,7 @@ export function toolsFor(character: CharacterId, locale: ToolLocale): string[] {
 const EN_VALUES: Record<string, Record<string, string>> = {
   object: { programme: "programme", letter: "lettre", photo: "photo", waterline: "trace_eau", message: "message" },
   clue: { seat_g7: "siege_g7", water_risk: "risque_eau" },
-  gesture: { look_for_key: "chercher_cle", open_cabinet: "ouvrir_armoire", acknowledge: "noter_accord", store: "conserver", recover_cache: "recuperer_cache" },
+  gesture: { look_for_key: "chercher_cle", open_cabinet: "ouvrir_armoire", acknowledge: "noter_accord", store: "conserver" },
   location: { upper_shelf: "etagere_haute", lower_cabinet: "bas_armoire", desk: "bureau", floor: "sol" },
 };
 const EN_KEYS: Record<string, string> = { object: "objet", clue: "indice", gesture: "geste", location: "emplacement", text: "texte" };
@@ -58,7 +58,7 @@ const argSchemas = {
   }),
   jeanne_draft_message: z.strictObject({ texte: z.string().max(1000) }),
   malik_examine: z.strictObject({ objet: z.enum(["photo", "trace_eau", "message", "lettre"]) }),
-  malik_act: z.strictObject({ geste: z.enum(["recuperer_cache"]) }),
+  malik_act: z.strictObject({ geste: z.enum(["chercher_cle", "ouvrir_armoire"]) }),
   world_request_hint: z.strictObject({}),
 } satisfies Record<ToolName, z.ZodType>;
 
@@ -94,7 +94,7 @@ export function toolToCommand(character: CharacterId, toolName: string, toolArgs
         a.objet === "photo" ? "inspect_photo" : a.objet === "trace_eau" ? "inspect_waterline" : a.objet === "message" ? "read_message" : "read_future_letter",
       );
     case "malik_act":
-      return cmd("recover_cache");
+      return cmd(a.geste === "chercher_cle" ? "find_future_key" : "recover_cache");
     case "world_request_hint":
       return cmd("request_hint");
   }
@@ -120,7 +120,8 @@ export function toolsForActions(character: CharacterId, actions: Action[], local
       : {
           inspect_photo: "malik_examine(objet=photo)",
           inspect_waterline: "malik_examine(objet=trace_eau)",
-          recover_cache: "malik_act(geste=recuperer_cache)",
+          find_future_key: "malik_act(geste=chercher_cle)",
+          recover_cache: "malik_act(geste=ouvrir_armoire)",
           read_message: "malik_examine(objet=message)",
           read_future_letter: "malik_examine(objet=lettre)",
           request_hint: "world_request_hint()",
@@ -149,8 +150,8 @@ export function functionDefinitions(): Record<ToolName, { data: { name: ToolName
       "Utilise quand le joueur te dicte les mots à laisser. Recopie ses mots exacts, sans les reformuler. Le joueur devra les confirmer lui-même à l’écran ; ne dis jamais que le message est confirmé."),
     malik_examine: def("malik_examine", "Malik (2026) examine un objet de la cabine.", { objet: { type: "string", enum: ["photo", "trace_eau", "message", "lettre"] } }, ["objet"],
       "Utilise quand le joueur demande de regarder la photo et son verso, la trace d’eau, ou de lire un message ou une lettre retrouvés. N’annonce que ce que le résultat renvoie."),
-    malik_act: def("malik_act", "Malik (2026) cherche ce qui aurait pu être laissé dans la cabine.", { geste: { type: "string", enum: ["recuperer_cache"] } }, ["geste"],
-      "Utilise quand le joueur demande de chercher la clé ou ce que Jeanne a pu laisser. Si le résultat est négatif, dis simplement qu’il n’y a rien de nouveau."),
+    malik_act: def("malik_act", "Malik (2026) cherche la clé ou ouvre l’armoire.", { geste: { type: "string", enum: ["chercher_cle", "ouvrir_armoire"] } }, ["geste"],
+      "chercher_cle : quand le joueur demande de chercher la clé ou ce que Jeanne a pu laisser (derrière le projecteur). ouvrir_armoire : seulement après avoir trouvé la clé. Si le résultat est négatif, dis simplement qu’il n’y a rien de nouveau ou que l’armoire reste fermée."),
     world_request_hint: def("world_request_hint", "Demande une aide progressive pour le joueur.", {}, [],
       "Utilise seulement si le joueur demande explicitement de l’aide. Formule l’aide renvoyée avec tes mots, sans en dire davantage."),
   };
@@ -177,8 +178,8 @@ export function englishFunctionDefinitions(): Record<string, { data: { name: str
       "Use when the player dictates the words to leave. Copy their exact words, without rephrasing. The player must confirm them on screen themselves; never say the message is confirmed."),
     def("malik_examine", "Malik (2026) examines an object in the booth.", { object: { type: "string", enum: ["photo", "waterline", "message", "letter"] } }, ["object"],
       "Use when the player asks to look at the photo and its back, the water mark, or to read a recovered message or letter. Announce only what the result returns."),
-    def("malik_act", "Malik (2026) searches for whatever might have been left in the booth.", { gesture: { type: "string", enum: ["recover_cache"] } }, ["gesture"],
-      "Use when the player asks you to look for the key or for what Jeanne may have left. If the result is negative, simply say there is nothing new."),
+    def("malik_act", "Malik (2026) looks for the key or opens the cabinet.", { gesture: { type: "string", enum: ["look_for_key", "open_cabinet"] } }, ["gesture"],
+      "look_for_key: when the player asks you to look for the key or for what Jeanne may have left (behind the projector). open_cabinet: only after finding the key. If the result is negative, simply say there is nothing new or that the cabinet stays locked."),
     def("world_request_hint", "Requests a progressive hint for the player.", {}, [],
       "Use only if the player explicitly asks for help. Put the returned hint in your own words, without saying more."),
   ];
@@ -203,7 +204,8 @@ function toolsForActionsEn(character: CharacterId, actions: Action[]): string[] 
       : {
           inspect_photo: "en_malik_examine(object=photo)",
           inspect_waterline: "en_malik_examine(object=waterline)",
-          recover_cache: "en_malik_act(gesture=recover_cache)",
+          find_future_key: "en_malik_act(gesture=look_for_key)",
+          recover_cache: "en_malik_act(gesture=open_cabinet)",
           read_message: "en_malik_examine(object=message)",
           read_future_letter: "en_malik_examine(object=letter)",
           request_hint: "en_world_request_hint()",

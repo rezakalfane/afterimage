@@ -12,7 +12,7 @@ import { sha256 } from "@/server/security/ids";
 import { characterForEra, type CharacterId } from "./content";
 import { transition, type Action, type Command, type Channel, type WorldState } from "./engine";
 import { characterContext, hintText, playerView, type CharacterContext, type PlayerView } from "./projections";
-import { refusalText, texts } from "./texts";
+import { refusalText, texts, type Locale } from "./texts";
 
 export const commandBody = z.strictObject({
   commandId: z.string().regex(/^[A-Za-z0-9_:.-]{8,80}$/),
@@ -44,14 +44,17 @@ interface ExecOptions {
   inTx?: (tx: Transaction, run: { state: WorldState; revision: number }) => Promise<void>;
   /** Arguments resolved inside the transaction (after inTx), e.g. the ending bound to a token. */
   resolveArgs?: () => Record<string, unknown>;
+  /** Language of the returned texts and projections (the run state itself is language-free). */
+  locale?: Locale;
 }
 
-function projectFor(state: WorldState, lastAction: { action: Action; summary: string } | null) {
-  return { publicState: playerView(state), characterContext: characterContext(state, characterForEra(state.activeEra), lastAction) };
+function projectFor(state: WorldState, lastAction: { action: Action; summary: string } | null, locale: Locale = "fr") {
+  return { publicState: playerView(state, locale), characterContext: characterContext(state, characterForEra(state.activeEra), lastAction, locale) };
 }
 
 export async function executeCommand(ctx: TenantContext, runId: string, body: CommandBody, opts: ExecOptions): Promise<CommandResult> {
   let command: Command = { action: body.action, args: body.args ?? {} };
+  const L: Locale = opts.locale ?? "fr";
   const requestHash = sha256(JSON.stringify({ a: body.action, r: body.args ?? {}, e: body.expectedRevision ?? null, c: opts.channel, l: body.conversationLeaseId ?? null }));
   const now = Date.now();
 
@@ -66,7 +69,7 @@ export async function executeCommand(ctx: TenantContext, runId: string, body: Co
       return JSON.parse(String(prior.rows[0].result_json)) as CommandResult;
     }
 
-    if (run.status !== "active") throw new HttpError("RUN_FINISHED", texts().refusals.default.RUN_FINISHED, projectFor(run.state, null));
+    if (run.status !== "active") throw new HttpError("RUN_FINISHED", texts(L).refusals.default.RUN_FINISHED, projectFor(run.state, null, L));
 
     // 3. Tool proposals must come from the caller's own active conversation, for the current era's character.
     if (opts.channel === "tool") {
@@ -80,7 +83,7 @@ export async function executeCommand(ctx: TenantContext, runId: string, body: Co
 
     // 4. Optimistic revision (UI commands must state what they saw; tool proposals are evaluated on the current state).
     if (body.expectedRevision !== undefined && body.expectedRevision !== run.revision) {
-      throw new HttpError("REVISION_CONFLICT", "La partie a changé entre-temps.", { revision: run.revision, ...projectFor(run.state, null) });
+      throw new HttpError("REVISION_CONFLICT", L === "en" ? "The game changed in the meantime." : "La partie a changé entre-temps.", { revision: run.revision, ...projectFor(run.state, null, L) });
     }
     // ending-confirmed: the single-use token already binds the revision (checked in inTx).
     if (opts.channel === "ui" && body.expectedRevision === undefined) throw new HttpError("INVALID_ARGUMENT", "expectedRevision manquant.");
@@ -98,11 +101,11 @@ export async function executeCommand(ctx: TenantContext, runId: string, body: Co
     const r = transition(run.state, command, { channel: opts.channel, character: opts.toolCharacter });
     let result: CommandResult;
     if (!r.ok) {
-      result = { ok: false, code: r.code, message: refusalText(body.action, r.code, r.detail), revision: run.revision, ...projectFor(run.state, null) };
+      result = { ok: false, code: r.code, message: refusalText(body.action, r.code, r.detail, L), revision: run.revision, ...projectFor(run.state, null, L) };
     } else if (!r.changed) {
-      result = { ok: true, changed: false, revision: run.revision, event: null, hint: null, ...projectFor(run.state, null) };
+      result = { ok: true, changed: false, revision: run.revision, event: null, hint: null, ...projectFor(run.state, null, L) };
     } else {
-      const summary = texts().events[r.event.type] ?? r.event.type;
+      const summary = texts(L).events[r.event.type] ?? r.event.type;
       const next = r.state;
       const status = next.ending ? "finished" : "active";
       // 6. Compare-and-swap on the revision.
@@ -127,8 +130,8 @@ export async function executeCommand(ctx: TenantContext, runId: string, body: Co
         changed: true,
         revision: next.revision,
         event: { type: r.event.type, summary },
-        hint: r.event.type === "request_hint" ? hintText(next) : null,
-        ...projectFor(next, { action: r.event.type, summary }),
+        hint: r.event.type === "request_hint" ? hintText(next, L) : null,
+        ...projectFor(next, { action: r.event.type, summary }, L),
       };
     }
     // 7. Receipt (successes AND refusals are replayed identically).

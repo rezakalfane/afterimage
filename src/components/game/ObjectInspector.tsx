@@ -117,7 +117,8 @@ export function ObjectInspector({ id, era, view, onClose, act, openComposer }: {
       ) : (
         <>
           <p>{t.inspector.cabinet2026}</p>
-          <ActionButton can={can} act={act} action="recover_cache">{t.inspector.cabinetSearch2026}</ActionButton>
+          <ActionButton can={can} act={act} action="recover_cache">{t.inspector.cabinetOpen}</ActionButton>
+          {!can("recover_cache") && <p className="muted">{t.inspector.cabinetLocked2026}</p>}
         </>
       );
       break;
@@ -127,8 +128,8 @@ export function ObjectInspector({ id, era, view, onClose, act, openComposer }: {
       body = (
         <>
           <p>{t.inspector.projectorDesc}</p>
-          <ActionButton can={can} act={act} action="recover_cache">{t.inspector.projectorSearch}</ActionButton>
-          {!can("recover_cache") && <p className="muted">{t.inspector.projectorNothing}</p>}
+          <ActionButton can={can} act={act} action="find_future_key">{t.inspector.projectorSearch}</ActionButton>
+          {!can("find_future_key") && <p className="muted">{t.inspector.projectorNothing}</p>}
         </>
       );
       break;

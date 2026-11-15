@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api } from "@/components/game/api";
 import { useT } from "@/i18n/I18nProvider";
+import { LanguageChoice, LanguageSwitch } from "@/components/ui/LanguageSwitch";
+import { Dialog } from "@/components/ui/Dialog";
 
 type Settings = { large: boolean; reduceMotion: boolean };
 const KEY = "afterimage.settings";
@@ -65,22 +67,26 @@ export function HomeClient({ mode, runs, signedIn, isAdmin }: { mode: "rehearsal
         <p className="marquee" aria-hidden="true">{h.marquee}<small>{h.marqueeSub}</small></p>
       </div>
       <div className="home__panel">
+        <LanguageSwitch />
         <h1 className="home__title">AFTERIMAGE</h1>
         <p className="home__subtitle">{h.subtitle}</p>
         <p className="home__pitch">{h.pitch}</p>
         <div className="btn-row">
           <button type="button" className="btn btn--brass btn--big" onClick={start} disabled={busy || !hydrated}>{busy ? h.opening : h.start}</button>
           {resume && <Link className="btn btn--big" href={`/play/${resume.id}`}>{h.resume}</Link>}
-          <button type="button" className="btn" onClick={() => setSettingsOpen((v) => !v)} aria-expanded={settingsOpen}>{h.settings}</button>
+          <button type="button" className="btn" onClick={() => setSettingsOpen(true)}>{h.settings}</button>
         </div>
-        {settingsOpen && (
-          <fieldset className="settings">
-            <legend>{h.settings}</legend>
-            <label><input type="checkbox" checked={settings.large} onChange={(e) => setSettings({ ...settings, large: e.target.checked })} /> {h.largeText}</label>
-            <label><input type="checkbox" checked={settings.reduceMotion} onChange={(e) => setSettings({ ...settings, reduceMotion: e.target.checked })} /> {h.reduceMotion}</label>
+        <Dialog open={settingsOpen} title={h.settings} onClose={() => setSettingsOpen(false)}>
+          <div className="settings">
+            <LanguageChoice />
+            <fieldset className="choices">
+              <legend>{h.display}</legend>
+              <label className="choice"><input type="checkbox" checked={settings.large} onChange={(e) => setSettings({ ...settings, large: e.target.checked })} /> {h.largeText}</label>
+              <label className="choice"><input type="checkbox" checked={settings.reduceMotion} onChange={(e) => setSettings({ ...settings, reduceMotion: e.target.checked })} /> {h.reduceMotion}</label>
+            </fieldset>
             <p className="muted small">{h.settingsNote}</p>
-          </fieldset>
-        )}
+          </div>
+        </Dialog>
         {error && <p className="warn" role="alert">{error}</p>}
         <p className="home__notice">{mode === "rehearsal" ? h.noticeRehearsal : h.noticeLive} {h.noticeMic}</p>
         <p className="home__links">

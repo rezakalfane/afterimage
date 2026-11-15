@@ -27,7 +27,7 @@ export const HOTSPOTS: Record<Era, Hotspot[]> = {
   2026: [
     { id: "photo", rect: { x: 0.37, y: 0.53, w: 0.1, h: 0.1 }, inspect: "photo", action: "inspect_photo" },
     { id: "waterline", rect: { x: 0.79, y: 0.74, w: 0.17, h: 0.11 }, inspect: "archiveReport", action: "inspect_waterline" },
-    { id: "projector", rect: { x: 0.03, y: 0.32, w: 0.2, h: 0.36 }, action: "recover_cache" },
+    { id: "projector", rect: { x: 0.03, y: 0.32, w: 0.2, h: 0.36 }, action: "find_future_key" },
     { id: "cabinet", rect: { x: 0.77, y: 0.1, w: 0.2, h: 0.6 }, when: "closed", action: "recover_cache" },
     { id: "cache", rect: { x: 0.79, y: 0.13, w: 0.14, h: 0.34 }, when: "open", inspect: "cache" },
   ],

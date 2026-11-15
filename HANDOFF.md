@@ -13,14 +13,15 @@
 | 6 Mémoire | ✅ HMAC identity per run and character; no contamination (live canary); resume recalls |
 | 7 Signature | ✅ exact sentence end to end; no video generation required |
 | 8 Résilience | ✅ reload, network cut, retries, uncertain creates, close-during-open race, 429, maintenance |
-| 9 Finition | 🟡 visual pass done (screens in var/screens); accessibility tested (axe, keyboard, zoom); UI strings in dictionaries (fr complete); sound not done (optional) |
+| 9 Finition | 🟡 visual pass done (screens in var/screens); accessibility tested (axe, keyboard, zoom); fr + en complete (Settings modal, FR|EN switch); sound not done (optional) |
 | 10 Release | ⏳ prepared (docs/OPERATIONS.md); needs a Turso account and approval for the Vercel projects |
 | 11 Bonus | ⛔ off (Recordings 403; phone and v2 untested) |
 | 12 Soumission | 🟡 README, demo script; the video is still to record |
 
 ## Verified at handoff
-- `npm run verify` → lint ✓, typecheck ✓, unit 28/28, integration 22/22, build ✓, bundle check ✓.
-- `npx playwright test` → 11/11 on a production build: three endings, reload/offline, hints, mobile 390 px, axe WCAG AA, keyboard only, 1280×720, 200% zoom, screens.
+- `npm run verify` → lint ✓, typecheck ✓, unit 30/30, integration 22/22, build ✓, bundle check ✓.
+- `npx playwright test` → 13/13 on a production build: three endings, reload/offline, hints, era-switch subtitles, English (Settings → English → back to French), mobile 390 px, axe WCAG AA, keyboard only, 1280×720, 200% zoom, screens.
+- Napster functions re-provisioned for fr and en (2026-11-15) after the `malik_act` change (key behind the projector).
 - `node tests/live/game-live.mjs` → full live path OK (Malik's tool, era switch, Jeanne finds the key). Napster spend so far: **$1.28** of $150.
 - Clean clone from GitHub: `npm ci && npm run setup && npm run dev` → a guest run is playable.
 
@@ -35,7 +36,7 @@ npm run dev
 
 ## Next steps (in order)
 1. Accesses from docs/OPERATIONS.md §0 (Turso, Vercel projects), then staging: release migration, owner bootstrap, deploy, acceptance on HTTPS, CSP observation, then production.
-2. English pass: UI strings to dictionaries, English episode content and texts, route `en` sessions to the `en` agents, English e2e.
+2. A live check of an English session and of Malik's new key step (a few cents).
 3. Optional polish: ambient sound with a mute button, more scene transitions, a demo video.
 4. Bonuses only after enablement: Recordings (VHS) and the phone epilogue.
 

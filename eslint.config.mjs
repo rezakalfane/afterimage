@@ -11,7 +11,7 @@ const config = [
     },
   },
   { files: ["src/server/**", "src/app/api/**", "src/app/**/page.tsx", "src/app/**/layout.tsx", "scripts/**", "tests/**"], rules: { "no-restricted-imports": "off" } },
-  { ignores: [".next/**", "node_modules/**", "drizzle/**", "var/**", "public/**", "assets-src/**", "src/server/db/auth-schema.ts", "next-env.d.ts", "tests/live/**"] },
+  { ignores: [".next/**", ".next-e2e/**", "test-results/**", "playwright-report/**", "node_modules/**", "drizzle/**", "var/**", "public/**", "assets-src/**", "src/server/db/auth-schema.ts", "next-env.d.ts", "tests/live/**"] },
 ];
 
 export default config;

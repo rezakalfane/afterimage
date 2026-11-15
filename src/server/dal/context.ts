@@ -18,6 +18,12 @@ export const TENANT_COOKIE = "afterimage_tenant";
 
 /** Resolve the caller. Throws 401 without a session, 403 without an active membership. */
 export async function requireContext(req: Request): Promise<TenantContext> {
+  return contextFromHeaders(req.headers);
+}
+
+/** Same as requireContext, for server components (headers() from next/headers). */
+export async function contextFromHeaders(headers: Headers): Promise<TenantContext> {
+  const req = { headers };
   const session = await (await auth()).api.getSession({ headers: req.headers });
   if (!session?.user?.id) throw new HttpError("UNAUTHENTICATED", "Connexion nécessaire.");
   const userId = session.user.id;

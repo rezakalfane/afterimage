@@ -16,11 +16,36 @@ export const TOOL_NAMES = [
   "world_request_hint",
 ] as const;
 export type ToolName = (typeof TOOL_NAMES)[number];
+export type ToolLocale = "fr" | "en";
 
+/** Per-locale tool sets: each locale has its OWN functions (descriptions, prompts, enum values in that language). */
 export const TOOLS_BY_CHARACTER: Record<CharacterId, ToolName[]> = {
   jeanne: ["jeanne_examine", "jeanne_use_clue", "jeanne_act", "jeanne_draft_message", "world_request_hint"],
   malik: ["malik_examine", "malik_act", "world_request_hint"],
 };
+export function toolsFor(character: CharacterId, locale: ToolLocale): string[] {
+  return TOOLS_BY_CHARACTER[character].map((t) => (locale === "en" ? `en_${t}` : t));
+}
+
+/** English tool call → equivalent French-tool call (same bounded command). Unknown values stay invalid. */
+const EN_VALUES: Record<string, Record<string, string>> = {
+  object: { programme: "programme", letter: "lettre", photo: "photo", waterline: "trace_eau", message: "message" },
+  clue: { seat_g7: "siege_g7", water_risk: "risque_eau" },
+  gesture: { look_for_key: "chercher_cle", open_cabinet: "ouvrir_armoire", acknowledge: "noter_accord", store: "conserver", recover_cache: "recuperer_cache" },
+  location: { upper_shelf: "etagere_haute", lower_cabinet: "bas_armoire", desk: "bureau", floor: "sol" },
+};
+const EN_KEYS: Record<string, string> = { object: "objet", clue: "indice", gesture: "geste", location: "emplacement", text: "texte" };
+function fromEnglish(name: string, rawArgs: unknown): { name: string; args: unknown } | null {
+  if (!name.startsWith("en_")) return { name, args: rawArgs };
+  if (!rawArgs || typeof rawArgs !== "object" || Array.isArray(rawArgs)) return rawArgs === undefined ? { name: name.slice(3), args: {} } : null;
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(rawArgs as Record<string, unknown>)) {
+    const fk = EN_KEYS[k];
+    if (!fk) return null; // unexpected argument
+    out[fk] = k === "text" ? v : (EN_VALUES[k]?.[String(v)] ?? `__invalid__${String(v)}`);
+  }
+  return { name: name.slice(3), args: out };
+}
 
 const LOCATIONS = { etagere_haute: "upper_cabinet", bas_armoire: "lower_cabinet", bureau: "desk", sol: "floor" } as const;
 
@@ -40,7 +65,10 @@ const argSchemas = {
 export type ToolMapping = { ok: true; command: Command } | { ok: false };
 
 /** Map a tool call to an engine command. Unknown tools or arguments → { ok: false }. */
-export function toolToCommand(character: CharacterId, name: string, rawArgs: unknown): ToolMapping {
+export function toolToCommand(character: CharacterId, toolName: string, toolArgs: unknown): ToolMapping {
+  const normalized = fromEnglish(toolName, toolArgs);
+  if (!normalized) return { ok: false };
+  const { name, args: rawArgs } = normalized;
   if (!(TOOL_NAMES as readonly string[]).includes(name)) return { ok: false };
   const tool = name as ToolName;
   if (!TOOLS_BY_CHARACTER[character].includes(tool)) return { ok: false };
@@ -125,4 +153,33 @@ export function functionDefinitions(): Record<ToolName, { data: { name: ToolName
     world_request_hint: def("world_request_hint", "Demande une aide progressive pour le joueur.", {}, [],
       "Utilise seulement si le joueur demande explicitement de l’aide. Formule l’aide renvoyée avec tes mots, sans en dire davantage."),
   };
+}
+
+/** English function definitions (for the `en` agents): descriptions, prompts and enum values in English. */
+export function englishFunctionDefinitions(): Record<string, { data: { name: string; description: string; parameters: unknown }; flow: "implicit"; prompt: string }> {
+  const def = (name: string, description: string, properties: Record<string, unknown>, required: string[], prompt: string) => ({
+    data: { name: `en_${name}`, description, parameters: { type: "object", properties, required, additionalProperties: false } },
+    flow: "implicit" as const,
+    prompt,
+  });
+  const list = [
+    def("jeanne_examine", "Jeanne (1996) examines a document in the booth.", { object: { type: "string", enum: ["programme", "letter"] } }, ["object"],
+      "Use when the player asks to read the screening programme or the letter in the cabinet. Say what you are doing first. Never invent the content: read only what the result returns."),
+    def("jeanne_use_clue", "Jeanne (1996) takes into account a clue the player has just given her.", { clue: { type: "string", enum: ["seat_g7", "water_risk"] } }, ["clue"],
+      "Use ONLY when the player tells you themselves where to look for the key (seat_g7) or warns you about a water risk (water_risk). Never guess a clue. If the result refuses, ask for a precise detail."),
+    def("jeanne_act", "Jeanne (1996) makes a gesture in the booth.", {
+      gesture: { type: "string", enum: ["look_for_key", "open_cabinet", "acknowledge", "store"] },
+      location: { type: "string", enum: ["upper_shelf", "lower_cabinet", "desk", "floor"], description: "Only for store." },
+    }, ["gesture"],
+      "State your intention before acting and only announce success after a positive result. acknowledge: only if the player explicitly acknowledges Alice's condition. store: only when the player asks you to put away the reel, the letter and their message; give the chosen location."),
+    def("jeanne_draft_message", "Jeanne (1996) notes the draft of the message the player wants to leave with the film.", { text: { type: "string", maxLength: 240 } }, ["text"],
+      "Use when the player dictates the words to leave. Copy their exact words, without rephrasing. The player must confirm them on screen themselves; never say the message is confirmed."),
+    def("malik_examine", "Malik (2026) examines an object in the booth.", { object: { type: "string", enum: ["photo", "waterline", "message", "letter"] } }, ["object"],
+      "Use when the player asks to look at the photo and its back, the water mark, or to read a recovered message or letter. Announce only what the result returns."),
+    def("malik_act", "Malik (2026) searches for whatever might have been left in the booth.", { gesture: { type: "string", enum: ["recover_cache"] } }, ["gesture"],
+      "Use when the player asks you to look for the key or for what Jeanne may have left. If the result is negative, simply say there is nothing new."),
+    def("world_request_hint", "Requests a progressive hint for the player.", {}, [],
+      "Use only if the player explicitly asks for help. Put the returned hint in your own words, without saying more."),
+  ];
+  return Object.fromEntries(list.map((d) => [d.data.name, d]));
 }

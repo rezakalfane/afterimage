@@ -5,8 +5,8 @@ import { dirname } from "node:path";
 import { createClient, type Client } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 import { migrate } from "drizzle-orm/libsql/migrator";
-import episode from "../../src/content/episodes/last-screening/v1/episode.json";
-import characters from "../../src/content/episodes/last-screening/v1/characters.json";
+import episode from "../../src/content/episodes/last-screening/v1/episode.json" with { type: "json" };
+import characters from "../../src/content/episodes/last-screening/v1/characters.json" with { type: "json" };
 import { PROMPTS } from "../../src/content/episodes/last-screening/v1/prompts";
 
 export function openClient(url: string, authToken?: string): Client {

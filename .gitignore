@@ -1,19 +1,19 @@
-# secrets — the Napster API key lives here and must never be committed
+
+!.env.example
+.claude/settings.local.json
+.DS_Store
 .env
 .env.*
-!.env.example
-
-# dependencies / build
-node_modules/
+.next-e2e/
 .next/
-out/
-*.tsbuildinfo
-next-env.d.ts
-
-# local
-.DS_Store
 .vercel
-.claude/settings.local.json
-var/
-test-results/
+*.tsbuildinfo
+# dependencies / build
+# local
+# secrets — the Napster API key lives here and must never be committed
+next-env.d.ts
+node_modules/
+out/
 playwright-report/
+test-results/
+var/

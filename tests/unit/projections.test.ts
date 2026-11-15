@@ -79,6 +79,18 @@ describe("tools", () => {
   });
 });
 
+describe("English tools (en agents)", () => {
+  it("map to the same bounded commands; English values only", () => {
+    expect(toolToCommand("malik", "en_malik_examine", { object: "photo" })).toEqual({ ok: true, command: { action: "inspect_photo", args: {} } });
+    expect(toolToCommand("jeanne", "en_jeanne_act", { gesture: "store", location: "upper_shelf" })).toEqual({ ok: true, command: { action: "preserve_cache", args: { location: "upper_cabinet" } } });
+    expect(toolToCommand("jeanne", "en_jeanne_draft_message", { text: "Stars stay lit." })).toEqual({ ok: true, command: { action: "write_message", args: { text: "Stars stay lit." } } });
+    expect(toolToCommand("malik", "en_malik_examine", { object: "trace_eau" })).toEqual({ ok: false }); // French value on English tool
+    expect(toolToCommand("malik", "en_malik_examine", { objet: "photo" })).toEqual({ ok: false }); // French key
+    expect(toolToCommand("malik", "en_jeanne_act", { gesture: "open_cabinet" })).toEqual({ ok: false }); // other character
+    expect(toolToCommand("malik", "en_world_request_hint", {})).toEqual({ ok: true, command: { action: "request_hint", args: {} } });
+  });
+});
+
 describe("memory identity", () => {
   const base = { env: "local", tenantId: "t1", userId: "u1", runId: "r1", character: "malik", generation: 1 };
   it("is ≤ 32 chars, Napster-safe, stable and different per run/character/env", () => {

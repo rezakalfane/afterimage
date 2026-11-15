@@ -36,6 +36,13 @@
     "jeanne_draft_message": "jeanne_draft_message",
     "malik_examine": "malik_examine",
     "malik_act": "malik_act",
-    "world_request_hint": "world_request_hint"
+    "world_request_hint": "world_request_hint",
+    "en_jeanne_examine": "en_jeanne_examine",
+    "en_jeanne_use_clue": "en_jeanne_use_clue",
+    "en_jeanne_act": "en_jeanne_act",
+    "en_jeanne_draft_message": "en_jeanne_draft_message",
+    "en_malik_examine": "en_malik_examine",
+    "en_malik_act": "en_malik_act",
+    "en_world_request_hint": "en_world_request_hint"
   }
 }

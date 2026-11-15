@@ -226,7 +226,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
   return (
     <div className={`game game--${era}${switching ? " is-switching" : ""}`}>
       <header className="topbar">
-        <Link href="/" className="wordmark" aria-label="AFTERIMAGE, accueil">AFTERIMAGE</Link>
+        <Link href="/" className="wordmark" aria-label={`AFTERIMAGE, ${t.common.home}`}>AFTERIMAGE</Link>
         <p className="episode"><span>{g.episodeLabel}</span> {g.episode}</p>
         <div className="topbar__right">
         <LanguageSwitch onRequest={requestLocale} />
@@ -240,6 +240,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
       {mode === "rehearsal" && <p className="rehearsal-banner" role="note">{g.rehearsalBanner}</p>}
 
       <main className="stage">
+        <div className="stage__inner">
         <div className="stage__scene">
           <div className="meta"><span>{t.scene.place}</span><span>{era === 1996 ? t.scene.date1996 : t.scene.date2026}</span></div>
           <SceneViewport era={era} view={view} pulse={pulse} onHotspot={(id) => setInspect(HOTSPOT_TO_INSPECT[id] ?? id)} />
@@ -262,6 +263,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
           onToggleMic={() => { live.setMicMuted(!micMuted); setMicMuted(!micMuted); }}
           disabled={busy || Boolean(view.ending)}
         />
+        </div>
       </main>
 
       <Notebook entries={view.notebook} era={era} onOpen={setInspect} />

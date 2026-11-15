@@ -11,15 +11,21 @@ const log = (k, v) => { out[k] = v; console.log("•", k, typeof v === "string" 
 async function goLive(name) {
   await p.getByRole("button", { name: `Parler à ${name}` }).click();
   const t = Date.now();
-  await p.getByRole("button", { name: "Autoriser le micro et parler" }).click();
-  await p.getByRole("status").filter({ hasText: /En direct/ }).waitFor({ timeout: 60000 });
+  const consent = p.getByRole("button", { name: "Autoriser le micro et parler" });
+  if (await consent.isVisible({ timeout: 3000 }).catch(() => false)) await consent.click();
+  await waitLive(name, t);
+}
+async function waitLive(name, t = Date.now()) {
+  await p.locator(".character__head .state").filter({ hasText: /À l’écoute|répond|Micro coupé/ }).waitFor({ timeout: 60000 });
   log(`${name}: live after ms`, Date.now() - t);
-  await p.getByRole("button", { name: "Micro ouvert" }).click(); // mute the fake mic: typed turns only
+  log(`${name}: name in header while live`, await p.locator(".character__head h2").innerText());
+  const mute = p.getByRole("button", { name: "Couper le micro" });
+  if (await mute.isVisible().catch(() => false)) await mute.click(); // mute the fake mic: typed turns only
 }
 async function waitSubtitle(re, ms = 45000) {
   const end = Date.now() + ms;
   while (Date.now() < end) {
-    const s = (await p.locator(".character__subtitles").innerText().catch(() => "")) + " " + (await p.locator(".transcript").innerText().catch(() => ""));
+    const s = (await p.locator(".character__subtitles").innerText().catch(() => "")) + " " + (await p.locator(".history__list").innerText().catch(() => ""));
     if (re.test(s)) return s;
     await p.waitForTimeout(700);
   }
@@ -33,18 +39,25 @@ try {
   await p.goto(BASE + "/");
   await p.getByRole("button", { name: "Commencer" }).click();
   await p.waitForURL(/\/play\/run_/);
-  log("badge before live (none expected)", await p.locator(".badge").count());
+  log("state before live", await p.locator(".character__head .state").innerText());
   await goLive("Malik");
   log("video element", await p.evaluate(() => { const v = document.querySelector(".character__live video"); return v ? `${v.videoWidth}x${v.videoHeight} paused=${v.paused}` : "none"; }));
   log("Malik opening", await waitSubtitle(/Régina|reçois/));
+  await p.waitForTimeout(1500);
+  await p.screenshot({ path: "var/screens/after/live-malik-1440.png" });
   await type("Bonjour Malik. Peux-tu examiner la photo sur le bureau et me lire son verso ?");
   await p.getByRole("button", { name: /Photographie du Régina/ }).waitFor({ timeout: 60000 });
   log("notebook updated by tool", true);
   log("Malik reaction", await waitSubtitle(/G\s?7|G sept/i));
+  // The photo Malik just read opened on its own (auto-open): look at it, then close it.
+  log("photo opened automatically", await p.getByRole("dialog").isVisible().catch(() => false));
+  await p.screenshot({ path: "var/screens/after/live-autoopen-1440.png" });
+  await p.keyboard.press("Escape");
   await p.getByRole("navigation", { name: "Époque" }).getByRole("button", { name: "1996" }).click();
-  await p.getByRole("button", { name: "Parler à Jeanne" }).waitFor({ timeout: 30000 });
+  // During a call, the era switch closes Malik's session then reconnects Jeanne by itself.
+  await p.locator(".character__head h2").filter({ hasText: "Jeanne" }).waitFor({ timeout: 30000 });
   log("era switched to 1996 after closing Malik", true);
-  await goLive("Jeanne");
+  await waitLive("Jeanne");
   log("Jeanne opening", await waitSubtitle(/entendez|cabine/i));
   await p.getByRole("button", { name: /Photographie du Régina/ }).click();
   await p.getByRole("dialog").getByRole("button", { name: /Transmettre cet indice à Jeanne/ }).click();
@@ -53,7 +66,8 @@ try {
   await type("Peux-tu aller chercher la clé sous le siège G7, s’il te plaît ?");
   await p.getByRole("button", { name: /Clé au croissant/ }).waitFor({ timeout: 60000 }).then(() => log("Jeanne tool → key in notebook", true)).catch(() => log("Jeanne tool → key in notebook", false));
   log("Jeanne after search", await waitSubtitle(/clé|trouv/i));
-  await p.getByRole("button", { name: "Raccrocher" }).click();
+  await p.screenshot({ path: "var/screens/after/live-jeanne-1440.png" });
+  await p.getByRole("button", { name: "Terminer la conversation" }).click();
   await p.getByRole("button", { name: "Parler à Jeanne" }).waitFor({ timeout: 20000 });
   log("hung up", true);
 } catch (e) {

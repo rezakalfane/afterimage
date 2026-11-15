@@ -6,6 +6,7 @@ import { test, type Page } from "@playwright/test";
 
 const DIR = process.env.SCREENS_DIR ?? "var/screens/after";
 const VIEWPORTS = [
+  { id: "1920", width: 1920, height: 1080, scale: 1 },
   { id: "1440", width: 1440, height: 900, scale: 1 },
   { id: "1280", width: 1280, height: 720, scale: 1 },
   { id: "390", width: 390, height: 844, scale: 3, mobile: true },

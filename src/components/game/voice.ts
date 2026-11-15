@@ -113,3 +113,12 @@ export function eraFromSpeech(text: string, current: 1996 | 2026): 1996 | 2026 |
   const era = Number(m[1]) as 1996 | 2026;
   return era === current ? null : era;
 }
+
+/** The player asks to make the final decision ("let's decide", "on décide", "je suis prêt à
+ *  décider", "décider du sort du film"). Only OPENS the choice: nothing is selected or confirmed. */
+export function wantsToDecide(text: string): boolean {
+  if (/[?¿]/.test(text)) return false;
+  const t = normalizeSpeech(text);
+  if (/\b(ne|n'|pas|jamais|not|don't|never|later|plus tard|attends?|wait)\b/.test(t)) return false;
+  return /\b(let's decide|lets decide|time to decide|i'?m ready to decide|i want to decide|ready to choose|let's choose|decide the film'?s fate|make the decision|on (decide|décide)|décidons|décider du sort|je (suis prête? à|veux|vais) décider|prête? à décider|c'est l'heure de (décider|choisir)|faisons notre choix|on choisit|choisissons)\b/.test(t);
+}

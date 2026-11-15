@@ -30,6 +30,7 @@ Dites chaque phrase, attendez la ligne du panneau, notez le résultat.
 ## Choix final — fenêtre « Que faire du film ? »
 | # | Dites | Attendu |
 |---|---|---|
+| 8b | Fenêtre fermée, après la lettre : « Décidons. » / “Let's decide.” | la fenêtre « Que faire du film ? » s'ouvre, rien n'est choisi |
 | 9 | « Les archives ou la version autorisée ? » | ignoré (ambigu) |
 | 10 | « Je choisis la version autorisée. » | sélection seulement, **pas** de fin |
 | 11 | « Si je confirme, c'est définitif ? » | ignoré |

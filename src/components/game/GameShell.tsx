@@ -8,7 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CharacterPanel } from "@/components/conversation/CharacterPanel";
 import { useLiveConversation, type TranscriptLine } from "@/components/conversation/useLiveConversation";
 import { useLocale, useT } from "@/i18n/I18nProvider";
-import { endingFromSpeech, eraFromSpeech, isConfirmation, sameTarget, type VoiceTarget } from "./voice";
+import { endingFromSpeech, eraFromSpeech, isConfirmation, sameTarget, wantsToDecide, type VoiceTarget } from "./voice";
 import { LanguageChoice, LanguageSwitch, setLocale } from "@/components/ui/LanguageSwitch";
 import { DisplayChoices } from "@/components/ui/DisplayChoices";
 import { Dialog } from "@/components/ui/Dialog";
@@ -30,6 +30,8 @@ const AUTO_OPEN = new Set(["photo", "archiveReport", "programme", "rowMemory", "
 /** Gestures whose result is shown briefly, then the window closes by itself. Readings stay open. */
 const AUTO_CLOSE_ACTIONS = new Set<Action>(["share_photo_note", "propose_seat", "share_report", "retrieve_key", "close_cabinet", "acknowledge_permission", "relay_flood_warning", "confirm_message", "preserve_cache", "find_future_key"]);
 const AUTO_CLOSE_MS = 2200;
+/** Time left to finish reading the last recovered text before its window closes. */
+const READ_CLOSE_MS = 4000;
 /** Calls that show something to read: their window stays open. Gestures close after their result. */
 const READINGS = new Set(["open_cabinet", "recover_cache", "inspect_photo", "inspect_waterline", "inspect_programme", "ask_usual_place", "read_letter", "read_message", "read_future_letter", "look_at"]);
 
@@ -145,11 +147,11 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
     }, AUTO_CLOSE_MS);
   }
   function afterState(prev: PublicState, next: PublicState) {
-    if (mode === "live" && prev.endings.length === 0 && next.endings.length > 0 && !next.ending) {
-      setTimeout(() => {
-        setInspect(null);
-        setEndingOpen(true);
-      }, AUTO_CLOSE_MS + 600);
+    // Both recovered texts read: the reading window closes after a moment. The decision is NOT
+    // opened for the player: they open it (button) or name an ending out loud when ready.
+    if (prev.endings.length === 0 && next.endings.length > 0 && !next.ending) {
+      if (closeTimer.current) clearTimeout(closeTimer.current);
+      closeTimer.current = setTimeout(() => setInspect(null), READ_CLOSE_MS);
     }
   }
 
@@ -192,6 +194,25 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
       if (t.kind === "message") void act("confirm_message", { text: t.content });
       else endingConfirm.current?.();
       return;
+    }
+    // "Let's decide" / "on décide": open the choice (no selection, no confirmation).
+    if (!endingOpenRef.current && viewRef.current.endings.length > 0 && !viewRef.current.ending && wantsToDecide(text)) {
+      trace(text, "ouverture du choix");
+      setInspect(null);
+      setEndingOpen(true);
+      return;
+    }
+    // Naming an ending while the decision is possible but not shown: open it, then select (the
+    // confirmation stays a separate, explicit step).
+    if (!endingOpenRef.current && viewRef.current.endings.length > 0 && !viewRef.current.ending) {
+      const id = endingFromSpeech(text, locale);
+      if (id) {
+        trace(text, `ouverture du choix + sélection : ${id} (confirmation encore requise)`);
+        setInspect(null);
+        setEndingOpen(true);
+        setTimeout(() => endingChoose.current?.(id), 300);
+        return;
+      }
     }
     // Ending choice by voice: an explicit selection only (never a confirmation, never automatic).
     if (endingOpenRef.current && !selectedRef.current && endingChoose.current) {
@@ -260,7 +281,6 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
         setBusy(false);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- afterState/scheduleClose only read refs and setters
     [runId, mode, live, refresh, say, g, t],
   );
 

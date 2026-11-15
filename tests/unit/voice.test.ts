@@ -72,3 +72,13 @@ describe("era switch by voice", () => {
     for (const t of ["Je viens de 2026", "En 2026, la cabine est abîmée", "2026 ?", "Que s'est-il passé en 2026 ?", "1996"]) expect(eraFromSpeech(t, 1996), t).toBeNull();
   });
 });
+
+import { wantsToDecide } from "@/components/game/voice";
+describe("opening the decision by voice", () => {
+  it("explicit requests open it (en, fr)", () => {
+    for (const t of ["Let's decide.", "OK, let's decide the film's fate", "I'm ready to decide", "On décide.", "Décidons maintenant", "Je suis prête à décider", "Décider du sort du film"]) expect(wantsToDecide(t), t).toBe(true);
+  });
+  it("questions, refusals and mere mentions do not", () => {
+    for (const t of ["Should we decide?", "Not yet, let's decide later", "On ne décide pas encore", "Il faudra décider un jour, peut-être", "Décider quoi ?"]) expect(wantsToDecide(t), t).toBe(false);
+  });
+});

@@ -1,20 +1,44 @@
 "use client";
-// Object inspector: image + DOM text (selectable) + the actions the server says are available.
-// Texts come from the server projection only; nothing undiscovered is known here.
-import { useState } from "react";
+// Object inspector: the object (or a close-up of the set) next to its DOM text (selectable) and the
+// actions the server says are available. Texts come from the server projection only.
+// A simple reading (report, programme, letter) runs on opening — no extra confirmation — but only
+// when the server lists it as available, once per opening; nothing is shown as found before the
+// server answers. Turning the photo over and unfolding the message stay explicit gestures.
+import { useEffect, useRef, useState } from "react";
 import { Dialog } from "@/components/ui/Dialog";
 import { useT } from "@/i18n/I18nProvider";
-import { objectImage } from "./scene-config";
+import { CLOSEUPS, objectImage, sceneImage } from "./scene-config";
 import type { Action, Era, PublicState } from "./types";
 
 type Act = (action: Action, args?: Record<string, unknown>) => Promise<unknown>;
 
 const LOCATION_IDS = ["upper_cabinet", "lower_cabinet", "desk", "floor"] as const;
 
-function ActionButton({ action, args, children, tone, can, act }: { action: Action; args?: Record<string, unknown>; children: React.ReactNode; tone?: "decision"; can: (a: Action) => boolean; act: Act }) {
+/** Readings that run when their document is opened (pure reads, no consequence to confirm). */
+const AUTO_READ: Partial<Record<string, Action>> = { archiveReport: "inspect_waterline", programme: "inspect_programme", letter: "read_letter" };
+
+function Closeup({ id, era, open }: { id: string; era: Era; open: boolean }) {
+  const c = CLOSEUPS[id];
+  if (!c) return null;
+  const pos = (v: number, size: number) => (size >= 1 ? "0%" : `${((v / (1 - size)) * 100).toFixed(2)}%`);
+  return (
+    <div
+      className="closeup"
+      aria-hidden="true"
+      style={{
+        aspectRatio: String((c.w * 1672) / (c.h * 941)),
+        backgroundImage: `url(${sceneImage(era, open)}-1672.webp)`,
+        backgroundSize: `${(100 / c.w).toFixed(2)}% auto`,
+        backgroundPosition: `${pos(c.x, c.w)} ${pos(c.y, c.h)}`,
+      }}
+    />
+  );
+}
+
+function ActionButton({ action, args, children, can, act }: { action: Action; args?: Record<string, unknown>; children: React.ReactNode; can: (a: Action) => boolean; act: Act }) {
   if (!can(action)) return null;
   return (
-    <button type="button" className={`btn ${tone === "decision" ? "btn--decision" : "btn--brass"}`} onClick={() => act(action, args)}>
+    <button type="button" className="btn btn--brass" onClick={() => act(action, args)}>
       {children}
     </button>
   );
@@ -23,6 +47,19 @@ function ActionButton({ action, args, children, tone, can, act }: { action: Acti
 export function ObjectInspector({ id, era, view, onClose, act, openComposer }: { id: string | null; era: Era; view: PublicState; onClose: () => void; act: Act; openComposer: () => void }) {
   const t = useT();
   const [location, setLocation] = useState("upper_cabinet");
+  const fired = useRef<string | null>(null);
+  const auto = id ? AUTO_READ[id] : undefined;
+  const autoReady = Boolean(auto && view.availableActions.includes(auto));
+  useEffect(() => {
+    if (!id) {
+      fired.current = null;
+      return;
+    }
+    if (auto && autoReady && fired.current !== id) {
+      fired.current = id; // once per opening, StrictMode-safe
+      void act(auto);
+    }
+  }, [id, auto, autoReady, act]);
   if (!id) return <Dialog open={false} title="" onClose={onClose}>{null}</Dialog>;
   const note = (k: string) => view.notebook.find((n) => n.id === k);
   const can = (a: Action) => view.availableActions.includes(a);
@@ -63,7 +100,7 @@ export function ObjectInspector({ id, era, view, onClose, act, openComposer }: {
       ) : (
         <>
           <p>{t.inspector.waterDesc}</p>
-          <ActionButton can={can} act={act} action="inspect_waterline">{t.inspector.waterRead}</ActionButton>
+          {can("inspect_waterline") && <p className="muted" role="status">{t.inspector.reading}</p>}
         </>
       );
       break;
@@ -72,7 +109,7 @@ export function ObjectInspector({ id, era, view, onClose, act, openComposer }: {
       title = t.inspector.programmeTitle;
       asset = "screening-programme";
       const n = note("programme");
-      body = n ? <p className="doc doc--typed">{n.text}</p> : (<><p>{t.inspector.programmeDesc}</p><ActionButton can={can} act={act} action="inspect_programme">{t.inspector.programmeRead}</ActionButton></>);
+      body = n ? <p className="doc doc--typed">{n.text}</p> : (<><p>{t.inspector.programmeDesc}</p>{can("inspect_programme") && <p className="muted" role="status">{t.inspector.reading}</p>}</>);
       break;
     }
     case "letter":
@@ -83,13 +120,13 @@ export function ObjectInspector({ id, era, view, onClose, act, openComposer }: {
       body = n ? (
         <>
           <p className="doc doc--hand">{n.text}</p>
-          {era === 1996 && !view.acknowledged && <ActionButton can={can} act={act} action="acknowledge_permission" tone="decision">{t.inspector.acknowledge}</ActionButton>}
+          {era === 1996 && !view.acknowledged && <ActionButton can={can} act={act} action="acknowledge_permission">{t.inspector.acknowledge}</ActionButton>}
           {era === 1996 && view.acknowledged && <p className="muted">{t.inspector.acknowledged}</p>}
         </>
       ) : (
         <>
           <p>{t.inspector.letterDesc}</p>
-          <ActionButton can={can} act={act} action="read_letter">{t.inspector.letterRead}</ActionButton>
+          {can("read_letter") && <p className="muted" role="status">{t.inspector.reading}</p>}
           {!can("read_letter") && <p className="muted">{t.inspector.letterNeedProgramme}</p>}
         </>
       );
@@ -149,7 +186,7 @@ export function ObjectInspector({ id, era, view, onClose, act, openComposer }: {
               </label>
             ))}
           </fieldset>
-          <ActionButton can={can} act={act} action="preserve_cache" args={{ location }} tone="decision">{t.inspector.shelfStore}</ActionButton>
+          <ActionButton can={can} act={act} action="preserve_cache" args={{ location }}>{t.inspector.shelfStore}</ActionButton>
           {!can("preserve_cache") && <p className="muted">{t.inspector.shelfMissing}</p>}
           {!view.message.confirmed && <button type="button" className="btn" onClick={openComposer}>{t.inspector.shelfWrite}</button>}
         </>
@@ -166,8 +203,8 @@ export function ObjectInspector({ id, era, view, onClose, act, openComposer }: {
             <li>{t.inspector.cachePaper}</li>
           </ul>
           {view.message.recovered ? (
-            <figure className="paper">
-              <figcaption>{t.inspector.cacheMessageCaption}</figcaption>
+            <figure className="sheet sheet--aged">
+              <figcaption className="sheet__label">{t.inspector.cacheMessageCaption}</figcaption>
               <p className="paper__text">{view.message.recovered}</p>
             </figure>
           ) : (
@@ -180,8 +217,12 @@ export function ObjectInspector({ id, era, view, onClose, act, openComposer }: {
     }
     case "message": {
       title = t.inspector.messageTitle;
-      asset = "message-paper";
-      body = view.message.recovered ? <p className="paper__text">{view.message.recovered}</p> : null;
+      body = view.message.recovered ? (
+        <figure className="sheet sheet--aged">
+          <figcaption className="sheet__label">{t.inspector.cacheMessageCaption}</figcaption>
+          <p className="paper__text">{view.message.recovered}</p>
+        </figure>
+      ) : null;
       break;
     }
     case "key":
@@ -201,11 +242,17 @@ export function ObjectInspector({ id, era, view, onClose, act, openComposer }: {
       break;
   }
 
+  const openNow = era === 1996 ? view.scene.cabinetOpen1996 : view.scene.cabinetOpen2026;
+  const visual = asset ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img className="inspect__img" src={objectImage(asset, 640)} alt="" aria-hidden="true" />
+  ) : CLOSEUPS[id] ? (
+    <Closeup id={id} era={id === "archiveReport" ? 2026 : era} open={id === "archiveReport" ? false : openNow} />
+  ) : null;
   return (
-    <Dialog open title={title} onClose={onClose}>
-      <div className="inspect">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        {asset && <img className="inspect__img" src={objectImage(asset, 640)} alt="" aria-hidden="true" />}
+    <Dialog open title={title} onClose={onClose} wide={Boolean(visual)}>
+      <div className={`inspect${visual ? "" : " inspect--text"}`}>
+        {visual && <div className="inspect__visual">{visual}</div>}
         <div className="inspect__body">{body}</div>
       </div>
     </Dialog>

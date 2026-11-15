@@ -226,7 +226,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
         </div>
         <div className="footer__actions">
           {era === 1996 && !view.message.sealed && view.availableActions.includes("write_message") && <button type="button" className="btn" onClick={() => setComposer(true)}>{g.words}</button>}
-          {canDecide && <button type="button" className="btn btn--decision" onClick={() => setEndingOpen(true)}>{g.decide}</button>}
+          {canDecide && <button type="button" className="btn btn--brass" onClick={() => setEndingOpen(true)}>{g.decide}</button>}
           {!view.ending && <button type="button" className="btn" onClick={() => act("request_hint")} disabled={busy}>{g.hint}</button>}
           <Link className="btn" href="/">{g.quit}</Link>
           {!confirmDelete ? (

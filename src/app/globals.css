@@ -169,13 +169,17 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .dlg { width: min(720px, calc(100% - 24px)); max-height: calc(100vh - 40px); border: 1px solid var(--brass); background: var(--ink-2); color: var(--ivory); padding: 0; }
 .dlg--wide { width: min(860px, calc(100% - 24px)); }
 .dlg--decision { border-color: var(--bordeaux-hi); }
-.dlg::backdrop { background: rgb(3 8 7 / 0.82); backdrop-filter: blur(4px); }
+.dlg::backdrop { background: rgb(3 8 7 / 0.62); backdrop-filter: blur(1.5px); }
 .dlg__head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 16px 22px; border-bottom: 1px solid var(--line); }
 .dlg__head h2 { margin: 0; font-family: var(--display); font-weight: 500; font-size: 1.8rem; }
 .dlg__close { width: 44px; height: 44px; border: 1px solid var(--line); background: transparent; font-size: 1.5rem; cursor: pointer; }
 .dlg__body { padding: 18px 22px 24px; }
-.inspect { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 20px; align-items: start; }
-.inspect__img { width: 100%; max-height: 300px; object-fit: contain; filter: drop-shadow(0 10px 14px rgb(0 0 0 / 0.5)); }
+.inspect { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: center; }
+.inspect--text { grid-template-columns: minmax(0, 1fr); max-width: 60ch; }
+.inspect__visual { display: grid; place-items: center; min-height: 0; }
+.inspect__img { width: 100%; max-height: min(52vh, 420px); object-fit: contain; filter: drop-shadow(0 12px 16px rgb(0 0 0 / 0.55)); }
+.closeup { width: 100%; max-height: min(56vh, 460px); background-repeat: no-repeat; border: 1px solid var(--line); box-shadow: 0 10px 24px rgb(0 0 0 / 0.45); }
+.inspect__body { max-width: 62ch; }
 .inspect__body > * + * { margin-top: 0.8rem; }
 .doc { user-select: text; white-space: pre-wrap; margin: 0; padding: 18px 20px; color: var(--paper-ink); background: var(--paper); box-shadow: inset 0 0 40px rgb(120 80 30 / 0.28), 0 8px 20px rgb(0 0 0 / 0.4); }
 .doc--hand { font-family: var(--display); font-style: italic; font-size: 1.35rem; line-height: 1.45; }
@@ -186,13 +190,25 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .paper__text { font-family: var(--display); font-style: italic; font-size: 1.6rem; line-height: 1.35; margin: 0.4em 0; white-space: pre-wrap; overflow-wrap: anywhere; user-select: text; }
 .paper .btn--decision { color: var(--ivory); }
 .compose { display: grid; gap: 0.45rem; }
+.sheet { margin: 0; padding: 22px 26px 18px; background: var(--paper); color: var(--paper-ink); box-shadow: inset 0 0 48px rgb(120 80 30 / 0.3), 0 10px 24px rgb(0 0 0 / 0.4); }
+.sheet__label { display: block; font-size: 0.85rem; color: #5d4930; margin-bottom: 0.4rem; }
+.sheet__input { width: 100%; resize: vertical; border: 0; border-bottom: 1px solid rgb(90 60 30 / 0.35); background: transparent; color: var(--paper-ink); font-family: var(--display); font-size: 1.5rem; line-height: 1.4; padding: 4px 0; }
+.sheet__input:focus-visible { outline: 2px solid #8a6a2e; outline-offset: 4px; }
+.sheet__count { margin: 0.3rem 0 0; font-size: 0.8rem; color: #6c5537; text-align: right; }
+.sheet .btn { color: var(--paper-ink); border-color: rgb(90 60 30 / 0.4); }
+.sheet .btn--brass { color: #15120c; border-color: var(--brass); }
+.sheet--paper { transform: rotate(-0.4deg); margin-bottom: 1rem; }
+/* The same words thirty years later: yellowed, foxed, folded — the text itself unchanged. */
+.sheet--aged { background: radial-gradient(circle at 18% 30%, rgb(140 100 50 / 0.18), transparent 22%), radial-gradient(circle at 82% 70%, rgb(140 100 50 / 0.14), transparent 26%), linear-gradient(180deg, transparent 49.4%, rgb(90 60 30 / 0.18) 50%, transparent 50.6%), #e2cfa3; box-shadow: inset 0 0 60px rgb(110 70 25 / 0.45), 0 10px 24px rgb(0 0 0 / 0.45); transform: rotate(0.5deg); margin-bottom: 1rem; }
 .compose textarea { resize: vertical; font-family: var(--display); font-size: 1.25rem; }
 .choices { border: 0; padding: 0; margin: 0.6rem 0; display: grid; gap: 0.2rem; }
 .choice { display: flex; gap: 0.6em; align-items: center; min-height: 44px; }
 .found { margin: 0 0 0.6rem; padding-left: 1.2em; }
 .endings { list-style: none; padding: 0; margin: 1rem 0 0; display: grid; gap: 0.7rem; }
 .ending { width: 100%; text-align: left; display: grid; gap: 4px; padding: 14px 16px; min-height: 64px; border: 1px solid var(--line); background: rgb(255 255 255 / 0.02); cursor: pointer; }
-.ending:hover:not(:disabled) { border-color: var(--bordeaux-hi); background: rgb(110 48 55 / 0.2); }
+.ending:hover:not(:disabled) { border-color: var(--brass); background: rgb(185 155 98 / 0.08); }
+.ending--warn { border-left: 3px solid var(--bordeaux-hi); }
+.ending--warn:hover:not(:disabled) { border-color: var(--bordeaux-hi); background: rgb(110 48 55 / 0.2); }
 .ending__label { font-family: var(--display); font-size: 1.35rem; }
 .ending__consequence { color: var(--muted); font-size: 0.95rem; }
 
@@ -254,7 +270,8 @@ button, input, textarea, select { font: inherit; color: inherit; }
   .notebook { display: block; }
   .notebook__label { width: auto; display: flex; gap: 0.8rem; align-items: baseline; margin-bottom: 6px; }
   .inspect { grid-template-columns: 1fr; }
-  .inspect__img { max-height: 180px; }
+  .inspect__img { max-height: 200px; }
+  .closeup { max-height: 220px; }
   .meta { font-size: 0.58rem; }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -38,14 +38,14 @@ export function EndingDialog({ open, onClose, runId, view, onDone }: { open: boo
   }
 
   return (
-    <Dialog open={open} title={t.title} onClose={() => { setIntent(null); onClose(); }} tone="decision" wide>
+    <Dialog open={open} title={t.title} onClose={() => { setIntent(null); onClose(); }} wide>
       {!intent ? (
         <>
           <p>{t.intro}</p>
           <ul className="endings">
             {view.endings.map((e) => (
               <li key={e.id}>
-                <button type="button" className="ending" disabled={busy} onClick={() => choose(e.id)}>
+                <button type="button" className={`ending${e.id === "broken_promise" ? " ending--warn" : ""}`} disabled={busy} onClick={() => choose(e.id)}>
                   <span className="ending__label">{e.label}</span>
                   <span className="ending__consequence">{e.consequence}</span>
                 </button>
@@ -58,7 +58,7 @@ export function EndingDialog({ open, onClose, runId, view, onDone }: { open: boo
           <p className="ending__label">{intent.ending.label}</p>
           <p>{intent.ending.consequence}</p>
           <div className="btn-row">
-            <button type="button" className="btn btn--decision" disabled={busy} onClick={confirm}>{intent.ending.confirmation}</button>
+            <button type="button" className={`btn ${intent.ending.id === "broken_promise" ? "btn--decision" : "btn--brass"}`} disabled={busy} onClick={confirm}>{intent.ending.confirmation}</button>
             <button type="button" className="btn" disabled={busy} onClick={() => setIntent(null)}>{t.back}</button>
           </div>
         </>

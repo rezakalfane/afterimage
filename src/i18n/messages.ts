@@ -66,6 +66,7 @@ const fr = {
   },
   notebook: { label: "Le carnet", region: "Carnet", empty: "Encore vide", emptyHint: "Examinez le décor : ce que vous découvrez s’inscrit ici.", count: "{n} trace", countPlural: "{n} traces" },
   inspector: {
+    reading: "Lecture…",
     photoTitle: "Photographie du Régina", photoDesc: "Une vieille photographie de la façade, posée sur le bureau.", photoTurn: "Retourner la photo", photoBackLabel: "Au verso, à la main :",
     photoRelay: "Transmettre cet indice à Jeanne", photoNot1996: "Jeanne, en 1996, ne connaît pas encore cette inscription. Passez en 1996 pour la lui transmettre.", photoOtherEra: "La photo se trouve dans la cabine de 2026.",
     waterTitle: "Trace d’humidité", waterDesc: "Le bois de l’armoire est marqué d’une ligne claire. Un dossier traîne à côté.", waterRead: "Lire le rapport de conservation",
@@ -86,9 +87,10 @@ const fr = {
     reelTitle: "La bobine", reelDesc: "« Les lumières du Régina », un film d’Alice Mercier. Trente ans au sec.", envelopeTitle: "Enveloppe scellée", envelopeDesc: "Elle contenait la lettre d’Alice.",
   },
   composer: {
-    title: "Vos mots, pour dans trente ans", sealed: "Le message est scellé avec le film. Pour d’autres mots, commencez une nouvelle partie.", needLetter: "Avant de laisser des mots avec le film, lisez ce qu’Alice a écrit.",
-    label: "Écrivez ou dictez à Jeanne une phrase de 1 à {max} caractères.", save: "Enregistrer ce brouillon", draftCaption: "Brouillon conservé par le jeu (exactement ces mots)",
-    confirmed: "Confirmé, mot pour mot. Vous pouvez demander à Jeanne de tout ranger.", confirm: "Je confirme ces mots exacts", note: "Toute modification annule la confirmation, tant que le film n’est pas rangé.",
+    title: "Quelques mots pour dans trente ans", sealed: "Vos mots sont rangés avec le film. Pour d’autres mots, commencez une nouvelle partie.", needLetter: "Avant de laisser des mots avec le film, lisez ce qu’Alice a écrit.",
+    label: "Écrivez ou dictez à Jeanne une phrase de 1 à {max} caractères.", save: "Relire mon message", draftCaption: "Vos mots, tels que Jeanne les gardera",
+    confirmed: "Jeanne a gardé vos mots. Vous pouvez lui demander de tout ranger.", confirm: "Confier ces mots à Jeanne", note: "Toute modification annule l’accord, tant que le film n’est pas rangé.",
+    edit: "Modifier", review: "Relisez : ce sont exactement les mots qui traverseront le temps.", saveFailed: "Vos mots n’ont pas pu être enregistrés. Votre texte est conservé ; réessayez.",
     defaultText: "Les étoiles restent allumées.",
   },
   ending: { title: "Que faire du film ?", intro: "Le film est sauvé. Il reste à décider comment le rendre au monde. Ce choix est définitif pour cette partie.", back: "Revenir aux choix", failed: "Choix impossible." },
@@ -164,6 +166,7 @@ const en: DeepPartial<Messages> = {
   },
   notebook: { label: "The notebook", region: "Notebook", empty: "Still empty", emptyHint: "Examine the set: what you discover is written here.", count: "{n} clue", countPlural: "{n} clues" },
   inspector: {
+    reading: "Reading…",
     photoTitle: "Photograph of Le Régina", photoDesc: "An old photograph of the façade, lying on the desk.", photoTurn: "Turn the photo over", photoBackLabel: "On the back, handwritten:",
     photoRelay: "Pass this clue on to Jeanne", photoNot1996: "Jeanne, in 1996, does not know this inscription yet. Go to 1996 to pass it on to her.", photoOtherEra: "The photo is in the 2026 booth.",
     waterTitle: "Damp mark", waterDesc: "The cabinet's wood bears a pale line. A file lies next to it.", waterRead: "Read the conservation report",
@@ -184,9 +187,10 @@ const en: DeepPartial<Messages> = {
     reelTitle: "The reel", reelDesc: "“Les lumières du Régina”, a film by Alice Mercier. Thirty years kept dry.", envelopeTitle: "Sealed envelope", envelopeDesc: "It held Alice's letter.",
   },
   composer: {
-    title: "Your words, for thirty years from now", sealed: "The message is sealed with the film. For other words, start a new game.", needLetter: "Before leaving words with the film, read what Alice wrote.",
-    label: "Write or dictate to Jeanne a sentence of 1 to {max} characters.", save: "Save this draft", draftCaption: "Draft kept by the game (exactly these words)",
-    confirmed: "Confirmed, word for word. You can ask Jeanne to put everything away.", confirm: "I confirm these exact words", note: "Any change cancels the confirmation, until the film is put away.",
+    title: "A few words for thirty years from now", sealed: "Your words are stored with the film. For other words, start a new game.", needLetter: "Before leaving words with the film, read what Alice wrote.",
+    label: "Write or dictate to Jeanne a sentence of 1 to {max} characters.", save: "Review my message", draftCaption: "Your words, as Jeanne will keep them",
+    confirmed: "Jeanne kept your words. You can ask her to put everything away.", confirm: "Leave these words with Jeanne", note: "Any change cancels the agreement, until the film is put away.",
+    edit: "Edit", review: "Read it again: these are exactly the words that will cross time.", saveFailed: "Your words could not be saved. Your text is kept; try again.",
     defaultText: "The stars stay lit.",
   },
   ending: { title: "What to do with the film?", intro: "The film is saved. It remains to decide how to give it back to the world. This choice is final for this game.", back: "Back to the choices", failed: "Choice not possible." },

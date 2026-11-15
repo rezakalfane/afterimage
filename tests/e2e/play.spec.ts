@@ -31,8 +31,7 @@ test("resume after reload and network cut keeps a consistent state", async ({ pa
   await inDialog(page, /Retourner la photo/);
   await closeDialog(page);
   await context.setOffline(true);
-  await hotspot(page, /Trace d’humidité/);
-  await page.getByRole("dialog").getByRole("button", { name: /Lire le rapport/ }).click();
+  await hotspot(page, /Trace d’humidité/); // opening the report reads it: fails offline
   await expect(page.getByText(/Connexion au serveur impossible|Failed to fetch/)).toBeVisible();
   await context.setOffline(false);
   await page.reload();

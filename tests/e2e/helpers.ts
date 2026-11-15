@@ -13,6 +13,13 @@ export async function inDialog(page: Page, button: RegExp) {
   const r = await answered;
   expect(r.status(), `server answer for ${button}`).toBeLessThan(500);
 }
+/** Open a document whose reading runs on opening, and wait for the SERVER's answer. */
+export async function openReading(page: Page, label: RegExp) {
+  const answered = page.waitForResponse((r) => r.url().includes("/commands") && r.request().method() === "POST");
+  await hotspot(page, label);
+  const r = await answered;
+  expect(r.status(), `server answer for ${label}`).toBeLessThan(500);
+}
 export async function closeDialog(page: Page) {
   await page.keyboard.press("Escape");
   await expect(page.locator("dialog[open]")).toHaveCount(0);
@@ -35,8 +42,7 @@ export async function playToDecision(page: Page) {
   await inDialog(page, /Retourner la photo/);
   await expect(page.getByRole("dialog").getByText(/G7/)).toBeVisible();
   await closeDialog(page);
-  await hotspot(page, /Trace d’humidité/);
-  await inDialog(page, /Lire le rapport/);
+  await openReading(page, /Trace d’humidité/);
   await closeDialog(page);
   await era(page, "1996");
   // Early refusal: the cabinet is locked, nothing changes.
@@ -54,11 +60,9 @@ export async function playToDecision(page: Page) {
   await closeDialog(page);
 
   // Énigme 2 — la promesse et la trace
-  await hotspot(page, /Programme de la séance/);
-  await inDialog(page, /Lire le programme/);
+  await openReading(page, /Programme de la séance/);
   await closeDialog(page);
-  await hotspot(page, /La lettre dans l’armoire/);
-  await inDialog(page, /Lire la lettre/);
+  await openReading(page, /La lettre dans l’armoire/);
   await inDialog(page, /Je reconnais la condition d’Alice/);
   await closeDialog(page);
   await page.getByRole("button", { name: /Rapport de conservation/ }).click();
@@ -68,13 +72,13 @@ export async function playToDecision(page: Page) {
   await page.getByRole("button", { name: "Vos mots" }).click();
   await page.getByLabel(/Écrivez ou dictez/).fill(PHRASE);
   const saved = page.waitForResponse((r) => r.url().includes("/commands"));
-  await page.getByRole("button", { name: /Enregistrer ce brouillon/ }).click();
+  await page.getByRole("button", { name: /Relire mon message/ }).click();
   await saved;
   await expect(page.locator(".paper__text")).toHaveText(PHRASE.normalize("NFC"));
   const confirmed = page.waitForResponse((r) => r.url().includes("/commands"));
-  await page.getByRole("button", { name: /Je confirme ces mots exacts/ }).click();
+  await page.getByRole("button", { name: /Confier ces mots à Jeanne/ }).click();
   await confirmed;
-  await expect(page.getByText(/Confirmé, mot pour mot/)).toBeVisible();
+  await expect(page.getByText(/Jeanne a gardé vos mots/)).toBeVisible();
   await closeDialog(page);
   await hotspot(page, /Étagère haute de l’armoire/);
   await page.getByRole("dialog").getByLabel(/Sur le bureau/).check();

@@ -59,6 +59,16 @@ export const OVERLAYS = {
   reelInCabinet: { asset: "film-canister", x: 0.83, base: 0.848, w: 0.09, pose: "stand" },
 } satisfies Record<string, Overlay>;
 
+/** Close-up of the set shown next to a place's text in the inspector (normalized crop). */
+export const CLOSEUPS: Record<string, { x: number; y: number; w: number; h: number }> = {
+  archiveReport: { x: 0.72, y: 0.56, w: 0.27, h: 0.36 },
+  hall: { x: 0.3, y: 0.18, w: 0.42, h: 0.36 },
+  cabinet: { x: 0.7, y: 0.06, w: 0.3, h: 0.86 },
+  projector: { x: 0.0, y: 0.12, w: 0.3, h: 0.7 },
+  shelf: { x: 0.74, y: 0.08, w: 0.24, h: 0.46 },
+  cache: { x: 0.74, y: 0.08, w: 0.24, h: 0.46 },
+};
+
 /** Names, roles and dates: dictionary (character.*, scene.date1996/2026). */
 export const ERA_META: Record<Era, { character: "jeanne" | "malik"; portrait: string }> = {
   1996: { character: "jeanne", portrait: "/assets/afterimage/characters/jeanne-reference" },

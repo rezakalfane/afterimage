@@ -22,11 +22,13 @@ interface Options {
   onPublicState?: (state: unknown, revision: number) => void;
   /** The PLAYER's own final transcript (never the model's words): used for voice confirmations. */
   onUserUtterance?: (text: string) => void;
+  /** What a character's tool call was about (accepted, refused or unchanged): the screen shows it. */
+  onFocus?: (focus: { action: string; target: string | null }) => void;
   /** Debug hook for the technical proof (Playwright); not used by the game UI. */
   onRawEvent?: (e: ServerEvent) => void;
 }
 
-export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUtterance }: Options) {
+export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUtterance, onFocus }: Options) {
   const t = useT().character;
   const mountRef = useRef<HTMLDivElement | null>(null);
   const instanceRef = useRef<Instance | null>(null);
@@ -49,10 +51,10 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUt
   useEffect(() => {
     tRef.current = t;
   }, [t]);
-  const cbs = useRef({ onPublicState, onRawEvent, onUserUtterance });
+  const cbs = useRef({ onPublicState, onRawEvent, onUserUtterance, onFocus });
   useEffect(() => {
-    cbs.current = { onPublicState, onRawEvent, onUserUtterance };
-  }, [onPublicState, onRawEvent, onUserUtterance]);
+    cbs.current = { onPublicState, onRawEvent, onUserUtterance, onFocus };
+  }, [onPublicState, onRawEvent, onUserUtterance, onFocus]);
 
   const send = useCallback((cmd: unknown) => {
     instanceRef.current?.sendCommand(cmd as Parameters<Instance["sendCommand"]>[0]);
@@ -66,12 +68,13 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUt
       seen.current.add(callId);
       let output: Record<string, unknown> = { ok: false, message: tRef.current.toolNoServer };
       try {
-        const r = await api<{ output: Record<string, unknown>; revision: number; publicState: unknown }>(`/api/runs/${runId}/tool`, {
+        const r = await api<{ output: Record<string, unknown>; revision: number; publicState: unknown; focus?: { action: string; target: string | null } | null }>(`/api/runs/${runId}/tool`, {
           method: "POST",
           body: { callId, name, args: data.arguments ?? {}, conversationLeaseId: leaseRef.current },
         });
         output = r.output;
         cbs.current.onPublicState?.(r.publicState, r.revision);
+        if (r.focus) cbs.current.onFocus?.(r.focus);
       } catch (e) {
         // Never claim failure if it may have committed: the UI reloads the canonical state.
         output = { ok: false, message: tRef.current.toolUnverified };

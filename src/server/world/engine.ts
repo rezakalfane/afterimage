@@ -50,6 +50,7 @@ export type Action =
   | "find_future_key"
   | "recover_cache"
   | "close_cabinet"
+  | "look_at"
   | "read_message"
   | "read_future_letter"
   | "choose_ending"
@@ -59,7 +60,7 @@ export type Action =
 export const ACTIONS: readonly Action[] = [
   "inspect_photo", "relay_key_location", "retrieve_key", "open_cabinet", "inspect_programme", "read_letter",
   "acknowledge_permission", "inspect_waterline", "relay_flood_warning", "write_message", "confirm_message",
-  "preserve_cache", "find_future_key", "recover_cache", "close_cabinet", "read_message", "read_future_letter", "choose_ending", "switch_era", "request_hint",
+  "preserve_cache", "find_future_key", "recover_cache", "close_cabinet", "look_at", "read_message", "read_future_letter", "choose_ending", "switch_era", "request_hint",
 ];
 
 export type FailCode =
@@ -114,6 +115,12 @@ const SIMPLE: Partial<Record<Action, [Era, Flag[], Flag]>> = {
   recover_cache: [2026, ["future_key_found"], "cache_recovered"],
   read_message: [2026, ["cache_recovered"], "message_read"],
   read_future_letter: [2026, ["cache_recovered"], "future_letter_read"],
+};
+
+/** What a character can show the player in each era (look_at targets; no secret, only places). */
+export const LOOK_TARGETS: Record<Era, readonly string[]> = {
+  1996: ["hall", "cabinet", "desk", "programme", "letter", "projector"],
+  2026: ["cabinet", "projector", "desk", "photo", "waterline", "message", "letter"],
 };
 
 /** Actions on what is inside the cabinet: refused while its door is closed. */
@@ -189,6 +196,10 @@ export function transition(state: WorldState, command: Command, ctx: EngineConte
     mark(flag);
     // Opening an already unlocked cabinet just reopens its door.
     if (a === "open_cabinet" || a === "recover_cache") s.flags = s.flags.filter((f) => f !== `door_closed_${era}`);
+  } else if (a === "look_at") {
+    // Pure look: shows a place or object of the CURRENT era to the player; never mutates.
+    if (!exact(["target"]) || !LOOK_TARGETS[s.activeEra].includes(String(args.target))) return fail("INVALID_ARGUMENT");
+    return { ok: true, changed: false, state };
   } else if (a === "close_cabinet") {
     if (!exact([])) return fail("INVALID_ARGUMENT");
     const era = s.activeEra;

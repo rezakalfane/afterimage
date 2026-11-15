@@ -29,6 +29,32 @@ const AUTO_OPEN = new Set(["photo", "archiveReport", "programme", "letter", "mes
 /** Gestures whose result is shown briefly, then the window closes by itself. Readings stay open. */
 const AUTO_CLOSE_ACTIONS = new Set<Action>(["relay_key_location", "retrieve_key", "open_cabinet", "close_cabinet", "acknowledge_permission", "relay_flood_warning", "confirm_message", "preserve_cache", "find_future_key", "recover_cache"]);
 const AUTO_CLOSE_MS = 2200;
+/** Calls that show something to read: their window stays open. Gestures close after their result. */
+const READINGS = new Set(["inspect_photo", "inspect_waterline", "inspect_programme", "read_letter", "read_message", "read_future_letter", "look_at"]);
+
+/** The inspector window matching a character's call, from the current server state. */
+function focusTarget(action: string, target: string | null, s: PublicState): string | null {
+  const era = s.activeEra;
+  const open = era === 1996 ? s.scene.cabinetOpen1996 : s.scene.cabinetOpen2026;
+  const seen = (id: string) => s.notebook.some((n) => n.id === id);
+  const cabinet = open ? (era === 1996 ? "letter" : "cache") : "cabinet";
+  if (action === "look_at") {
+    const looks: Record<string, string> = {
+      hall: "hall", cabinet, projector: "projector", photo: "photo", waterline: "archiveReport", programme: "programme",
+      desk: era === 1996 ? "programme" : "photo",
+      letter: era === 1996 ? "letter" : seen("futureLetter") ? "futureLetter" : "cache",
+      message: seen("message") ? "message" : "cache",
+    };
+    return target ? looks[target] ?? null : null;
+  }
+  const byAction: Record<string, string> = {
+    inspect_photo: "photo", relay_key_location: "photo", inspect_waterline: "archiveReport", relay_flood_warning: "archiveReport",
+    inspect_programme: "programme", read_letter: "letter", acknowledge_permission: "letter", retrieve_key: "hall",
+    find_future_key: "projector", preserve_cache: "shelf", read_message: "cache", read_future_letter: "cache",
+    open_cabinet: cabinet, close_cabinet: "cabinet", recover_cache: cabinet,
+  };
+  return byAction[action] ?? null;
+}
 /** Event-time clock (called from handlers only). */
 const clock = () => Date.now();
 
@@ -81,13 +107,22 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
         setInspect(null);
         setComposer(true);
       }
-      // A gesture done by voice while a place was open: let the result show, then close it.
-      if (next.revision > prev.revision && !revealed) setInspect((cur) => (cur && !AUTO_OPEN.has(cur) ? (scheduleClose(), cur) : cur));
+      lastState.current = next;
       afterState(prev, next);
+    },
+    // Whatever a character's call was about (accepted, refused or unchanged) is shown on screen.
+    onFocus: ({ action, target }) => {
+      const s = lastState.current ?? viewRef.current;
+      const id = focusTarget(action, target, s);
+      if (!id || composerRef.current) return;
+      setInspect(id);
+      if (!READINGS.has(action)) scheduleClose();
+      else if (closeTimer.current) clearTimeout(closeTimer.current);
     },
     onUserUtterance: (text) => onPlayerWords(text),
   });
 
+  const lastState = useRef<PublicState | null>(null);
   // Voice play: windows close a moment after a validated gesture; the decision opens itself.
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   function scheduleClose() {

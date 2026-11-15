@@ -178,3 +178,15 @@ describe("1996 after storing: the cabinet stays locked", () => {
     expect(transition(s, { action: "close_cabinet" }, ui)).toMatchObject({ ok: false, code: "PREREQUISITE_MISSING" });
   });
 });
+
+describe("look_at: a pure look that shows a place, never a mutation", () => {
+  it("valid targets of the current era return unchanged; others are invalid", () => {
+    const s = initialState(); // 2026
+    expect(transition(s, { action: "look_at", args: { target: "waterline" } }, ui)).toMatchObject({ ok: true, changed: false });
+    expect(transition(s, { action: "look_at", args: { target: "hall" } }, ui)).toMatchObject({ ok: false, code: "INVALID_ARGUMENT" }); // 1996 only
+    expect(transition(s, { action: "look_at", args: { target: "G7" } }, ui)).toMatchObject({ ok: false });
+    expect(toolToCommand("malik", "malik_look", { objet: "trace_eau" })).toMatchObject({ ok: true, command: { action: "look_at", args: { target: "waterline" } } });
+    expect(toolToCommand("malik", "en_malik_look", { object: "cabinet" })).toMatchObject({ ok: true, command: { action: "look_at", args: { target: "cabinet" } } });
+    expect(toolToCommand("jeanne", "malik_look", { objet: "armoire" })).toEqual({ ok: false }); // not Jeanne's tool
+  });
+});

@@ -55,8 +55,11 @@ export const POST = handler(async (req, { params }: P) => {
   // narrate a failure that never happened.
   // The next usable tools are stated explicitly (models skim long JSON contexts).
   const next = toolsForActions(character, result.characterContext.availableActions, locale);
+  const looked = command.action === "look_at";
   const output = result.ok
-    ? result.changed
+    ? looked
+      ? { ok: true, resultat: texts(locale).tool.shown, outilsMaintenant: next, contexte: contextUpdateText(result.characterContext, locale) }
+      : result.changed
       ? { ok: true, resultat: result.event?.summary, aide: result.hint, outilsMaintenant: next, contexte: contextUpdateText(result.characterContext, locale) }
       : {
           ok: true,
@@ -65,5 +68,7 @@ export const POST = handler(async (req, { params }: P) => {
           contexte: contextUpdateText(result.characterContext, locale),
         }
     : { ok: false, message: mapped.ok ? result.message : texts(locale).tool.invalid };
-  return json({ ok: result.ok, output, revision: result.revision, publicState: result.publicState });
+  // What the call was about, for the player's screen only (opens that object's window).
+  const focus = mapped.ok ? { action: command.action, target: typeof command.args?.target === "string" ? command.args.target : null } : null;
+  return json({ ok: result.ok, output, revision: result.revision, publicState: result.publicState, focus });
 });

@@ -47,6 +47,10 @@
     "en_jeanne_draft_message": "en_jeanne_draft_message",
     "en_malik_examine": "en_malik_examine",
     "en_malik_act": "en_malik_act",
-    "en_world_request_hint": "en_world_request_hint"
+    "en_world_request_hint": "en_world_request_hint",
+    "jeanne_look": "jeanne_look",
+    "malik_look": "malik_look",
+    "en_jeanne_look": "en_jeanne_look",
+    "en_malik_look": "en_malik_look"
   }
 }

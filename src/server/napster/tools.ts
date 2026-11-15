@@ -14,14 +14,16 @@ export const TOOL_NAMES = [
   "malik_examine",
   "malik_act",
   "world_request_hint",
+  "jeanne_look",
+  "malik_look",
 ] as const;
 export type ToolName = (typeof TOOL_NAMES)[number];
 export type ToolLocale = "fr" | "en";
 
 /** Per-locale tool sets: each locale has its OWN functions (descriptions, prompts, enum values in that language). */
 export const TOOLS_BY_CHARACTER: Record<CharacterId, ToolName[]> = {
-  jeanne: ["jeanne_examine", "jeanne_use_clue", "jeanne_act", "jeanne_draft_message", "world_request_hint"],
-  malik: ["malik_examine", "malik_act", "world_request_hint"],
+  jeanne: ["jeanne_examine", "jeanne_use_clue", "jeanne_act", "jeanne_draft_message", "jeanne_look", "world_request_hint"],
+  malik: ["malik_examine", "malik_act", "malik_look", "world_request_hint"],
 };
 export function toolsFor(character: CharacterId, locale: ToolLocale): string[] {
   return TOOLS_BY_CHARACTER[character].map((t) => (locale === "en" ? `en_${t}` : t));
@@ -29,7 +31,7 @@ export function toolsFor(character: CharacterId, locale: ToolLocale): string[] {
 
 /** English tool call → equivalent French-tool call (same bounded command). Unknown values stay invalid. */
 const EN_VALUES: Record<string, Record<string, string>> = {
-  object: { programme: "programme", letter: "lettre", photo: "photo", waterline: "trace_eau", message: "message" },
+  object: { programme: "programme", letter: "lettre", photo: "photo", waterline: "trace_eau", message: "message", hall: "salle", cabinet: "armoire", desk: "bureau", projector: "projecteur" },
   clue: { seat_g7: "siege_g7", water_risk: "risque_eau" },
   gesture: { look_for_key: "chercher_cle", open_cabinet: "ouvrir_armoire", close_cabinet: "fermer_armoire", acknowledge: "noter_accord", store: "conserver" },
   location: { upper_shelf: "etagere_haute", lower_cabinet: "bas_armoire", desk: "bureau", floor: "sol" },
@@ -47,6 +49,9 @@ function fromEnglish(name: string, rawArgs: unknown): { name: string; args: unkn
   return { name: name.slice(3), args: out };
 }
 
+/** "Look at" targets (French tool values → engine look_at targets). */
+const LOOK = { salle: "hall", armoire: "cabinet", bureau: "desk", programme: "programme", lettre: "letter", projecteur: "projector", photo: "photo", trace_eau: "waterline", message: "message" } as const;
+
 const LOCATIONS = { etagere_haute: "upper_cabinet", bas_armoire: "lower_cabinet", bureau: "desk", sol: "floor" } as const;
 
 const argSchemas = {
@@ -62,6 +67,8 @@ const argSchemas = {
   malik_examine: z.strictObject({ objet: z.enum(["photo", "trace_eau", "message", "lettre"]) }),
   malik_act: z.strictObject({ geste: z.enum(["chercher_cle", "ouvrir_armoire", "fermer_armoire"]) }),
   world_request_hint: z.strictObject({}),
+  jeanne_look: z.strictObject({ objet: z.enum(["salle", "armoire", "bureau", "programme", "lettre", "projecteur"]) }),
+  malik_look: z.strictObject({ objet: z.enum(["armoire", "projecteur", "bureau", "photo", "trace_eau", "message", "lettre"]) }),
 } satisfies Record<ToolName, z.ZodType>;
 
 export type ToolMapping = { ok: true; command: Command } | { ok: false };
@@ -108,6 +115,9 @@ export function toolToCommand(character: CharacterId, toolName: string, toolArgs
       return cmd(a.geste === "chercher_cle" ? "find_future_key" : a.geste === "fermer_armoire" ? "close_cabinet" : "recover_cache");
     case "world_request_hint":
       return cmd("request_hint");
+    case "jeanne_look":
+    case "malik_look":
+      return cmd("look_at", { target: LOOK[a.objet as keyof typeof LOOK] });
   }
 }
 
@@ -139,7 +149,7 @@ export function toolsForActions(character: CharacterId, actions: Action[], local
           read_future_letter: "malik_examine(objet=lettre)",
           request_hint: "world_request_hint()",
         };
-  return actions.map((a) => map[a]).filter((x): x is string => Boolean(x));
+  return [...actions.map((a) => map[a]).filter((x): x is string => Boolean(x)), `${character}_look(objet=…) — pour montrer un endroit au joueur`];
 }
 
 /** Napster function definitions (POST /public/functions). Global and immutable: no player data. */
@@ -165,6 +175,10 @@ export function functionDefinitions(): Record<ToolName, { data: { name: ToolName
       "Utilise quand le joueur demande de regarder la photo et son verso, la trace d’eau, ou de lire un message ou une lettre retrouvés. N’annonce que ce que le résultat renvoie."),
     malik_act: def("malik_act", "Malik (2026) cherche la clé, ouvre ou referme l’armoire.", { geste: { type: "string", enum: ["chercher_cle", "ouvrir_armoire", "fermer_armoire"] } }, ["geste"],
       "chercher_cle : quand le joueur demande de chercher la clé ou ce que Jeanne a pu laisser (derrière le projecteur). ouvrir_armoire : seulement après avoir trouvé la clé. fermer_armoire : si le joueur demande de la refermer. Si le résultat est négatif, dis simplement qu’il n’y a rien de nouveau ou que l’armoire reste fermée."),
+    jeanne_look: def("jeanne_look", "Jeanne (1996) montre au joueur un endroit ou un objet de la cabine.", { objet: { type: "string", enum: ["salle", "armoire", "bureau", "programme", "lettre", "projecteur"] } }, ["objet"],
+      "Utilise quand le joueur te demande de regarder, de lui montrer ou de décrire un endroit (la salle, l’armoire, le bureau, le projecteur) ou un document déjà vu : l’endroit s’affiche à l’écran pour le joueur. Ce n’est pas un geste : ne change rien et ne découvre rien de nouveau ; décris seulement ce que ton contexte autorise."),
+    malik_look: def("malik_look", "Malik (2026) montre au joueur un endroit ou un objet de la cabine.", { objet: { type: "string", enum: ["armoire", "projecteur", "bureau", "photo", "trace_eau", "message", "lettre"] } }, ["objet"],
+      "Utilise quand le joueur te demande de regarder, de lui montrer ou de décrire un endroit (l’armoire, son bas abîmé, le projecteur, le bureau) ou un objet déjà vu : l’endroit s’affiche à l’écran pour le joueur. Ce n’est pas un geste : ne change rien et ne découvre rien de nouveau ; décris seulement ce que ton contexte autorise."),
     world_request_hint: def("world_request_hint", "Demande une aide progressive pour le joueur.", {}, [],
       "Utilise seulement si le joueur demande explicitement de l’aide. Formule l’aide renvoyée avec tes mots, sans en dire davantage."),
   };
@@ -193,6 +207,10 @@ export function englishFunctionDefinitions(): Record<string, { data: { name: str
       "Use when the player asks to look at the photo and its back, the water mark, or to read a recovered message or letter. Announce only what the result returns."),
     def("malik_act", "Malik (2026) looks for the key, opens or closes the cabinet.", { gesture: { type: "string", enum: ["look_for_key", "open_cabinet", "close_cabinet"] } }, ["gesture"],
       "look_for_key: when the player asks you to look for the key or for what Jeanne may have left (behind the projector). open_cabinet: only after finding the key. close_cabinet: if the player asks to close it again. If the result is negative, simply say there is nothing new or that the cabinet stays locked."),
+    def("jeanne_look", "Jeanne (1996) shows the player a place or an object in the booth.", { object: { type: "string", enum: ["hall", "cabinet", "desk", "programme", "letter", "projector"] } }, ["object"],
+      "Use when the player asks you to look at, show or describe a place (the hall, the cabinet, the desk, the projector) or a document already seen: the place is shown on screen to the player. It is not a gesture: it changes nothing and discovers nothing new; describe only what your context allows."),
+    def("malik_look", "Malik (2026) shows the player a place or an object in the booth.", { object: { type: "string", enum: ["cabinet", "projector", "desk", "photo", "waterline", "message", "letter"] } }, ["object"],
+      "Use when the player asks you to look at, show or describe a place (the cabinet, its damaged bottom, the projector, the desk) or an object already seen: the place is shown on screen to the player. It is not a gesture: it changes nothing and discovers nothing new; describe only what your context allows."),
     def("world_request_hint", "Requests a progressive hint for the player.", {}, [],
       "Use only if the player explicitly asks for help. Put the returned hint in your own words, without saying more."),
   ];
@@ -225,5 +243,5 @@ function toolsForActionsEn(character: CharacterId, actions: Action[]): string[] 
           read_future_letter: "en_malik_examine(object=letter)",
           request_hint: "en_world_request_hint()",
         };
-  return actions.map((a) => map[a]).filter((x): x is string => Boolean(x));
+  return [...actions.map((a) => map[a]).filter((x): x is string => Boolean(x)), `en_${character}_look(object=…) — to show the player a place`];
 }

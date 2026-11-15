@@ -16,7 +16,8 @@ const csp = [
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  distDir: process.env.NEXT_DIST_DIR || ".next",
+  // Only override when asked (e2e build). An explicit distDir made `next dev` reload in a loop.
+  ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
   poweredByHeader: false,
   async headers() {
     return [

@@ -62,8 +62,14 @@ async function main() {
   for (const id of ours) if (!agents.some((a) => a.id === id)) throw new Error(`Agent ${id} listed in ${RES_PATH} not found on the account: stop (no duplicate creation).`);
 
   // Safety: no open session on the agents we are about to modify.
-  const sessions = await api<{ items: Array<{ status: string; agent?: { id: string } | null }> }>("/public/sessions?pageSize=100");
-  const open = sessions.items.filter((s) => (s.status === "pending" || s.status === "started") && s.agent && ours.includes(s.agent.id));
+  // Read EVERY page: the list is paginated and the order is not documented.
+  const all: Array<{ status: string; agent?: { id: string } | null }> = [];
+  for (let page = 0; ; page++) {
+    const p = await api<{ items: typeof all; totalCount: number }>(`/public/sessions?pageSize=100&pageIndex=${page}`);
+    all.push(...p.items);
+    if (!p.items.length || all.length >= p.totalCount) break;
+  }
+  const open = all.filter((s) => (s.status === "pending" || s.status === "started") && s.agent && ours.includes(s.agent.id));
   if (open.length) throw new Error(`${open.length} session(s) open on these agents: close them before changing the global configuration.`);
 
   for (const character of ["jeanne", "malik"] as const) {

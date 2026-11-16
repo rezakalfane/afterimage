@@ -18,8 +18,14 @@ const api = async (path, method = "GET", body) => {
 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function openSessionsOn(ids) {
-  const s = await api("/public/sessions?pageSize=50");
-  return s.items.filter((x) => (x.status === "pending" || x.status === "started") && x.agent && ids.includes(x.agent.id)).length;
+  // Every page: the list is paginated and the order is not documented.
+  const items = [];
+  for (let page = 0; ; page++) {
+    const p = await api(`/public/sessions?pageSize=100&pageIndex=${page}`);
+    items.push(...p.items);
+    if (!p.items.length || items.length >= p.totalCount) break;
+  }
+  return items.filter((x) => (x.status === "pending" || x.status === "started") && x.agent && ids.includes(x.agent.id)).length;
 }
 async function setCompanions(locale, version) {
   const ids = [res.agents.jeanne[locale], res.agents.malik[locale]];

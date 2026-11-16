@@ -175,3 +175,18 @@ export function wantsToWrite(text: string): boolean {
   if (/\b(ne|n'|pas|jamais|not|don't|never|plus tard|later)\b/.test(t)) return false;
   return /\b(laisser|laissons|laisse|ecrire|ecrivons|ecris|rediger|dicter|dicte|leave|write|dictate)\b/.test(t) && /\b(message|mot|mots|quelques mots|lettre|phrase|words?|note|a few words)\b/.test(t);
 }
+
+/** "La version autorisée, je confirme": the sentence names the SELECTED ending and, once that name
+ *  is removed, what remains is an explicit confirmation. Any other ending named → false. */
+export function confirmsSelectedEnding(text: string, locale: VoiceLocale, selected: string): boolean {
+  if (/[?¿]/.test(text)) return false;
+  const plain = normalizeSpeech(text).normalize("NFD").replace(/[̀-ͯ]/g, "");
+  const named = ENDINGS[locale].filter(([, re]) => re.test(plain));
+  if (named.length !== 1 || named[0][0] !== selected) return false;
+  const rest = plain
+    .replace(named[0][1], " ")
+    .replace(/\b(je choisis|on choisit|allons y pour|va pour|alors|donc|oui|c'est|ce sera|la|le|les|l'|i choose|we choose|let's go with|so|yes|the)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return isConfirmation(rest, locale, "ending");
+}

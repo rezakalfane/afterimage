@@ -8,7 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CharacterPanel } from "@/components/conversation/CharacterPanel";
 import { useLiveConversation, type TranscriptLine } from "@/components/conversation/useLiveConversation";
 import { useLocale, useT } from "@/i18n/I18nProvider";
-import { closeIntent, showIntent, wantsToWrite, endingFromSpeech, eraFromSpeech, isConfirmation, sameTarget, wantsToDecide, type VoiceTarget } from "./voice";
+import { closeIntent, confirmsSelectedEnding, showIntent, wantsToWrite, endingFromSpeech, eraFromSpeech, isConfirmation, sameTarget, wantsToDecide, type VoiceTarget } from "./voice";
 import { LanguageChoice, LanguageSwitch, setLocale } from "@/components/ui/LanguageSwitch";
 import { DisplayChoices } from "@/components/ui/DisplayChoices";
 import { Dialog } from "@/components/ui/Dialog";
@@ -241,7 +241,8 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
         endingChoose.current(reselect);
         return;
       }
-      if (!isConfirmation(text, locale, t.kind)) {
+      const confirmed = isConfirmation(text, locale, t.kind) || (t.kind === "ending" && confirmsSelectedEnding(text, locale, t.content));
+      if (!confirmed) {
         // It sounded like a confirmation but was not explicit enough: say so instead of silence.
         if (/confirm|valid|garde|keep|confie/i.test(text)) say(t.kind === "message" ? g.voiceRetryMessage : g.voiceRetryEnding, "warn");
         return trace(text, "ignoré : pas une confirmation explicite");
@@ -277,7 +278,13 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
       if (id) {
         trace(text, `sélection : ${id} (confirmation encore requise)`);
         endingChoose.current(id);
-      } else trace(text, "ignoré : aucune fin choisie explicitement");
+        // "La version autorisée, je confirme" with nothing selected yet: select, and say that the
+        // confirmation must follow (it binds to what is shown, so it cannot happen in advance).
+        if (isConfirmation(text.replace(/^.*?,/, ""), locale, "ending") || /confirm/i.test(text)) say(g.voiceSelectThenConfirm, "info");
+      } else {
+        trace(text, "ignoré : aucune fin choisie explicitement");
+        if (isConfirmation(text, locale, "ending")) say(g.voiceChooseFirst, "warn");
+      }
       return;
     }
     trace(text, "aucune étape de confirmation à l’écran");
@@ -388,10 +395,18 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
       live.pushContext(r.farewell, true);
       const wait = (ms: number) => new Promise((res) => setTimeout(res, ms));
       const t0 = clock();
-      // Wait for the last word to start (≤ 8 s), then to end (≤ 30 s in all).
-      while (!speakingRef.current && !skipFarewell.current && clock() - t0 < 8000) await wait(200);
-      while (speakingRef.current && !skipFarewell.current && clock() - t0 < 30000) await wait(200);
-      if (!skipFarewell.current) await wait(800);
+      // The character may first finish its current reply, and talk_state goes "ended" between two
+      // sentences: wait until it has spoken, then for 3 s of continuous silence (cap 45 s).
+      let spoke = false;
+      let silentSince = clock();
+      while (!skipFarewell.current && clock() - t0 < 45000) {
+        if (speakingRef.current) {
+          spoke = true;
+          silentSince = clock();
+        } else if (spoke && clock() - silentSince > 3000) break;
+        else if (!spoke && clock() - t0 > 10000) break; // nothing came: do not hang
+        await wait(200);
+      }
       setFarewell(false);
     }
     await live.stop();

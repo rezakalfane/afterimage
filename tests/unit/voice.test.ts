@@ -145,3 +145,15 @@ describe("selecting an ending while the choice is shown", () => {
     expect(endingFromSpeech("Je choisis la version autorisée", "fr")).toBe("public_cut");
   });
 });
+
+import { confirmsSelectedEnding } from "@/components/game/voice";
+describe("naming the selected ending and confirming in one sentence", () => {
+  it("confirms only the ending that is selected", () => {
+    expect(confirmsSelectedEnding("La version autorisée, je confirme.", "fr", "public_cut")).toBe(true);
+    expect(confirmsSelectedEnding("Oui, les archives, je confirme ce choix", "fr", "sealed_archive")).toBe(true);
+    expect(confirmsSelectedEnding("The authorised version, I confirm", "en", "public_cut")).toBe(true);
+    expect(confirmsSelectedEnding("Les archives, je confirme", "fr", "public_cut")).toBe(false); // another option
+    expect(confirmsSelectedEnding("La version autorisée, je ne confirme pas", "fr", "public_cut")).toBe(false);
+    expect(confirmsSelectedEnding("La version autorisée ?", "fr", "public_cut")).toBe(false);
+  });
+});

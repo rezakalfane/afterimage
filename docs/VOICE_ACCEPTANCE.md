@@ -35,7 +35,8 @@ Dites chaque phrase, attendez la ligne du panneau, notez le résultat.
 | 10 | « Je choisis la version autorisée. » ou, fenêtre ouverte, « La version autorisée » / « Allons-y pour les archives » | sélection seulement, **pas** de fin ; dire une autre option change la sélection |
 | 10b | « Qu'en penses-tu, les archives ? » / « Je pense aux archives » | rien n'est sélectionné (discussion) |
 | 11 | « Si je confirme, c'est définitif ? » | ignoré |
-| 12 | « Je confirme ce choix. » | CONFIRMÉ : fin public_cut → épilogue ; la conversation se ferme |
+| 12 | « Je confirme ce choix. » (ou « La version autorisée, je confirme » une fois sélectionnée) | CONFIRMÉ du premier coup → Malik dit sa dernière phrase **en entier**, puis l'épilogue |
+| 12b | « Je confirme » sans option choisie | rien n'est validé ; un message demande de choisir d'abord |
 
 ## Anglais (FR|EN → EN, nouvelle partie ou même partie)
 Refaites 1, 2, 3, 6, 10, 12 avec : “If I say I confirm, what happens?”, “I don't confirm.”, “Yes… wait.”,

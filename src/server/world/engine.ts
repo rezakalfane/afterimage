@@ -14,7 +14,7 @@ export type Flag =
   | "future_key_found"
   | "door_closed_1996"
   | "door_closed_2026"
-  /** The player presented the 2008 report to Jeanne (a future document: a temporal claim). */
+  /** The player presented the 2016 report to Jeanne (a future document: a temporal claim). */
   | "report_shared"
   /** The player explicitly claimed to come from 2026 (backed by their own words or the UI). */
   | "temporal_claim";
@@ -257,7 +257,7 @@ export function transition(state: WorldState, command: Command, ctx: EngineConte
     if (!exact([])) return fail("INVALID_ARGUMENT");
     if (s.activeEra !== 1996) return fail("WRONG_ERA");
     if (!need(["waterline_seen"])) return fail("PREREQUISITE_MISSING");
-    // Presenting the 2008 report also conveys the water risk.
+    // Presenting the 2016 report also conveys the water risk.
     mark("report_shared");
     mark("flood_warning_shared");
   } else if (a === "look_at") {

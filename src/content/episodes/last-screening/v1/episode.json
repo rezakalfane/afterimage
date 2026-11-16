@@ -15,7 +15,7 @@
     "truth": "Alice a autorisé la projection du film uniquement sans son épilogue privé. Jeanne a annulé la séance parce que la copie complète était la seule disponible. Elle a préféré protéger sa promesse plutôt que se justifier publiquement.",
     "temporalRule": "Une action confirmée en 1996 modifie uniquement les objets conservés jusqu'en 2026. Les interlocuteurs restent conscients de leur époque. Le joueur conserve les informations découvertes. Aucun voyage de personnes, aucune réécriture globale de souvenirs.",
     "keyLocation": "Sous le siège G7 en 1996. Indices répartis : verso de la photo (« notre place habituelle »), souvenir de Jeanne (Alice choisissait la rangée G), annotation du programme (« Alice — place 7 »).",
-    "flood": "Une infiltration en 2008 a endommagé les documents laissés sur le bureau ; l'étagère haute de l'armoire est restée sèche (déduction du joueur, jamais écrite dans un document).",
+    "flood": "Lors des crues de juin 2016, une infiltration a endommagé les documents laissés sur le bureau ; l'étagère haute de l'armoire est restée sèche (déduction du joueur, jamais écrite dans un document).",
     "storage": "Étagère haute de l'armoire au croissant ; la clé est replacée derrière le projecteur en 1996 après fermeture.",
     "permission": "Projection autorisée du corps du film ; conserver l'épilogue privé sous scellés.",
     "endings": [
@@ -28,7 +28,7 @@
     "photoBack": "La clé est à notre place habituelle. — J.",
     "programme": "Le Régina — Vendredi 15 novembre 1996, 21 h 30. Les lumières du Régina, un film d’Alice Mercier. Projection annulée.",
     "letter": "Jeanne, tu peux montrer le film, mais pas les dernières images. L’épilogue appartient à ma famille. Sépare-le de la projection et conserve-le sous enveloppe. Je te fais confiance. Alice — 14 novembre 1996.",
-    "archiveReport": "Rapport de conservation, 2008 : infiltration dans la cabine. Les documents laissés sur le bureau ont été endommagés.",
+    "archiveReport": "Rapport de conservation, juin 2016 : lors des crues, infiltration dans la cabine. Les documents laissés sur le bureau ont été endommagés.",
     "defaultMessage": "Les étoiles restent allumées.",
     "closingPublic": "La salle se rallume. Le nom d’Alice retrouve l’affiche, et son épilogue reste privé.",
     "closingArchive": "Le film est sauvé, accompagné de la lettre d’Alice. La séance attendra ; la promesse, elle, a traversé les années.",

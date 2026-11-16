@@ -28,7 +28,7 @@ const needles: [string, string | undefined][] = [
   ["photo back text", episode.documents.photoBack],
   ["programme annotation", episode.documents.programmeNote.slice(0, 30)],
   ["Jeanne's row memory", episode.documents.rowMemory.slice(0, 30)],
-  ["2008 report text", episode.documents.archiveReport.slice(0, 40)],
+  ["2016 report text", episode.documents.archiveReport.slice(0, 40)],
   ["closing texts", episode.documents.closingBreach.slice(0, 40)],
   ["canon truth", episode.canon.truth.slice(0, 40)],
   ["key location", episode.canon.keyLocation],

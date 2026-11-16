@@ -17,7 +17,7 @@ era: the player carries clues between them.
 flowchart LR
   subgraph Y2026["2026 — Malik"]
     P[Photo on the desk<br/>back: G7]
-    W[Water mark<br/>2008 report]
+    W[Water mark<br/>2016 report]
     FK[Key behind<br/>the projector]
     C26[Crescent cabinet<br/>upper shelf]
     M[Message + Alice's letter]
@@ -39,7 +39,7 @@ flowchart LR
 | # | Puzzle | Where the clue is | Who acts | What unlocks |
 |---|---|---|---|---|
 | 1 | **The key** | Back of the photo (2026): "La clé est à notre place habituelle. — J." · Jeanne's memory once the note is shared: Alice always chose **row G** · Programme annotation (1996): "Alice — place 7" | The player puts row and number together and proposes the seat (voice, text or the field in the Hall inspector); Jeanne searches under it | The 1996 cabinet opens → the letter |
-| 2 | **The cache** | Water mark + 2008 report (2026): "infiltration… the documents left on the desk were damaged" — no hiding place named | The player warns Jeanne (risk) or shows the report (a temporal claim); Jeanne first thinks of the drawer; the player names a higher place | The film and the message survive 30 years |
+| 2 | **The cache** | Water mark + 2016 report (2026): "infiltration… the documents left on the desk were damaged" — no hiding place named | The player warns Jeanne (risk) or shows the report (a temporal claim); Jeanne first thinks of the drawer; the player names a higher place | The film and the message survive 30 years |
 | 3 | **The promise** | Alice's letter (1996): the epilogue stays private | Player acknowledges, writes a message, then chooses the ending | Three possible endings |
 
 In 2026, Malik must first find the key **behind the projector** (`find_future_key`); only then can he open the cabinet that Jeanne sealed.
@@ -159,7 +159,7 @@ prefixed `en_` with English argument values.
 | | Jeanne (1996) | Malik (2026) |
 |---|---|---|
 | At the start | The cinema closes tonight; Alice Mercier's film; she cancelled the screening; a promise to keep; the cabinet holds the film and the letter; she lost the key | 15 Nov 2026; no film for 30 years; the last screening was cancelled; a lost film by Alice; a photo and a water mark on the desk; no key for the cabinet |
-| Learned during play | programme → the cancellation was deliberate; letter → a version without the epilogue is allowed; G7 from the player; the water risk from the player | photo → G7; water mark → 2008 damage at desk level; after 1996 preservation → "a new object is detectable"; key behind the projector; reel, envelope and message |
+| Learned during play | programme → the cancellation was deliberate; letter → a version without the epilogue is allowed; G7 from the player; the water risk from the player | photo → G7; water mark → 2016 damage at desk level; after 1996 preservation → "a new object is detectable"; key behind the projector; reel, envelope and message |
 | Never knows | G7 before the player says it; the future | What happened in 1996 until it is in the cabinet |
 
 Knowledge is projected per character (`characterContext`) and sent only through
@@ -227,4 +227,4 @@ receipt instead of acting twice.
 | `claim_future` | 1996 | — | `temporal_claim` | player's turn mentions 2026 / the future |
 | `preserve_cache` (location: free text) | 1996 | as before | `cache_preserved` only at the top of the cabinet; drawer/desk/floor/bottom explain the risk without naming the answer | the same place in a player's turn |
 
-What Jeanne receives is in three categories: facts of her world (`knownFacts`, by disclosure), claims made by the player (`sharedByPlayer`) and confirmed actions (`observedState`). An era switch, a reconnection or the player opening a document shares nothing. `tests/unit/leaks.test.ts` walks 400 random paths and checks, fr and en, that "G7", "rangée G", "place 7", "2026/Malik", "2008" and the hiding place never reach a character or the player before the flag that reveals them.
+What Jeanne receives is in three categories: facts of her world (`knownFacts`, by disclosure), claims made by the player (`sharedByPlayer`) and confirmed actions (`observedState`). An era switch, a reconnection or the player opening a document shares nothing. `tests/unit/leaks.test.ts` walks 400 random paths and checks, fr and en, that "G7", "rangée G", "place 7", "2026/Malik", "2016" and the hiding place never reach a character or the player before the flag that reveals them.

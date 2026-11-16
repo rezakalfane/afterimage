@@ -73,7 +73,7 @@ describe("leak sweep over random walks", () => {
     expect(STATES.some((s) => /rangée G/.test(jeanneSees(s, "fr")))).toBe(true);
     expect(STATES.some((s) => /place 7/.test(jeanneSees(s, "fr")))).toBe(true);
     expect(STATES.some((s) => /2026/.test(jeanneSees(s, "fr")))).toBe(true);
-    expect(STATES.some((s) => /2008/.test(jeanneSees(s, "fr")))).toBe(true);
+    expect(STATES.some((s) => /2016/.test(jeanneSees(s, "fr")))).toBe(true);
     expect(STATES.some((s) => /rangée G/.test(playerSees(s, "fr")))).toBe(true);
   });
 
@@ -87,7 +87,7 @@ describe("leak sweep over random walks", () => {
         if (!has(s, "note_shared")) expect(j, "row").not.toMatch(/rangée G|row G/);
         if (!has(s, "programme_seen")) expect(j, "annotation").not.toMatch(/place 7|seat 7/);
         if (!has(s, "temporal_claim")) expect(j, "2026/Malik").not.toMatch(/2026|Malik/);
-        if (!has(s, "report_shared")) expect(j, "2008").not.toMatch(/2008/);
+        if (!has(s, "report_shared")) expect(j, "2016").not.toMatch(/2016/);
         if (!has(s, "cache_preserved")) expect(j, "hiding place").not.toMatch(/étagère haute|upper shelf|haut de l’armoire|top of the cabinet/i);
       }
     }, SWEEP_TIMEOUT);

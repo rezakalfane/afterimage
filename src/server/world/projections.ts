@@ -132,7 +132,7 @@ export function characterContext(s: WorldState, character: CharacterId, lastActi
     if (has("note_shared")) shared.push(en ? EN.shared.noteShared : "Le joueur a rapporté une note : « La clé est à notre place habituelle. — J. »");
     if (has("seat_proposed") && s.proposedSeat) shared.push(en ? EN.shared.seatProposed.replace("{seat}", s.proposedSeat) : `Le joueur a proposé le siège ${s.proposedSeat}.`);
     if (has("flood_warning_shared")) shared.push(en ? EN.shared.jeanneFloodWarning : "Le joueur a averti d’un risque d’eau dans la cabine, au niveau du bureau.");
-    if (has("report_shared")) shared.push(en ? EN.shared.reportShared : "Le joueur dit avoir lu un rapport de conservation daté de 2008 : une infiltration a abîmé les documents laissés sur le bureau. (Une affirmation : tu n’en sais pas plus.)");
+    if (has("report_shared")) shared.push(en ? EN.shared.reportShared : "Le joueur dit avoir lu un rapport de conservation daté de 2016 : une infiltration a abîmé les documents laissés sur le bureau. (Une affirmation : tu n’en sais pas plus.)");
     if (has("temporal_claim")) shared.push(en ? EN.shared.temporalClaim : "Le joueur affirme venir de 2026. (Une affirmation, pas un fait : tu peux être surprise ou sceptique ; elle ne t’apprend rien d’autre.)");
     if (has("permission_acknowledged")) shared.push(en ? EN.shared.jeanneAcknowledged : "Le joueur a reconnu la condition d’Alice sur l’épilogue privé.");
     observedState = { rowRemembered: has("row_learned"), seatProposed: has("seat_proposed"), keyFound: has("key_found"), cabinetOpen: has("cabinet_open") && !has("door_closed_1996") && !has("cache_preserved"), cabinetLockedForThirtyYears: has("cache_preserved"), cachePreserved: has("cache_preserved") };

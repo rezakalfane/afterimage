@@ -7,7 +7,7 @@ import { toolToCommand } from "@/server/napster/tools";
 import { memoryId } from "@/server/security/ids";
 import { ready } from "../support/ready";
 
-const SECRETS = ["G7", "rangée G", "place 7", "épilogue", "Alice — 14 novembre", "étagère haute", "derrière le projecteur", "2008"];
+const SECRETS = ["G7", "rangée G", "place 7", "épilogue", "Alice — 14 novembre", "étagère haute", "derrière le projecteur", "2016"];
 
 describe("player view", () => {
   it("initial state reveals no document, ending or clue", () => {
@@ -33,7 +33,7 @@ describe("player view", () => {
 describe("character context", () => {
   it("Jeanne starts without G7, 2026 facts or the letter text", () => {
     const j = JSON.stringify(characterContext(initialState(), "jeanne", null));
-    expect(j).not.toMatch(/G7|2008|Malik|2026/);
+    expect(j).not.toMatch(/G7|2016|Malik|2026/);
     expect(j).not.toContain(EPISODE.documents.letter);
   });
   it("an era switch shares nothing; the note and the row only after the player shares the note", () => {
@@ -42,7 +42,7 @@ describe("character context", () => {
     s = transition(s, { action: "inspect_waterline" }, { channel: "ui" }).state;
     s = transition(s, { action: "switch_era", args: { era: 1996 } }, { channel: "ui" }).state;
     const before = JSON.stringify(characterContext(s, "jeanne", null));
-    expect(before).not.toMatch(/habituelle|rangée G|2008|2026|Malik/);
+    expect(before).not.toMatch(/habituelle|rangée G|2016|2026|Malik/);
     s = transition(s, { action: "share_photo_note" }, { channel: "ui" }).state;
     const j = JSON.stringify(characterContext(s, "jeanne", null));
     expect(j).toContain("notre place habituelle");
@@ -55,7 +55,7 @@ describe("character context", () => {
     s = transition(s, { action: "claim_future" }, { channel: "ui" }).state;
     const j = JSON.stringify(characterContext(s, "jeanne", null));
     expect(j).toContain("affirme venir de 2026");
-    expect(j).not.toMatch(/Malik|2008|habituelle/);
+    expect(j).not.toMatch(/Malik|2016|habituelle/);
   });
   it("Malik never gets the personal message or the letter before recovering them", () => {
     const s = ready("Canari-A");

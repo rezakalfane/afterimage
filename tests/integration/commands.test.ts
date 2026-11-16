@@ -88,6 +88,6 @@ describe("commands", () => {
     const a = await guest("a");
     const r = await a.createRun();
     const s = JSON.stringify(r.body);
-    for (const secret of ["G7", "épilogue", "2008", "étagère haute"]) expect(s).not.toContain(secret);
+    for (const secret of ["G7", "épilogue", "2016", "étagère haute"]) expect(s).not.toContain(secret);
   });
 });

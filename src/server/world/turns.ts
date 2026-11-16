@@ -29,7 +29,7 @@ export function classifyTurn(text: string): TurnIndicators {
   return {
     note: /\b(note|photo|verso|inscription|ecrit|back of|written)\b|place habituelle|notre place|usual place|our place/.test(t),
     water: /\b(eau|humid\w*|infiltr\w*|inond\w*|fuite|degats? des eaux|water|damp|flood\w*|leak\w*|wet)\b/.test(t),
-    report: /\b(rapport|2008|report|conservation)\b/.test(t),
+    report: /\b(rapport|2016|report|conservation)\b/.test(t),
     future: /\b(2026|futur|avenir|trente ans|30 ans|autre epoque|une autre epoque|future|thirty years|another time|another era)\b/.test(t),
     seat: parseSeat(text),
     location: parseLocation(text),

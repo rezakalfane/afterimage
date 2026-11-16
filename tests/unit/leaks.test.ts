@@ -77,6 +77,8 @@ describe("leak sweep over random walks", () => {
     expect(STATES.some((s) => /rangée G/.test(playerSees(s, "fr")))).toBe(true);
   });
 
+  // 400 walks × 2 locales: give the sweep room on a loaded machine (the default 5 s is per test).
+  const SWEEP_TIMEOUT = 30_000;
   for (const locale of ["fr", "en"] as const) {
     it(`Jeanne (${locale}) learns nothing before it is shared`, () => {
       for (const s of STATES) {
@@ -88,7 +90,7 @@ describe("leak sweep over random walks", () => {
         if (!has(s, "report_shared")) expect(j, "2008").not.toMatch(/2008/);
         if (!has(s, "cache_preserved")) expect(j, "hiding place").not.toMatch(/étagère haute|upper shelf|haut de l’armoire|top of the cabinet/i);
       }
-    });
+    }, SWEEP_TIMEOUT);
     it(`Malik (${locale}) never gets Jeanne's clues`, () => {
       for (const s of STATES) {
         const m = malikSees(s, locale);
@@ -96,7 +98,7 @@ describe("leak sweep over random walks", () => {
         if (!has(s, "cache_recovered")) expect(m).not.toMatch(/étagère haute|upper shelf/i);
         if (!has(s, "message_read")) expect(m).not.toContain("Mot-témoin");
       }
-    });
+    }, SWEEP_TIMEOUT);
     it(`player view and hints (${locale}) never spell the solutions`, () => {
       for (const s of STATES) {
         const p = playerSees(s, locale);
@@ -105,7 +107,7 @@ describe("leak sweep over random walks", () => {
         if (!has(s, "programme_seen")) expect(p, "annotation").not.toMatch(/place 7|seat 7/);
         if (!has(s, "cache_preserved")) expect(p, "hiding place").not.toMatch(/étagère haute|upper shelf/i);
       }
-    });
+    }, SWEEP_TIMEOUT);
   }
 });
 

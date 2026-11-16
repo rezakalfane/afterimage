@@ -1,7 +1,7 @@
 // Live V1 vs V2 avatar comparison in the real game PiP (consumes credits). Dev server, live mode.
 // For each locale and version: temporarily point the 2 agents of that locale to the V1 or V2
 // companion (only when no session is open on them), play a short scene (Malik 2026, then Jeanne
-// 1996), measure click→audio and click→video, record the page, then ALWAYS restore V1.
+// 1996), measure click→audio and click→video, record the page, then ALWAYS restore the adopted version (V2).
 import { chromium } from "@playwright/test";
 import { readFileSync } from "node:fs";
 
@@ -24,7 +24,7 @@ async function openSessionsOn(ids) {
 async function setCompanions(locale, version) {
   const ids = [res.agents.jeanne[locale], res.agents.malik[locale]];
   if (await openSessionsOn(ids)) throw new Error(`session open on ${locale} agents: not touching them`);
-  const src = version === "v2" ? res.companionsV2 : res.companions;
+  const src = version === "v2" ? res.companions : res.companionsV1;
   for (const c of ["jeanne", "malik"]) await api(`/public/agents/${res.agents[c][locale]}`, "PATCH", { companionId: src[c].id });
 }
 
@@ -83,10 +83,10 @@ try {
 } catch (e) {
   console.log("ERROR", String(e.message ?? e).slice(0, 200));
 } finally {
-  // Always back to V1 (wait for our sessions to close first).
+  // Always back to the adopted version, V2 (wait for our sessions to close first).
   for (const locale of ["fr", "en"]) {
     for (let i = 0; i < 10 && (await openSessionsOn([res.agents.jeanne[locale], res.agents.malik[locale]])); i++) await sleep(3000);
-    try { await setCompanions(locale, "v1"); console.log(`restored V1 on ${locale} agents`); } catch (e) { console.log("RESTORE FAILED", locale, e.message); }
+    try { await setCompanions(locale, "v2"); console.log(`restored V2 on ${locale} agents`); } catch (e) { console.log("RESTORE FAILED", locale, e.message); }
   }
   await b.close();
 }

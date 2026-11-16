@@ -23,7 +23,7 @@ Rules for every coding session. Rules here, history in HISTORY.md, state in HAND
 - Personal text is rendered as React text, never as HTML.
 - No undiscovered canon in client code or responses: hotspot and button labels must not reveal G7, the epilogue or the key location.
 - One live avatar per run; capacity in the DB, never in process memory.
-- Bonuses (VHS recordings, phone, v2) stay off until proven on the account.
+- Bonuses (VHS recordings, phone) stay off until proven on the account. Companion V2 is proven and in use (V1 kept as fallback).
 - Multilingual structure: server texts, prompts and tools are keyed by locale (fr complete, en agents ready). Do not hard-code new game copy in server modules without a locale entry.
 
 ## Definition of done

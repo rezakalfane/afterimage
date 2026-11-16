@@ -47,6 +47,7 @@ export const EN = {
         "The last screening was cancelled for an unknown reason.",
         "The programme mentions a lost film by Alice Mercier.",
         "There is a photograph on the desk and a water mark on the wood.",
+        "He remembers the major floods of late May and early June 2016 in France and parts of Europe (the Seine rose above six metres in Paris). He does not know whether Le Régina was affected and links that flood to the booth only if a document shows it.",
         "He does not know where the key is and cannot open the cabinet.",
       ],
       disclosures: {

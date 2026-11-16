@@ -3,18 +3,34 @@
   "organization": "9ee272fc-807e-4bb8-8cd1-2225039e30ba",
   "companions": {
     "jeanne": {
+      "id": "b8ccb3f5-3ba8-4e5d-9e2a-2029f6047ea7",
+      "kind": "custom-v2",
+      "source": "https://raw.githubusercontent.com/rezakalfane/afterimage/main/assets-src/afterimage/characters/jeanne-reference.png",
+      "note": "Created 2026-11-16 from the same portrait. Attached to both agents of this character (fr, en) since 2026-11-16, after the V1/V2 comparison.",
+      "fallbackStock": "67fe225a-5533-4c43-985c-81c9ccf2bc75"
+    },
+    "malik": {
+      "id": "f472e067-aaba-430b-ae35-4f525e513323",
+      "kind": "custom-v2",
+      "source": "https://raw.githubusercontent.com/rezakalfane/afterimage/main/assets-src/afterimage/characters/malik-reference.png",
+      "note": "Created 2026-11-16 from the same portrait. Attached to both agents of this character (fr, en) since 2026-11-16, after the V1/V2 comparison.",
+      "fallbackStock": "49a2b67d-1e38-4344-b41b-d94818949043"
+    }
+  },
+  "companionsV1": {
+    "jeanne": {
       "id": "16996273-188e-4710-b11f-2130570c13c6",
       "kind": "custom-v1",
       "source": "https://raw.githubusercontent.com/rezakalfane/afterimage/main/assets-src/afterimage/characters/jeanne-reference.png",
       "fallbackStock": "67fe225a-5533-4c43-985c-81c9ccf2bc75",
-      "note": "Created 2026-11-15 from the kit portrait (fictional, generated)."
+      "note": "Created 2026-11-15 from the kit portrait (fictional, generated). Kept as the fallback: detached 2026-11-16 when V2 was adopted."
     },
     "malik": {
       "id": "6db06ec6-3f58-4080-a553-feb65842a3b3",
       "kind": "custom-v1",
       "source": "https://raw.githubusercontent.com/rezakalfane/afterimage/main/assets-src/afterimage/characters/malik-reference.png",
       "fallbackStock": "49a2b67d-1e38-4344-b41b-d94818949043",
-      "note": "Created 2026-11-15 from the kit portrait (fictional, generated)."
+      "note": "Created 2026-11-15 from the kit portrait (fictional, generated). Kept as the fallback: detached 2026-11-16 when V2 was adopted."
     }
   },
   "agents": {
@@ -30,8 +46,8 @@
   "roles": {
     "jeanne.fr": "P0 Jeanne (1996), French. Shared by local, staging and production; global config immutable during play.",
     "malik.fr": "P0 Malik (2026), French. Shared by local, staging and production; global config immutable during play.",
-    "jeanne.en": "Reserved for P1 English. Still holds the earlier prototype configuration; not used by the app until the English pass.",
-    "malik.en": "Reserved for P1 English. Still holds the earlier prototype configuration; not used by the app until the English pass."
+    "jeanne.en": "Jeanne (1996), English. Same rules as the French agent.",
+    "malik.en": "Malik (2026), English. Same rules as the French agent."
   },
   "functions": {
     "jeanne_examine": "jeanne_examine",
@@ -56,19 +72,5 @@
     "jeanne_check_seat": "jeanne_check_seat",
     "en_jeanne_recall": "en_jeanne_recall",
     "en_jeanne_check_seat": "en_jeanne_check_seat"
-  },
-  "companionsV2": {
-    "jeanne": {
-      "id": "b8ccb3f5-3ba8-4e5d-9e2a-2029f6047ea7",
-      "kind": "custom-v2",
-      "source": "https://raw.githubusercontent.com/rezakalfane/afterimage/main/assets-src/afterimage/characters/jeanne-reference.png",
-      "note": "Created 2026-11-16 from the same portrait; not attached to any agent until compared and approved."
-    },
-    "malik": {
-      "id": "f472e067-aaba-430b-ae35-4f525e513323",
-      "kind": "custom-v2",
-      "source": "https://raw.githubusercontent.com/rezakalfane/afterimage/main/assets-src/afterimage/characters/malik-reference.png",
-      "note": "Created 2026-11-16 from the same portrait; not attached to any agent until compared and approved."
-    }
   }
 }

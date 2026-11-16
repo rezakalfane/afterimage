@@ -76,6 +76,13 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
   const selectedRef = useRef<string | null>(null);
   const sessionRef = useRef<string | null>(null);
   const inspectRef = useRef<string | null>(null);
+  const openedByPlayer = useRef(false);
+  /** Open a window on the player's own request (click, keyboard, voice). */
+  const openByPlayer = (id: string) => {
+    openedByPlayer.current = true;
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    setInspect(id);
+  };
   const locale = useLocale();
   const [hint, setHint] = useState<string | null>(null);
   const [switching, setSwitching] = useState<Era | null>(null);
@@ -119,6 +126,9 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
       if (!id || composerRef.current) return;
       // A document window only opens if that document exists (a refused call shows nothing empty).
       if (AUTO_OPEN.has(id) && !s.notebook.some((n) => n.id === id)) return;
+      // A window the PLAYER opened (click or voice) is never replaced by the character's call.
+      if (inspectRef.current && openedByPlayer.current && inspectRef.current !== id) return;
+      openedByPlayer.current = false;
       setInspect(id);
       if (!READINGS.has(action)) scheduleClose();
       else if (closeTimer.current) clearTimeout(closeTimer.current);
@@ -212,8 +222,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
       const id = shown === "letter" && !n.some((e) => e.id === "letter") ? "futureLetter" : shown;
       if (n.some((e) => e.id === id)) {
         trace(text, `document ouvert : ${id}`);
-        if (closeTimer.current) clearTimeout(closeTimer.current);
-        setInspect(id);
+        openByPlayer(id);
         // Showing it to Jeanne in the player's own words IS the share (same as the button): she
         // then receives what the document says, through the server.
         const share = ({ photo: "share_photo_note", archiveReport: "share_report" } as Record<string, Action>)[id];
@@ -233,8 +242,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
       const id = place === "cabinet" && open ? (v.activeEra === 1996 ? "letter" : "cache") : place;
       if (here.includes(id) || (place === "cabinet" && here.some((h) => h === "cache" || h === "letter" || h === "cabinet"))) {
         trace(text, `lieu affiché : ${id}`);
-        if (closeTimer.current) clearTimeout(closeTimer.current);
-        setInspect(HOTSPOT_TO_INSPECT[id] ?? id);
+        openByPlayer(HOTSPOT_TO_INSPECT[id] ?? id);
         if (id === "photo" && v.availableActions.includes("inspect_photo")) void act("inspect_photo");
       }
     }
@@ -531,7 +539,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
         <div className="stage__inner">
         <div className="stage__scene">
           <p className="meta"><span className="meta__place">{t.scene.place}</span><span className="meta__short">{t.scene.placeShort}</span><span>{era === 1996 ? t.scene.date1996 : t.scene.date2026}</span></p>
-          <SceneViewport era={era} view={view} onHotspot={(id) => setInspect(HOTSPOT_TO_INSPECT[id] ?? id)} />
+          <SceneViewport era={era} view={view} onHotspot={(id) => openByPlayer(HOTSPOT_TO_INSPECT[id] ?? id)} />
         </div>
         <CharacterPanel
           era={era}
@@ -556,7 +564,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
       </main>
 
       <footer className="footer">
-        <Notebook entries={view.notebook} era={era} onOpen={setInspect} />
+        <Notebook entries={view.notebook} era={era} onOpen={openByPlayer} />
         <div className="footer__objective">
           <p className="objective"><span className="eyebrow">{g.objective}</span> {view.objective}</p>
           {hint && <p className="hint" role="status"><span className="eyebrow">{g.hint}</span> {hint}</p>}

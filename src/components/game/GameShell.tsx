@@ -246,7 +246,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
       return;
     }
     // "Let's decide" / "on décide": open the choice (no selection, no confirmation).
-    if (!endingOpenRef.current && viewRef.current.endings.length > 0 && !viewRef.current.ending && wantsToDecide(text)) {
+    if (!endingOpenRef.current && viewRef.current.endings.length > 0 && !viewRef.current.ending && viewRef.current.activeEra === 2026 && wantsToDecide(text)) {
       trace(text, "ouverture du choix");
       setInspect(null);
       setEndingOpen(true);
@@ -254,7 +254,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
     }
     // Naming an ending while the decision is possible but not shown: open it, then select (the
     // confirmation stays a separate, explicit step).
-    if (!endingOpenRef.current && viewRef.current.endings.length > 0 && !viewRef.current.ending) {
+    if (!endingOpenRef.current && viewRef.current.endings.length > 0 && !viewRef.current.ending && viewRef.current.activeEra === 2026) {
       const id = endingFromSpeech(text, locale);
       if (id) {
         trace(text, `ouverture du choix + sélection : ${id} (confirmation encore requise)`);
@@ -445,7 +445,8 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
   }
 
   const era = view.activeEra;
-  const canDecide = view.endings.length > 0 && !view.ending;
+  // The decision is taken in 2026, with Malik: the button only exists there.
+  const canDecide = view.endings.length > 0 && !view.ending && view.activeEra === 2026;
 
   if (view.ending) {
     const ending = view.ending;

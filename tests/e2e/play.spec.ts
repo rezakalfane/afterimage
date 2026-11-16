@@ -1,7 +1,7 @@
 // Full chapter in a real browser, rehearsal mode: every step through visible UI controls.
 import { expect, test } from "@playwright/test";
 
-import { closeDialog, hotspot, inDialog, playToDecision } from "./helpers";
+import { closeDialog, era, hotspot, inDialog, playToDecision } from "./helpers";
 
 for (const [ending, label, closing] of [
   ["public_cut", /Projeter la version autorisée/, /La salle se rallume/],
@@ -11,6 +11,10 @@ for (const [ending, label, closing] of [
   test(`chapter to ending ${ending}`, async ({ page }) => {
     page.on("dialog", () => { throw new Error("A JS dialog opened (XSS?)"); });
     await playToDecision(page);
+    // The decision belongs to 2026: no button in 1996.
+    await era(page, "1996");
+    await expect(page.getByRole("button", { name: "Décider du sort du film" })).toHaveCount(0);
+    await era(page, "2026");
     await page.getByRole("button", { name: "Décider du sort du film" }).click();
     await page.getByRole("dialog").getByRole("button", { name: label }).click();
     await page.getByRole("dialog").getByRole("button", { name: /Je confirme|Je comprends/ }).click();

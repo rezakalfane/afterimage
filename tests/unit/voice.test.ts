@@ -132,3 +132,16 @@ describe("natural confirmations", () => {
     for (const t of ["Je confirme pas ces mots", "Si je confirme ces mots ?", "Je confirme ces mots mais change le dernier", "Je confirme ces mots et va chercher la clé"]) expect(isConfirmation(t, "fr"), t).toBe(false);
   });
 });
+describe("selecting an ending while the choice is shown", () => {
+  it("naming one option selects it", () => {
+    for (const [t, id] of [["La version autorisée", "public_cut"], ["Allons-y pour les archives", "sealed_archive"], ["On montre tout, avec l'épilogue", "broken_promise"], ["On la projette sans l'épilogue, comme Alice le voulait", "public_cut"], ["The authorised version", "public_cut"]] as const)
+      expect(endingFromSpeech(t, /^The/.test(t) ? "en" : "fr", { choiceShown: true }), t).toBe(id);
+  });
+  it("talking it over, asking or naming two options selects nothing", () => {
+    for (const t of ["Qu'en penses-tu, les archives ?", "Les archives ou la version autorisée", "Je ne veux pas tout projeter", "Et si on choisissait les archives", "Je pense aux archives"]) expect(endingFromSpeech(t, "fr", { choiceShown: true }), t).toBeNull();
+  });
+  it("outside the choice, an explicit 'je choisis' is still required", () => {
+    expect(endingFromSpeech("La version autorisée", "fr")).toBeNull();
+    expect(endingFromSpeech("Je choisis la version autorisée", "fr")).toBe("public_cut");
+  });
+});

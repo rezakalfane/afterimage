@@ -63,15 +63,20 @@ export function isConfirmation(text: string, locale: VoiceLocale, kind: "message
 
 const ENDINGS: Record<VoiceLocale, [string, RegExp][]> = {
   fr: [
-    ["broken_promise", /\b(tout projeter|tout montrer|en entier|intégral|intégrale|version complète|avec l'épilogue)\b/],
-    ["sealed_archive", /\b(archives?|sous scellés?|conserver le film)\b/],
-    ["public_cut", /\b(version autorisée|sans l'épilogue|sans épilogue)\b/],
+    ["broken_promise", /(tout projeter|tout montrer|on montre tout|montrons tout|projetons tout|en entier|integral|integrale|version complete|avec l'epilogue|malgre la lettre)/],
+    ["sealed_archive", /(archives?|sous scelles?|conserver le film|garder le film|ne pas le projeter|sans projection)/],
+    ["public_cut", /(version autorisee|sans l'epilogue|sans epilogue|version sans|comme alice (le )?voulait|ce qu'alice (a )?autorise)/],
   ],
   en: [
-    ["broken_promise", /\b(screen everything|show everything|in full|full version|with the epilogue|whole film)\b/],
-    ["sealed_archive", /\b(archives?|under seal|keep the film)\b/],
-    ["public_cut", /\b(authori[sz]ed version|without the epilogue)\b/],
+    ["broken_promise", /(screen everything|show everything|show it all|screen it all|in full|full version|with the epilogue|whole film|despite the letter)/],
+    ["sealed_archive", /(archives?|under seal|keep the film|not screen it|no screening)/],
+    ["public_cut", /(authori[sz]ed version|without the epilogue|as alice wanted|what alice allowed)/],
   ],
+};
+/** Talking it over, not choosing ("qu'en penses-tu", "what do you think", "ou bien"). */
+const DISCUSS: Record<VoiceLocale, RegExp> = {
+  fr: /\b(penses|pense|penser|avis|qu'en|ou bien|hesite|hesiter|on verra|plutot que)\b/,
+  en: /\b(think|opinion|or maybe|not sure|rather than|we'll see)\b/,
 };
 const CHOOSE: Record<VoiceLocale, RegExp> = {
   fr: /^(?:(?:euh|bon|alors|ok|oui)\s+)*(?:je (?:choisis|prends|veux|préfère)|on (?:choisit|prend)|choisissons|ce sera)\b/,
@@ -80,11 +85,16 @@ const CHOOSE: Record<VoiceLocale, RegExp> = {
 
 /** An explicit choice of exactly one ending ("je choisis les archives"). It only SELECTS: the
  *  confirmation is a separate, explicit step. Questions, negations and ambiguity select nothing. */
-export function endingFromSpeech(text: string, locale: VoiceLocale): string | null {
+export function endingFromSpeech(text: string, locale: VoiceLocale, opts: { choiceShown?: boolean } = {}): string | null {
   if (/[?¿]/.test(text)) return null;
   const t = normalizeSpeech(text);
-  if (BLOCK[locale].test(t) || !CHOOSE[locale].test(t)) return null;
-  const hits = ENDINGS[locale].filter(([, re]) => re.test(t)).map(([id]) => id);
+  if (BLOCK[locale].test(t)) return null;
+  const plain = t.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (DISCUSS[locale].test(plain)) return null;
+  // While the choice is on screen, naming one option is enough to SELECT it ("la version
+  // autorisée", "allons-y pour les archives"); otherwise an explicit "je choisis…" is needed.
+  if (!opts.choiceShown && !CHOOSE[locale].test(t)) return null;
+  const hits = ENDINGS[locale].filter(([, re]) => re.test(plain)).map(([id]) => id);
   return hits.length === 1 ? hits[0] : null;
 }
 

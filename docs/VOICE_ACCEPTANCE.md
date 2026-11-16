@@ -32,7 +32,8 @@ Dites chaque phrase, attendez la ligne du panneau, notez le résultat.
 |---|---|---|
 | 8b | Fenêtre fermée, après la lettre : « Décidons. » / “Let's decide.” | la fenêtre « Que faire du film ? » s'ouvre, rien n'est choisi |
 | 9 | « Les archives ou la version autorisée ? » | ignoré (ambigu) |
-| 10 | « Je choisis la version autorisée. » | sélection seulement, **pas** de fin |
+| 10 | « Je choisis la version autorisée. » ou, fenêtre ouverte, « La version autorisée » / « Allons-y pour les archives » | sélection seulement, **pas** de fin ; dire une autre option change la sélection |
+| 10b | « Qu'en penses-tu, les archives ? » / « Je pense aux archives » | rien n'est sélectionné (discussion) |
 | 11 | « Si je confirme, c'est définitif ? » | ignoré |
 | 12 | « Je confirme ce choix. » | CONFIRMÉ : fin public_cut → épilogue ; la conversation se ferme |
 

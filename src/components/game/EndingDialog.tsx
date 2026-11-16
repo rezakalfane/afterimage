@@ -40,7 +40,8 @@ export function EndingDialog({ open, onClose, runId, view, onDone, confirmRef, c
   // Voice: the player may name an ending, then confirm it out loud (same calls as the buttons).
   useEffect(() => {
     if (confirmRef) confirmRef.current = open && intent && !busy ? () => void confirm() : null;
-    if (chooseRef) chooseRef.current = open && !intent && !busy ? (id: string) => void choose(id) : null;
+    // Selecting (or changing the selection) by voice; never a confirmation.
+    if (chooseRef) chooseRef.current = open && !busy ? (id: string) => void (intent?.ending.id === id ? undefined : choose(id)) : null;
   });
   // The selection on screen (for the voice confirmation target); cleared when closed.
   const selected = open && intent ? intent.ending.id : null;

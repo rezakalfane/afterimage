@@ -228,6 +228,12 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
     if (t) {
       if (!now || !sameTarget(t, { ...now, since: t.since })) return trace(text, "ignoré : l’étape affichée a changé");
       if (meta.receivedAt < t.since + 300) return trace(text, "ignoré : parole antérieure à l’étape");
+      const reselect = t.kind === "ending" ? endingFromSpeech(text, locale, { choiceShown: true }) : null;
+      if (reselect && reselect !== t.content && endingChoose.current) {
+        trace(text, `nouvelle sélection : ${reselect} (confirmation encore requise)`);
+        endingChoose.current(reselect);
+        return;
+      }
       if (!isConfirmation(text, locale, t.kind)) {
         // It sounded like a confirmation but was not explicit enough: say so instead of silence.
         if (/confirm|valid|garde|keep|confie/i.test(text)) say(t.kind === "message" ? g.voiceRetryMessage : g.voiceRetryEnding, "warn");
@@ -259,8 +265,8 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
       }
     }
     // Ending choice by voice: an explicit selection only (never a confirmation, never automatic).
-    if (endingOpenRef.current && !selectedRef.current && endingChoose.current) {
-      const id = endingFromSpeech(text, locale);
+    if (endingOpenRef.current && endingChoose.current) {
+      const id = endingFromSpeech(text, locale, { choiceShown: true });
       if (id) {
         trace(text, `sélection : ${id} (confirmation encore requise)`);
         endingChoose.current(id);

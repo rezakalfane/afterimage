@@ -111,7 +111,7 @@ const fr = {
     edit: "Modifier", review: "Relisez : ce sont exactement les mots qui traverseront le temps. Dites « Je confirme » pour les confier à Jeanne, ou utilisez le bouton.", saveFailed: "Vos mots n’ont pas pu être enregistrés. Votre texte est conservé ; réessayez.",
     defaultText: "Les étoiles restent allumées.",
   },
-  ending: { title: "Que faire du film ?", intro: "Le film est sauvé. Il reste à décider comment le rendre au monde. Ce choix est définitif pour cette partie.", back: "Revenir aux choix", failed: "Choix impossible.", voiceHint: "Vous pouvez aussi le dire : « la version autorisée », « les archives » ou « tout projeter ».", voiceConfirm: "Dites « Je confirme » ou utilisez le bouton." },
+  ending: { title: "Que faire du film ?", intro: "Le film est sauvé. Il reste à décider comment le rendre au monde. Ce choix est définitif pour cette partie.", back: "Revenir aux choix", failed: "Choix impossible.", voiceHint: "Vous pouvez aussi en parler avec Malik et dire votre choix : « la version autorisée », « les archives » ou « tout projeter ». Rien n’est définitif avant « Je confirme ».", voiceConfirm: "Dites « Je confirme » ou utilisez le bouton." },
   language: { label: "Langue" },
   auth: {
     signInTitle: "Se connecter", email: "Email", password: "Mot de passe", submit: "Se connecter", tooMany: "Trop de tentatives. Réessayez dans quelques minutes.", badCredentials: "Email ou mot de passe incorrect.",
@@ -229,7 +229,7 @@ const en: DeepPartial<Messages> = {
     edit: "Edit", review: "Read it again: these are exactly the words that will cross time. Say “I confirm” to leave them with Jeanne, or use the button.", saveFailed: "Your words could not be saved. Your text is kept; try again.",
     defaultText: "The stars stay lit.",
   },
-  ending: { title: "What to do with the film?", intro: "The film is saved. It remains to decide how to give it back to the world. This choice is final for this game.", back: "Back to the choices", failed: "Choice not possible.", voiceHint: "You can also say it: “the authorised version”, “the archives” or “screen everything”.", voiceConfirm: "Say “I confirm” or use the button." },
+  ending: { title: "What to do with the film?", intro: "The film is saved. It remains to decide how to give it back to the world. This choice is final for this game.", back: "Back to the choices", failed: "Choice not possible.", voiceHint: "You can also talk it over with Malik and say your choice: “the authorised version”, “the archives” or “screen everything”. Nothing is final until “I confirm”.", voiceConfirm: "Say “I confirm” or use the button." },
   auth: {
     signInTitle: "Sign in", email: "Email", password: "Password", submit: "Sign in", tooMany: "Too many attempts. Please try again in a few minutes.", badCredentials: "Incorrect email or password.",
     signInNote: "Accounts are created by invitation. To play without an account:", signInNoteLink: "home → Start",

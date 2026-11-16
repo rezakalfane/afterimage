@@ -214,6 +214,13 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
         trace(text, `document ouvert : ${id}`);
         if (closeTimer.current) clearTimeout(closeTimer.current);
         setInspect(id);
+        // Showing it to Jeanne in the player's own words IS the share (same as the button): she
+        // then receives what the document says, through the server.
+        const share = ({ photo: "share_photo_note", archiveReport: "share_report" } as Record<string, Action>)[id];
+        if (share && viewRef.current.availableActions.includes(share)) {
+          trace(text, `partagé avec le personnage : ${share}`);
+          void act(share);
+        }
       }
     }
     // "2026" / "1996" (alone or as a short command): change era, as with the switch.

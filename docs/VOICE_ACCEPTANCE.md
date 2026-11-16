@@ -61,6 +61,7 @@ Refaites 1, 2, 3, 6, 10, 12 avec : “If I say I confirm, what happens?”, “I
 |---|---|---|
 | 20 | En 1996, photo déjà vue : « J'ai une photo à vous montrer » | la fenêtre de la photo s'ouvre ; Jeanne réagit à ce que vous dites |
 | 21 | « Je n'ai pas de photo » | rien ne s'ouvre |
+| 21b | En 1996 : « Regardez, j'ai un rapport à vous montrer » | le rapport s'ouvre **et** est montré à Jeanne (comme le bouton) ; elle réagit à son contenu |
 
 ## Ouvrir la feuille des mots, confirmer naturellement
 | # | Dites | Attendu |

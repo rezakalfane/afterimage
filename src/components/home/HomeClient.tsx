@@ -20,6 +20,23 @@ export function HomeClient({ mode, runs, signedIn, isAdmin }: { mode: "rehearsal
     setHydrated(true);
   }, []);
   const [error, setError] = useState<string | null>(null);
+  // Live mode: no new game while every conversation slot is taken (re-checked every 15 s).
+  const [full, setFull] = useState(false);
+  useEffect(() => {
+    if (mode !== "live") return;
+    let stop = false;
+    const check = () =>
+      fetch("/api/capacity", { cache: "no-store" })
+        .then((r) => r.json())
+        .then((c: { available?: boolean }) => !stop && setFull(c.available === false))
+        .catch(() => {});
+    void check();
+    const id = setInterval(check, 15_000);
+    return () => {
+      stop = true;
+      clearInterval(id);
+    };
+  }, [mode]);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Only a game of the current chapter version is offered for resuming.
@@ -54,9 +71,10 @@ export function HomeClient({ mode, runs, signedIn, isAdmin }: { mode: "rehearsal
         <p className="home__pitch">{h.pitch}</p>
         <p className="home__pitch2">{h.pitch2}</p>
         <div className="btn-row">
-          {resume && <Link className="btn btn--brass btn--big" href={`/play/${resume.id}`}>{h.resume}</Link>}
-          <button type="button" className={`btn btn--big${resume ? "" : " btn--brass"}`} onClick={start} disabled={busy || !hydrated}>{busy ? h.opening : h.start}</button>
+          {resume && (full ? <span className="btn btn--brass btn--big" aria-disabled="true">{h.resume}</span> : <Link className="btn btn--brass btn--big" href={`/play/${resume.id}`}>{h.resume}</Link>)}
+          <button type="button" className={`btn btn--big${resume ? "" : " btn--brass"}`} onClick={start} disabled={busy || !hydrated || full}>{busy ? h.opening : h.start}</button>
         </div>
+        {full && <p className="warn" role="status">{h.full}</p>}
         {resume && <p className="muted small home__newnote">{h.newNote}</p>}
         <div className="btn-row home__secondary">
           <button type="button" className="btn btn--quiet" onClick={() => setSettingsOpen(true)}>{h.settings}</button>

@@ -167,3 +167,18 @@ describe("tool proposals", () => {
     await a.closeConversation(runId);
   });
 });
+
+import * as capacityRoute from "@/app/api/capacity/route";
+describe("home page capacity gate", () => {
+  it("reports unavailable once every slot is taken, available again after closing", async () => {
+    const read = async () => (await (await capacityRoute.GET(new Request("http://localhost:3000/api/capacity"), {} as never)).json()) as { available: boolean };
+    expect((await read()).available).toBe(true);
+    const ps = await Promise.all([guest("cap1"), guest("cap2")]);
+    const runs = await Promise.all(ps.map(async (p) => (await p.createRun()).body.runId as string));
+    for (let i = 0; i < 2; i++) expect((await ps[i].openConversation(runs[i])).status).toBe(200);
+    expect((await read()).available).toBe(false); // NAPSTER_MAX_ACTIVE=2 in tests
+    await ps[0].closeConversation(runs[0]);
+    expect((await read()).available).toBe(true);
+    await ps[1].closeConversation(runs[1]);
+  });
+});

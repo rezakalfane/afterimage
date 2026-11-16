@@ -59,14 +59,16 @@ export interface OpenedConversation {
   revision: number;
 }
 
-export async function openConversation(ctx: TenantContext, runId: string, opts: { resumed?: boolean; locale?: Locale } = {}): Promise<OpenedConversation> {
+export async function openConversation(ctx: TenantContext, runId: string, opts: { resumed?: boolean; locale?: Locale; character?: CharacterId; standby?: boolean } = {}): Promise<OpenedConversation> {
   const locale: Locale = opts.locale ?? "fr";
   const e = env();
   if (e.CONVERSATION_MODE !== "live") throw new HttpError("LIVE_DISABLED", "Conversation en direct désactivée (mode répétition).");
   const run = await getRun(ctx, runId);
   assertPlayable(run);
   if (run.status !== "active") throw new HttpError("RUN_FINISHED");
-  const character = characterForEra(run.state.activeEra);
+  // The era's character by default; the other one may be opened in STANDBY (muted, waiting for an
+  // era switch). Its tools are still refused by the engine while it is not the era's character.
+  const character = opts.character ?? characterForEra(run.state.activeEra);
   const agentId = agentFor(character, locale);
   const now = Date.now();
   const leaseId = newId("lease");
@@ -74,17 +76,17 @@ export async function openConversation(ctx: TenantContext, runId: string, opts: 
   // 0. Take over the caller's own open lease on this run (left behind by a reload, a language
   //    switch during an open, a crashed tab). The newest request wins; one avatar per run holds.
   //    Closing calls Napster, so it happens before (outside) the admission transaction.
-  const own = await sqlClient().execute({ sql: `SELECT id FROM conversation_leases WHERE tenant_id = ? AND run_id = ? AND user_id = ? AND status IN ${OPEN}`, args: [ctx.tenantId, runId, ctx.userId] });
+  const own = await sqlClient().execute({ sql: `SELECT id FROM conversation_leases WHERE tenant_id = ? AND run_id = ? AND user_id = ? AND character_id = ? AND status IN ${OPEN}`, args: [ctx.tenantId, runId, ctx.userId, character] });
   if (own.rows[0]) {
     log.info("napster.connection.take_over", { leaseId: String(own.rows[0].id) });
-    await closeConversation(ctx, runId);
+    await closeConversation(ctx, runId, character);
   }
 
   // 1. Admission + identity, one write transaction.
   const { slot, externalClientId, resumed } = await writeTx(async (tx) => {
     // Expired active/reserved leases may still hold provider capacity: mark them uncertain (counted until reconciled).
     await tx.execute({ sql: `UPDATE conversation_leases SET status = 'uncertain', status_reason = 'expired', updated_at = ? WHERE status IN ('reserved','active') AND expires_at < ?`, args: [now, now] });
-    const mine = await tx.execute({ sql: `SELECT id, status FROM conversation_leases WHERE tenant_id = ? AND run_id = ? AND status IN ${OPEN}`, args: [ctx.tenantId, runId] });
+    const mine = await tx.execute({ sql: `SELECT id, status FROM conversation_leases WHERE tenant_id = ? AND run_id = ? AND character_id = ? AND status IN ${OPEN}`, args: [ctx.tenantId, runId, character] });
     if (mine.rows[0]) throw new HttpError("CONVERSATION_ACTIVE", "Une conversation est déjà ouverte pour cette partie (autre onglet ?).", { leaseStatus: String(mine.rows[0].status) });
     const global = await tx.execute({ sql: `SELECT count(*) AS n FROM conversation_leases WHERE provider_scope = ? AND status IN ${OPEN}`, args: [PROVIDER_SCOPE] });
     if (Number(global.rows[0].n) >= e.NAPSTER_MAX_ACTIVE) throw new HttpError("CAPACITY_FULL", "Toutes les places de conversation sont occupées. Réessayez dans un instant ; en attendant, toutes les actions restent possibles à l’écran.", undefined, 15);
@@ -119,7 +121,8 @@ export async function openConversation(ctx: TenantContext, runId: string, opts: 
         channelType: "webrtc",
         externalClientId,
         externalClientProfile: connectionProfile(context, locale),
-        initialSpeech: openingInstruction(character, opts.resumed ?? resumed, locale),
+        // A standby character does not open the conversation: it greets when the player turns to it.
+        ...(opts.standby ? {} : { initialSpeech: openingInstruction(character, opts.resumed ?? resumed, locale) }),
         tags: { app: "afterimage", env: e.APP_ENV, lease: leaseId },
       },
     });
@@ -164,16 +167,16 @@ export async function openConversation(ctx: TenantContext, runId: string, opts: 
 }
 
 /** Close the caller's open conversation for this run. Idempotent. */
-export async function closeConversation(ctx: TenantContext, runId: string): Promise<{ closed: boolean }> {
+export async function closeConversation(ctx: TenantContext, runId: string, character?: CharacterId): Promise<{ closed: boolean }> {
   // No getRun here: the run may already be a 'deleting' tombstone. Every statement below is
   // scoped by tenant + run + user, so a foreign run simply matches nothing.
   const r = await sqlClient().execute({
-    sql: `UPDATE conversation_leases SET status = 'closing', updated_at = ? WHERE tenant_id = ? AND run_id = ? AND user_id = ? AND status IN ${OPEN} RETURNING id, connection_id`,
-    args: [Date.now(), ctx.tenantId, runId, ctx.userId],
+    sql: `UPDATE conversation_leases SET status = 'closing', updated_at = ? WHERE tenant_id = ? AND run_id = ? AND user_id = ? AND status IN ${OPEN}${character ? " AND character_id = ?" : ""} RETURNING id, connection_id`,
+    args: [Date.now(), ctx.tenantId, runId, ctx.userId, ...(character ? [character] : [])],
   });
-  const lease = r.rows[0];
-  if (!lease) return { closed: true };
-  return { closed: await closeProviderConnection(String(lease.id), lease.connection_id ? String(lease.connection_id) : null) };
+  let closed = true;
+  for (const lease of r.rows) closed = (await closeProviderConnection(String(lease.id), lease.connection_id ? String(lease.connection_id) : null)) && closed;
+  return { closed };
 }
 
 /** DELETE the provider connection (rate-limited) and settle the lease. Used by close and cleanup. */
@@ -209,4 +212,14 @@ export async function heartbeat(ctx: TenantContext, runId: string, leaseId: stri
   const still = await sqlClient().execute({ sql: `SELECT 1 FROM conversation_leases WHERE id = ? AND tenant_id = ? AND run_id = ? AND user_id = ? AND status = 'active'`, args: [leaseId, ctx.tenantId, runId, ctx.userId] });
   if (!still.rows[0]) throw new HttpError("LEASE_INVALID", "Cette conversation n’est plus active.");
   return { ok: true }; // too frequent: accepted without extending
+}
+
+/** Conversation slots for a NEW player (home page gate). Expired leases still count until
+ *  reconciled, exactly as admission does; the server still re-checks at the actual opening. */
+export const SESSIONS_PER_PLAYER = 1;
+export async function capacitySnapshot(): Promise<{ live: boolean; free: number; perPlayer: number }> {
+  const e = env();
+  if (e.CONVERSATION_MODE !== "live") return { live: false, free: 0, perPlayer: SESSIONS_PER_PLAYER };
+  const r = await sqlClient().execute({ sql: `SELECT count(*) AS n FROM conversation_leases WHERE provider_scope = ? AND status IN ${OPEN}`, args: [PROVIDER_SCOPE] });
+  return { live: true, free: Math.max(0, e.NAPSTER_MAX_ACTIVE - Number(r.rows[0].n)), perPlayer: SESSIONS_PER_PLAYER };
 }

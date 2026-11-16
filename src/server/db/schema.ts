@@ -199,7 +199,8 @@ export const conversationLeases = sqliteTable(
     check("leases_status", sql`${t.status} IN ('reserved','active','closing','uncertain','closed','failed')`),
     check("leases_locale", sql`${t.locale} IN ('fr','en')`),
     runFk(t),
-    uniqueIndex("one_open_lease_per_run").on(t.tenantId, t.runId).where(sql`status IN ('reserved','active','closing','uncertain')`),
+    // One open session per run and CHARACTER: both characters may be connected (instant era switch).
+    uniqueIndex("one_open_lease_per_run_character").on(t.tenantId, t.runId, t.characterId).where(sql`status IN ('reserved','active','closing','uncertain')`),
     index("leases_capacity").on(t.providerScope, t.status, t.expiresAt),
   ],
 );

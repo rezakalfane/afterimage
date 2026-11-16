@@ -3,11 +3,11 @@
   "organization": "9ee272fc-807e-4bb8-8cd1-2225039e30ba",
   "companions": {
     "jeanne": {
-      "id": "b8ccb3f5-3ba8-4e5d-9e2a-2029f6047ea7",
-      "kind": "custom-v2",
-      "source": "https://raw.githubusercontent.com/rezakalfane/afterimage/main/assets-src/afterimage/characters/jeanne-reference.png",
-      "note": "Created 2026-11-16 from the same portrait. Attached to both agents of this character (fr, en) since 2026-11-16, after the V1/V2 comparison.",
-      "fallbackStock": "67fe225a-5533-4c43-985c-81c9ccf2bc75"
+      "id": "64ea1196-d46a-4f4e-ac84-8c439f0e5310",
+      "kind": "custom-v1",
+      "source": "https://raw.githubusercontent.com/rezakalfane/afterimage/main/assets-src/afterimage/characters/jeanne-reference-1996-usher.png",
+      "fallbackStock": "67fe225a-5533-4c43-985c-81c9ccf2bc75",
+      "note": "Usher portrait V1, attached to both Jeanne agents 2026-11-16 as an interim until the usher V2 is ready."
     },
     "malik": {
       "id": "f472e067-aaba-430b-ae35-4f525e513323",
@@ -19,11 +19,10 @@
   },
   "companionsV1": {
     "jeanne": {
-      "id": "16996273-188e-4710-b11f-2130570c13c6",
+      "id": "64ea1196-d46a-4f4e-ac84-8c439f0e5310",
       "kind": "custom-v1",
-      "source": "https://raw.githubusercontent.com/rezakalfane/afterimage/main/assets-src/afterimage/characters/jeanne-reference.png",
-      "fallbackStock": "67fe225a-5533-4c43-985c-81c9ccf2bc75",
-      "note": "Created 2026-11-15 from the kit portrait (fictional, generated). Kept as the fallback: detached 2026-11-16 when V2 was adopted."
+      "source": "https://raw.githubusercontent.com/rezakalfane/afterimage/main/assets-src/afterimage/characters/jeanne-reference-1996-usher.png",
+      "note": "Usher portrait V1 (fallback once the usher V2 is attached)."
     },
     "malik": {
       "id": "6db06ec6-3f58-4080-a553-feb65842a3b3",
@@ -78,7 +77,23 @@
       "source": "https://raw.githubusercontent.com/rezakalfane/afterimage/main/assets-src/afterimage/characters/jeanne-reference-1996-usher.png",
       "v1": "64ea1196-d46a-4f4e-ac84-8c439f0e5310",
       "v2": "39ab2b8d-43d7-4d7f-af14-75c5636e8128",
-      "note": "Created 2026-11-16 from the 1996 usher portrait; not attached until ready. The previous Jeanne companions stay as they are."
+      "note": "Usher V1 attached (interim). Usher V2 to attach once Napster lists v2 in its versions."
+    }
+  },
+  "companionsRetired": {
+    "jeanneV2Original": {
+      "id": "b8ccb3f5-3ba8-4e5d-9e2a-2029f6047ea7",
+      "kind": "custom-v2",
+      "source": "https://raw.githubusercontent.com/rezakalfane/afterimage/main/assets-src/afterimage/characters/jeanne-reference.png",
+      "note": "First Jeanne V2 (civilian portrait). Detached 2026-11-16 for the usher portrait; kept.",
+      "fallbackStock": "67fe225a-5533-4c43-985c-81c9ccf2bc75"
+    },
+    "jeanneV1Original": {
+      "id": "16996273-188e-4710-b11f-2130570c13c6",
+      "kind": "custom-v1",
+      "source": "https://raw.githubusercontent.com/rezakalfane/afterimage/main/assets-src/afterimage/characters/jeanne-reference.png",
+      "fallbackStock": "67fe225a-5533-4c43-985c-81c9ccf2bc75",
+      "note": "First Jeanne V1 (civilian portrait). Kept."
     }
   }
 }

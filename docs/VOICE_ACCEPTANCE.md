@@ -71,6 +71,13 @@ Refaites 1, 2, 3, 6, 10, 12 avec : “If I say I confirm, what happens?”, “I
 | 23 | Feuille en relecture : « Je confirme ces mots, c'est parfait » | CONFIRMÉ (une seule fois suffit) |
 | 24 | « Je confirme ces mots mais change le dernier » | non confirmé ; un message vous invite à dire simplement « Je confirme » |
 
+## Regarder un lieu à la voix
+| # | Dites | Attendu |
+|---|---|---|
+| 25 | En 2026 : « Regardons le bas de l'armoire » / « Je veux juste voir le bas abîmé » | la fenêtre « Trace d'humidité » s'ouvre et le rapport est lu ; Malik n'essaie pas d'ouvrir l'armoire |
+| 26 | « Examinons la lampe » / « Montre-moi le projecteur » | la fenêtre du lieu s'ouvre |
+| 27 | « Le bas de l'armoire est abîmé » (sans verbe de regard) | rien ne s'ouvre |
+
 ## Contrôles finaux
 - Après l'épilogue, `npm run ops:napster-usage` : aucune session `afterimage` ouverte.
 - Focus : fermez une fenêtre à la souris → pas d'anneau doré sur l'objet ; avec Échap → anneau visible.

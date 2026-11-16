@@ -157,3 +157,19 @@ describe("naming the selected ending and confirming in one sentence", () => {
     expect(confirmsSelectedEnding("La version autorisée ?", "fr", "public_cut")).toBe(false);
   });
 });
+
+import { lookIntent } from "@/components/game/voice";
+describe("looking at a place by voice", () => {
+  it("names the place, specific before generic", () => {
+    expect(lookIntent("OK, regardons le bas de l'armoire.")).toBe("waterline");
+    expect(lookIntent("Non, je ne veux pas voir l'intérieur, je veux juste voir le bas abîmé.")).toBe("waterline");
+    expect(lookIntent("Montre-moi la trace d'humidité")).toBe("waterline");
+    expect(lookIntent("Let's examine the bottom of the cabinet")).toBe("waterline");
+    expect(lookIntent("Examinons la lampe")).toBe("lamp");
+    expect(lookIntent("Regarde l'armoire")).toBe("cabinet");
+  });
+  it("no looking verb, nothing", () => {
+    expect(lookIntent("Le bas de l'armoire est abîmé")).toBeNull();
+    expect(lookIntent("Ouvre l'armoire")).toBeNull();
+  });
+});

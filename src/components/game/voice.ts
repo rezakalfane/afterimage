@@ -190,3 +190,33 @@ export function confirmsSelectedEnding(text: string, locale: VoiceLocale, select
     .trim();
   return isConfirmation(rest, locale, "ending");
 }
+
+/** The player asks to look at / examine a place of the booth ("regardons le bas de l'armoire",
+ *  "montre-moi la lampe", "let's examine the projector"). Returns the scene hotspot id. Specific
+ *  places are tested before generic ones ("bas de l'armoire" before "armoire"); a negation just
+ *  before the place ("je ne veux pas voir l'intérieur") cancels that mention only. */
+const LOOK_VERB = /\b(regarde|regarder|regardons|regardez|examine|examiner|examinons|examinez|inspecte|inspecter|inspectons|montre|montrer|montrez|montre moi|voir|voyons|observe|observons|jette un oeil|jetons un oeil|look|looking|examine|examining|inspect|show me|let's see|check|see)\b/;
+const PLACES: [string, RegExp][] = [
+  ["waterline", /(bas de l'armoire|bas abime|bas de l armoire|pied de l'armoire|trace d'humidite|trace d'eau|marque d'eau|tache|humidite|bottom of the cabinet|cabinet's bottom|water mark|damp mark|damp|watermark|the stain)/],
+  ["photo", /(photo|photographie|photograph|picture)/],
+  ["programme", /(programme|program)/],
+  ["projector", /(projecteur|projector)/],
+  ["lamp", /(lampe|lamp)/],
+  ["reels", /(bobines|boites|reels|cans)/],
+  ["splicer", /(colleuse|splicer)/],
+  ["seats", /(fauteuils|sieges|seats)/],
+  ["hall", /(la salle|salle de cinema|the hall|the auditorium)/],
+  ["cabinet", /(armoire|cabinet)/],
+];
+export function lookIntent(text: string): string | null {
+  const t = normalizeSpeech(text).normalize("NFD").replace(/[̀-ͯ]/g, "");
+  if (!LOOK_VERB.test(t)) return null;
+  for (const [id, re] of PLACES) {
+    const m = re.exec(t);
+    if (!m) continue;
+    const before = t.slice(Math.max(0, m.index - 28), m.index);
+    if (/\b(ne|n'|pas|not|don't|no)\b/.test(before) && !/\b(juste|seulement|just|only)\b/.test(before)) continue;
+    return id;
+  }
+  return null;
+}

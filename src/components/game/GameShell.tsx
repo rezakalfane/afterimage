@@ -8,12 +8,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CharacterPanel } from "@/components/conversation/CharacterPanel";
 import { useLiveConversation, type TranscriptLine } from "@/components/conversation/useLiveConversation";
 import { useLocale, useT } from "@/i18n/I18nProvider";
-import { closeIntent, confirmsSelectedEnding, showIntent, wantsToWrite, endingFromSpeech, eraFromSpeech, isConfirmation, sameTarget, wantsToDecide, type VoiceTarget } from "./voice";
+import { closeIntent, confirmsSelectedEnding, lookIntent, showIntent, wantsToWrite, endingFromSpeech, eraFromSpeech, isConfirmation, sameTarget, wantsToDecide, type VoiceTarget } from "./voice";
 import { LanguageChoice, LanguageSwitch, setLocale } from "@/components/ui/LanguageSwitch";
 import { DisplayChoices } from "@/components/ui/DisplayChoices";
 import { Dialog } from "@/components/ui/Dialog";
 import { FacadeSign } from "@/components/ui/FacadeSign";
-import { ERA_META } from "./scene-config";
+import { ERA_META, HOTSPOTS } from "./scene-config";
 import { fmt, type Locale } from "@/i18n/messages";
 import { api, ApiError, commandId } from "./api";
 import { EndingDialog } from "./EndingDialog";
@@ -221,6 +221,21 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
           trace(text, `partagé avec le personnage : ${share}`);
           void act(share);
         }
+      }
+    }
+    // "Regardons le bas de l'armoire": open that place, as a click would (its simple reading runs
+    // on opening). Only places present in the era on screen; the character still hears the line.
+    const place = !shown && !composerRef.current && !endingOpenRef.current ? lookIntent(text) : null;
+    if (place) {
+      const v = viewRef.current;
+      const open = v.activeEra === 1996 ? v.scene.cabinetOpen1996 : v.scene.cabinetOpen2026;
+      const here = HOTSPOTS[v.activeEra].filter((h) => !h.when || (h.when === "open") === open).map((h) => h.id);
+      const id = place === "cabinet" && open ? (v.activeEra === 1996 ? "letter" : "cache") : place;
+      if (here.includes(id) || (place === "cabinet" && here.some((h) => h === "cache" || h === "letter" || h === "cabinet"))) {
+        trace(text, `lieu affiché : ${id}`);
+        if (closeTimer.current) clearTimeout(closeTimer.current);
+        setInspect(HOTSPOT_TO_INSPECT[id] ?? id);
+        if (id === "photo" && v.availableActions.includes("inspect_photo")) void act("inspect_photo");
       }
     }
     // "2026" / "1996" (alone or as a short command): change era, as with the switch.

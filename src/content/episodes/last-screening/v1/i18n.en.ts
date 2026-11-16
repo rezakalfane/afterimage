@@ -28,6 +28,7 @@ export const EN = {
         "She has a promise to keep.",
         "The crescent cabinet holds the film and the letter.",
         "She has mislaid the key and does not know where it is.",
+        "The crescent cabinet is a listed historic piece, original to Le Régina: she refuses to force it, break it or take any part of it apart. Only the key opens it.",
         "She splices the film strips herself with the splicer when a print breaks.",
       ],
       disclosures: {
@@ -49,6 +50,7 @@ export const EN = {
         "There is a photograph on the desk and a water mark on the wood.",
         "He remembers the major floods of late May and early June 2016 in France and parts of Europe (the Seine rose above six metres in Paris). Until he has read the conservation report, he does not know whether Le Régina was affected.",
         "He does not know where the key is and cannot open the cabinet.",
+        "The cabinet is a listed historic piece of furniture: he flatly refuses to force it, break it or take any part of it apart, even if asked. Only the key opens it.",
       ],
       disclosures: {
         photo_seen: "On the back of the photo: “The key is at our usual place. — J.” Malik does not know which place it means.",

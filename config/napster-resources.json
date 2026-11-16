@@ -72,5 +72,13 @@
     "jeanne_check_seat": "jeanne_check_seat",
     "en_jeanne_recall": "en_jeanne_recall",
     "en_jeanne_check_seat": "en_jeanne_check_seat"
+  },
+  "companionsPending": {
+    "jeanne": {
+      "source": "https://raw.githubusercontent.com/rezakalfane/afterimage/main/assets-src/afterimage/characters/jeanne-reference-1996-usher.png",
+      "v1": "64ea1196-d46a-4f4e-ac84-8c439f0e5310",
+      "v2": "39ab2b8d-43d7-4d7f-af14-75c5636e8128",
+      "note": "Created 2026-11-16 from the 1996 usher portrait; not attached until ready. The previous Jeanne companions stay as they are."
+    }
   }
 }

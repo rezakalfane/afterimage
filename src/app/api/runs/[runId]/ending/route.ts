@@ -3,6 +3,8 @@ import { requireContext } from "@/server/dal/context";
 import { handler, HttpError, json, readJson } from "@/server/security/http";
 import { confirmEnding } from "@/server/world/ending";
 import { requestLocale } from "@/server/security/locale";
+import { contextUpdateText } from "@/server/napster/context";
+import { texts } from "@/server/world/texts";
 
 export const dynamic = "force-dynamic";
 type P = { params: Promise<{ runId: string }> };
@@ -12,6 +14,10 @@ export const POST = handler(async (req, { params }: P) => {
   const ctx = await requireContext(req);
   const p = body.safeParse(await readJson(req, 2048));
   if (!p.success) throw new HttpError("INVALID_ARGUMENT");
-  const r = await confirmEnding(ctx, (await params).runId, p.data.token, p.data.commandId, requestLocale(req));
-  return json(r, { status: r.ok ? 200 : 422 });
+  const locale = requestLocale(req);
+  const r = await confirmEnding(ctx, (await params).runId, p.data.token, p.data.commandId, locale);
+  // The character's context for a last word (sent by the browser to ITS OWN live character).
+  const { characterContext: cc, ...pub } = r;
+  const farewell = r.ok && r.changed ? `${contextUpdateText(cc, locale)}\n${texts(locale).tool.farewell}` : null;
+  return json({ ...pub, farewell }, { status: r.ok ? 200 : 422 });
 });

@@ -17,7 +17,7 @@ type Texts = {
   cabinetSealed: string;
   events: Partial<Record<Action, string>>;
   notebook: Record<string, string>;
-  tool: { noop: string; shown: string; unbacked: string; invalid: string; contextHeader: string; opening: string; resume: string; openingLines: Record<"jeanne" | "malik", string> };
+  tool: { noop: string; shown: string; unbacked: string; farewell: string; invalid: string; contextHeader: string; opening: string; resume: string; openingLines: Record<"jeanne" | "malik", string> };
 };
 
 const fr: Texts = {
@@ -138,6 +138,7 @@ const fr: Texts = {
     message: "Votre message",
   },
   tool: {
+    farewell: "Le joueur vient de confirmer son choix : l’histoire se termine. Dis une seule dernière phrase, courte et sincère, en personnage, sur ce choix et sur Alice. Ne pose aucune question et ne relance pas la conversation.",
     unbacked: "Le joueur ne te l’a pas dit lui-même : ne le prends pas pour acquis. Demande-lui ce qu’il veut te dire, avec ses mots.",
     shown: "L’endroit est maintenant affiché à l’écran pour le joueur. Décris-le seulement avec ce que ton contexte autorise ; rien n’a changé.",
     noop: "Déjà pris en compte : ce n’est pas un échec, rien n’a changé, ne le redemande pas. Pour avancer, si le joueur le demande, utilise maintenant : {next}",
@@ -269,6 +270,7 @@ const en: Texts = {
     message: "Your message",
   },
   tool: {
+    farewell: "The player has just confirmed their choice: the story ends. Say one last sentence, short and sincere, in character, about this choice and about Alice. Ask no question and do not restart the conversation.",
     unbacked: "The player has not said this themselves: do not take it for granted. Ask them what they want to tell you, in their own words.",
     shown: "The place is now shown on screen to the player. Describe it only with what your context allows; nothing changed.",
     noop: "Already taken into account: this is not a failure, nothing changed, do not ask for it again. To move on, if the player asks, now use: {next}",

@@ -40,6 +40,8 @@ export interface CommandResponse {
   publicState: PublicState;
   reaction?: string | null;
   contextText?: string;
+  /** After the ending is confirmed: the character's context for a last word (live only). */
+  farewell?: string | null;
 }
 
 export type Mode = "rehearsal" | "live";

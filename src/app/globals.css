@@ -423,3 +423,4 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .lang-switch button[aria-pressed="true"] { background: var(--ivory); color: var(--ink); }
 .home__panel .lang-switch { margin-bottom: 1.5rem; }
 .seat-form { display: grid; gap: 6px; margin-top: 0.8rem; }
+.farewell { position: fixed; z-index: 30; left: 50%; top: 96px; transform: translateX(-50%); display: flex; gap: 12px; align-items: center; padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px; background: rgb(10 14 13 / 0.9); font-style: italic; }

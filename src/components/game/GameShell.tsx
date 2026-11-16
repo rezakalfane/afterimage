@@ -365,6 +365,31 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
     };
   }, [era0, mode, finished, runId]);
 
+  // After the decision: the character says one last word (live), then the epilogue. The decision is
+  // already saved; this only delays showing the epilogue, and the player can skip it.
+  const [farewell, setFarewell] = useState(false);
+  const skipFarewell = useRef(false);
+  const speakingRef = useRef(false);
+  useEffect(() => {
+    speakingRef.current = live.speaking;
+  }, [live.speaking]);
+  async function finishWithFarewell(r: CommandResponse) {
+    setEndingOpen(false);
+    if (live.status === "live" && r.farewell) {
+      skipFarewell.current = false;
+      setFarewell(true);
+      live.pushContext(r.farewell, true);
+      const wait = (ms: number) => new Promise((res) => setTimeout(res, ms));
+      const t0 = clock();
+      // Wait for the last word to start (≤ 8 s), then to end (≤ 30 s in all).
+      while (!speakingRef.current && !skipFarewell.current && clock() - t0 < 8000) await wait(200);
+      while (speakingRef.current && !skipFarewell.current && clock() - t0 < 30000) await wait(200);
+      if (!skipFarewell.current) await wait(800);
+      setFarewell(false);
+    }
+    await live.stop();
+    setView(r.publicState);
+  }
   const switchEraRef = useRef<((era: Era) => Promise<void>) | null>(null);
   useEffect(() => {
     switchEraRef.current = switchEra;
@@ -540,7 +565,13 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
 
       <ObjectInspector id={inspect} era={era} view={view} onClose={() => setInspect(null)} act={async (a, args) => { const r = await act(a, args); return r; }} openComposer={() => { setInspect(null); setComposer(true); }} />
       <MessageComposer key={view.message.draft ?? "none"} open={composer} onClose={() => setComposer(false)} view={view} act={act} />
-      {canDecide && <EndingDialog confirmRef={endingConfirm} chooseRef={endingChoose} onSelection={setEndingSelected} open={endingOpen} onClose={() => setEndingOpen(false)} runId={runId} view={view} onDone={async (r) => { setEndingOpen(false); await live.stop(); setView(r.publicState); }} />}
+      {canDecide && <EndingDialog confirmRef={endingConfirm} chooseRef={endingChoose} onSelection={setEndingSelected} open={endingOpen} onClose={() => setEndingOpen(false)} runId={runId} view={view} onDone={finishWithFarewell} />}
+      {farewell && (
+        <div className="farewell" role="status">
+          <span>{fmt(g.farewell, { name: t.character[ERA_META[era].character].name })}</span>
+          <button type="button" className="btn btn--quiet" onClick={() => (skipFarewell.current = true)}>{g.farewellSkip}</button>
+        </div>
+      )}
 
     </div>
   );

@@ -69,6 +69,9 @@ describe("commands", () => {
       const done = await a.confirmEnding(runId, intent.body.token);
       expect(done.body).toMatchObject({ ok: true, publicState: { ending, phase: "finished" } });
       expect(done.body.publicState.closing).toBeTruthy();
+      // The character context stays server-side; only a farewell text for the live character is returned.
+      expect(done.body.characterContext).toBeUndefined();
+      expect(String(done.body.farewell)).toMatch(/dernière phrase|last sentence/);
       const reuse = await a.confirmEnding(runId, intent.body.token);
       expect(reuse.status).toBe(409); // run finished; token cannot be reused
       expect((await a.command(runId, "switch_era", { era: 1996 }, done.body.revision)).status).toBe(409);

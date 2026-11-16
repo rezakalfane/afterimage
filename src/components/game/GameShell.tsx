@@ -58,6 +58,29 @@ function focusTarget(action: string, target: string | null, s: PublicState): str
   };
   return byAction[action] ?? null;
 }
+/** English labels of the voice debug panel (?voicedebug=1), by French prefix. */
+const VOICE_DEBUG_EN: [string, string][] = [
+  ["ignoré : événement répété", "ignored: repeated event"],
+  ["fenêtre fermée (rien confirmé)", "window closed (nothing confirmed)"],
+  ["fenêtre fermée", "window closed"],
+  ["feuille « Vos mots » ouverte", "“Your words” sheet opened"],
+  ["document ouvert : ", "document opened: "],
+  ["partagé avec le personnage : ", "shared with the character: "],
+  ["lieu affiché : ", "place shown: "],
+  ["époque → ", "era → "],
+  ["ignoré : l’étape affichée a changé", "ignored: the step on screen changed"],
+  ["ignoré : parole antérieure à l’étape", "ignored: speech from before the step"],
+  ["nouvelle sélection : ", "new selection: "],
+  ["ignoré : pas une confirmation explicite", "ignored: not an explicit confirmation"],
+  ["CONFIRMÉ : message", "CONFIRMED: message"],
+  ["CONFIRMÉ : fin ", "CONFIRMED: ending "],
+  ["ouverture du choix + sélection : ", "choice opened + selection: "],
+  ["ouverture du choix", "choice opened"],
+  ["sélection : ", "selection: "],
+  [" (confirmation encore requise)", " (confirmation still required)"],
+  ["ignoré : aucune fin choisie explicitement", "ignored: no ending explicitly chosen"],
+  ["aucune action vocale (laissé au personnage)", "no voice action (left to the character)"],
+];
 /** Event-time clock (called from handlers only). */
 const clock = () => Date.now();
 
@@ -310,13 +333,15 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
       }
       return;
     }
-    trace(text, "aucune étape de confirmation à l’écran");
+    trace(text, "aucune action vocale (laissé au personnage)");
   }
   // Diagnostic for the microphone acceptance test only (?voicedebug=1): what was heard → decision.
   const [voiceLog, setVoiceLog] = useState<string[]>([]);
   const [voiceDebug] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).has("voicedebug"));
   function trace(text: string, decision: string) {
-    if (voiceDebug) setVoiceLog((l) => [...l.slice(-12), `« ${text} » → ${decision}`]);
+    if (!voiceDebug) return;
+    const d = locale === "en" ? VOICE_DEBUG_EN.reduce((acc, [fr, en]) => acc.replace(fr, en), decision) : decision;
+    setVoiceLog((l) => [...l.slice(-12), locale === "en" ? `“${text}” → ${d}` : `« ${text} » → ${d}`]);
   }
 
   const say = useCallback((text: string, tone: "info" | "warn" = "info") => {

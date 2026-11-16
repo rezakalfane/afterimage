@@ -269,7 +269,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .toast__msg--warn { border-color: #c98d7c; }
 .timeshift { position: fixed; inset: 0; z-index: 25; display: grid; place-items: center; pointer-events: none; font-family: var(--display); font-style: italic; font-size: 2.4rem; color: var(--ivory); text-shadow: 0 2px 18px rgb(0 0 0 / 0.9); animation: fadein 250ms ease both; }
 /* Era change: the previous image fades out over the new one (no fade to black). */
-.scene__img--prev { z-index: 1; animation: fadeout 850ms ease both; pointer-events: none; }
+.scene__img--prev { z-index: 1; animation: fadeout 1800ms ease-in-out both; pointer-events: none; }
 @keyframes fadeout { from { opacity: 1; } to { opacity: 0; } }
 @keyframes yearflash { 0% { opacity: 0; } 25% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; } }
 .epilogue { min-height: 100vh; background: var(--ink); padding: clamp(16px, 4vw, 48px); display: grid; justify-items: center; align-content: start; gap: 1.1rem; animation: fadein 900ms ease both; }

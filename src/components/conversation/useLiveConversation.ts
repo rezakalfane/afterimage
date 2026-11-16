@@ -35,7 +35,7 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUt
   const leaseRef = useRef<string | null>(null);
   const seen = useRef(new Set<string>());
   const greeted = useRef(false);
-  const stopRef = useRef<(() => Promise<void>) | null>(null);
+  const stopRef = useRef<((opts?: { remote?: boolean }) => Promise<void>) | null>(null);
   /** "idle" | "starting" | "started": a stop while starting must also close what the start opens. */
   const phaseRef = useRef<"idle" | "starting" | "started">("idle");
   const heartbeatTimer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -131,7 +131,9 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUt
     [handleTool, t, postTurn],
   );
 
-  const stop = useCallback(async () => {
+  /** End the conversation. `remote: false` only tears the local connection down, for an era switch
+   *  whose server command closes the session itself (one round trip less). */
+  const stop = useCallback(async (opts: { remote?: boolean } = {}) => {
     if (heartbeatTimer.current) clearInterval(heartbeatTimer.current);
     heartbeatTimer.current = null;
     const wasActive = phaseRef.current !== "idle";
@@ -147,7 +149,7 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUt
     } catch {
       /* already destroyed */
     }
-    await api(`/api/runs/${runId}/conversation`, { method: "DELETE" }).catch(() => {});
+    if (opts.remote !== false) await api(`/api/runs/${runId}/conversation`, { method: "DELETE" }).catch(() => {});
     setVideoReady(false);
     setSpeaking(false);
     setSubtitle("");

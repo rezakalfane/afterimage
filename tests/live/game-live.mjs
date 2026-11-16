@@ -55,11 +55,12 @@ try {
   log("photo opened automatically", await p.getByRole("dialog").isVisible().catch(() => false));
   await p.screenshot({ path: "var/screens/after/live-autoopen-1440.png" });
   await p.keyboard.press("Escape");
+  const tSwitch = Date.now();
   await p.getByRole("navigation", { name: "Époque" }).getByRole("button", { name: "1996" }).click();
   // During a call, the era switch closes Malik's session then reconnects Jeanne by itself.
   await p.locator(".character__head h2").filter({ hasText: "Jeanne" }).waitFor({ timeout: 30000 });
   log("era switched to 1996 after closing Malik", true);
-  await waitLive("Jeanne");
+  await waitLive("Jeanne", tSwitch);
   log("Jeanne opening", await waitSubtitle(/entendez|cabine/i));
   await p.getByRole("button", { name: /Photographie du Régina/ }).click();
   await p.getByRole("dialog").getByRole("button", { name: /Transmettre cet indice à Jeanne/ }).click();

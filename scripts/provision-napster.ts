@@ -97,6 +97,10 @@ async function main() {
     };
     console.log(`  PATCH agent ${character}/${locale} (${id.slice(0, 8)}…): companion=${companionId?.slice(0, 8) ?? "unchanged"}…, tools=${body.functions.join(",")}, instructions ${body.providerSettings.instructions.length} chars, webSearch off`);
     if (apply) await api(`/public/agents/${id}`, "PATCH", body);
+    // Faster start: the conversation begins on audio, the video joins moments later (the client
+    // latches the first "ready" and keeps the portrait until the video is up).
+    console.log(`  PUT channel webrtc ${character}/${locale}: videoPolicy=deferred`);
+    if (apply) await api(`/public/agents/${id}/channels/webrtc`, "PUT", { videoPolicy: "deferred" });
   }
 
   // Legacy prototype functions: delete only if no agent of the account still references them.

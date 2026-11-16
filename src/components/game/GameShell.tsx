@@ -468,10 +468,14 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
     if (era === view.activeEra || busy || view.ending) return;
     setSwitching(era);
     const wasLive = live.status === "live" || live.status === "connecting";
-    if (live.status !== "idle") await live.stop(); // close the old character BEFORE switching
+    // Close the old character BEFORE switching: locally here, on the server by the switch command
+    // itself (no separate DELETE round trip).
+    const hadLive = live.status !== "idle";
+    if (hadLive) await live.stop({ remote: false });
     setSuggestion(null);
     const r = await act("switch_era", { era });
-    setTimeout(() => setSwitching(null), 450);
+    if (hadLive && !r?.ok) void api(`/api/runs/${runId}/conversation`, { method: "DELETE" }).catch(() => {}); // switch refused: close it anyway
+    setTimeout(() => setSwitching(null), 1400);
     // Keep talking across eras: the player already consented; connect the other era's character.
     if (wasLive && r?.ok && mode === "live") {
       setMicMuted(false);

@@ -63,10 +63,12 @@ try {
   await waitLive("Jeanne", tSwitch);
   log("Jeanne opening", await waitSubtitle(/entendez|cabine/i));
   await p.getByRole("button", { name: /Photographie du Régina/ }).click();
-  await p.getByRole("dialog").getByRole("button", { name: /Transmettre cet indice à Jeanne/ }).click();
+  await p.getByRole("dialog").getByRole("button", { name: /En parler à Jeanne/ }).click();
   await p.keyboard.press("Escape");
-  log("Jeanne reaction to UI-relayed clue (context push)", await waitSubtitle(/G\s?7|G sept|siège|chercher/i));
-  await type("Peux-tu aller chercher la clé sous le siège G7, s’il te plaît ?");
+  log("Jeanne reaction to the shared note (context push)", await waitSubtitle(/place|rangée|habitu/i));
+  await type("Lisez-moi le programme de la séance, sur le bureau.");
+  await p.waitForTimeout(9000);
+  await type("Rangée G, place 7 : cherchez la clé sous le siège G7, s’il vous plaît.");
   await p.getByRole("button", { name: /Clé au croissant/ }).waitFor({ timeout: 60000 }).then(() => log("Jeanne tool → key in notebook", true)).catch(() => log("Jeanne tool → key in notebook", false));
   log("Jeanne after search", await waitSubtitle(/clé|trouv/i));
   await p.screenshot({ path: "var/screens/after/live-jeanne-1440.png" });

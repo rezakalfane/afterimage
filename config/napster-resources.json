@@ -56,5 +56,19 @@
     "jeanne_check_seat": "jeanne_check_seat",
     "en_jeanne_recall": "en_jeanne_recall",
     "en_jeanne_check_seat": "en_jeanne_check_seat"
+  },
+  "companionsV2": {
+    "jeanne": {
+      "id": "b8ccb3f5-3ba8-4e5d-9e2a-2029f6047ea7",
+      "kind": "custom-v2",
+      "source": "https://raw.githubusercontent.com/rezakalfane/afterimage/main/assets-src/afterimage/characters/jeanne-reference.png",
+      "note": "Created 2026-11-16 from the same portrait; not attached to any agent until compared and approved."
+    },
+    "malik": {
+      "id": "f472e067-aaba-430b-ae35-4f525e513323",
+      "kind": "custom-v2",
+      "source": "https://raw.githubusercontent.com/rezakalfane/afterimage/main/assets-src/afterimage/characters/malik-reference.png",
+      "note": "Created 2026-11-16 from the same portrait; not attached to any agent until compared and approved."
+    }
   }
 }

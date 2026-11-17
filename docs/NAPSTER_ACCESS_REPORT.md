@@ -31,7 +31,7 @@ No key, token, session token or private URL in this file. "Documented" ≠ "test
 | No-op tool output | **found and fixed** | "Rien de nouveau" was read by Jeanne as a failure. A no-op now says "déjà pris en compte, ce n’est pas un échec" |
 | Recordings (VHS) | **unavailable** | `POST …/recordings` → 403 `RecordingsApiNotEnabled` → bonus disabled (`NAPSTER_RECORDINGS_ENABLED=false`) |
 | Custom companions v1 from kit portraits | ✅ works | Jeanne and Malik created from the kit portraits and attached to the 4 agents (2026-11-15) |
-| Avatar v2 | ✅ enabled by Napster (2026-11-16, no extra charge) | Jeanne `b8ccb3f5…` and Malik `f472e067…` generated from the same portraits (pending → readyToUse ≈ 5 min, v2 added after ≈ 2–3 h). Compared live in the PiP (see below). **Adopted 2026-11-16**: attached to the 4 agents (`companions` in `config/napster-resources.json`); V1 kept as `companionsV1` (fallback) |
+| Avatar v2 | ✅ enabled by Napster (2026-11-16, no extra charge) | Jeanne `b8ccb3f5…` and Malik `f472e067…` generated from the same portraits (Jeanne later replaced by the usher-portrait V2 `39ab2b8d…`, 2026-11-17) (pending → readyToUse ≈ 5 min, v2 added after ≈ 2–3 h). Compared live in the PiP (see below). **Adopted 2026-11-16**: attached to the 4 agents (`companions` in `config/napster-resources.json`); V1 kept as `companionsV1` (fallback) |
 
 ### V1 vs V2, measured live in the PiP (2026-11-16)
 Same scene per row (Malik 2026 opening, then switch to Jeanne 1996), times from the click; sessions confirmed on the intended companion ids.

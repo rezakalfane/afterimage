@@ -7,6 +7,8 @@ const PATHS: Record<string, string> = {
   expand: "M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7",
   collapse: "M4 14h6v6M20 10h-6V4M10 14l-7 7M14 10l7-7",
   menu: "M4 7h16M4 12h16M4 17h16",
+  sound: "M4 9.5h3.5L12 6v12l-4.5-3.5H4zM15.5 9a4 4 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11",
+  soundOff: "M4 9.5h3.5L12 6v12l-4.5-3.5H4zM16 9.5l5 5M21 9.5l-5 5",
   grip: "M8 8h.01M12 8h.01M16 8h.01M8 13h.01M12 13h.01M16 13h.01",
 };
 export function Icon({ name, size = 18 }: { name: keyof typeof PATHS | string; size?: number }) {

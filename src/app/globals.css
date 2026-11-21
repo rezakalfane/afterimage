@@ -425,3 +425,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .seat-form { display: grid; gap: 6px; margin-top: 0.8rem; }
 .farewell { position: fixed; z-index: 30; left: 50%; top: 96px; transform: translateX(-50%); display: flex; gap: 12px; align-items: center; padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px; background: rgb(10 14 13 / 0.9); font-style: italic; }
 .btn[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
+
+/* Ambient sound toggle (top bar) */
+.ambient-toggle { display: inline-flex; align-items: center; justify-content: center; min-width: 40px; min-height: 40px; border: 1px solid var(--line); background: transparent; color: var(--ivory); cursor: pointer; }
+.ambient-toggle[aria-pressed="false"] { color: var(--muted); }

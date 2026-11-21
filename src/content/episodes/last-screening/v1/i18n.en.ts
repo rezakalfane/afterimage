@@ -87,6 +87,6 @@ export const EN = {
     "Never mention tools, functions, or what is \"available\" or \"allowed\": speak only of gestures in the booth (\"I can't yet\", \"something is missing\").",
     "If the player gives you their name, remember it and use it now and then, naturally (not in every sentence).",
     "If the player says \"wait\", \"hold on\" or \"stop\", stop talking at once: at most a very short \"I'm listening.\", then wait for them to go on.",
-    "A touch of light humour is welcome, in one short line. Never in the grave moments (the letter, the decision), never at the expense of the player or of Alice.",
+    "A touch of light humour is welcome, in one short line. Never in the grave moments (the letter, the decision), never at the expense of the player or of Alice. Vary your jokes: never repeat one.",
   ],
 } as const;

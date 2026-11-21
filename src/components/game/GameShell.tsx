@@ -10,6 +10,7 @@ import { useLiveConversation, type TranscriptLine } from "@/components/conversat
 import { useLocale, useT } from "@/i18n/I18nProvider";
 import { closeIntent, confirmsSelectedEnding, lookIntent, showIntent, stopIntent, wantsToWrite, endingFromSpeech, eraFromSpeech, isConfirmation, sameTarget, wantsToDecide, type VoiceTarget } from "./voice";
 import { useIdleNudges } from "./useIdleNudges";
+import { AmbientSound } from "./AmbientSound";
 import { LanguageChoice, LanguageSwitch, setLocale } from "@/components/ui/LanguageSwitch";
 import { DisplayChoices } from "@/components/ui/DisplayChoices";
 import { Dialog } from "@/components/ui/Dialog";
@@ -474,12 +475,21 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
   }
   // Long silence: a few funny words; or, while the usual place is still not found, a push to ask
   // the character to search her memory. Never over a sheet, the decision, a farewell or a switch.
+  // Each funny nudge gets an angle not used yet for that character (shuffled, then reused).
+  const angles = useRef<Record<string, string[]>>({});
+  function humourNudge(): string {
+    const who = viewRef.current.activeEra === 1996 ? "jeanne" : "malik";
+    const all = t.character.nudgeAngles[who] ?? [];
+    if (!angles.current[who]?.length) angles.current[who] = [...all].sort(() => Math.random() - 0.5);
+    const angle = angles.current[who].pop();
+    return angle ? `${t.character.nudgeHumour} ${fmt(t.character.nudgeAngle, { angle })}` : t.character.nudgeHumour;
+  }
   const nudges = useIdleNudges({
     enabled: mode === "live" && live.status === "live" && !micMuted && !composer && !endingOpen && !farewell && !switching && !view.ending,
     speaking: live.speaking,
     activityKey: `${view.revision}|${view.activeEra}|${inspect}|${composer}|${endingOpen}`,
     memoryStep: view.activeEra === 1996 && view.hints.nudge === "memory",
-    onNudge: (kind) => live.pushContext(kind === "memory" ? t.character.nudgeMemory : t.character.nudgeHumour, true),
+    onNudge: (kind) => live.pushContext(kind === "memory" ? t.character.nudgeMemory : humourNudge(), true),
   });
   useEffect(() => {
     nudgesRef.current = nudges;
@@ -578,6 +588,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
         <Link href="/" className="wordmark" aria-label={`AFTERIMAGE, ${t.common.home}`}>AFTERIMAGE</Link>
         <p className="episode"><span>{g.episodeLabel}</span> {g.episode}</p>
         <div className="topbar__right">
+        <AmbientSound era={era} speaking={live.speaking} />
         <LanguageSwitch onRequest={requestLocale} />
         <nav className="era-switch" aria-label={g.era}>
           {([1996, 2026] as Era[]).map((e) => (

@@ -47,12 +47,18 @@ const schema = z
 
 export type Env = z.infer<typeof schema>;
 
+/** The Vercel Turso integration injects TURSO_DATABASE_URL / TURSO_AUTH_TOKEN: accept them when the
+ *  app's own DATABASE_URL / DATABASE_AUTH_TOKEN are not set. */
+function withTursoNames(source: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  return { ...source, DATABASE_URL: source.DATABASE_URL || source.TURSO_DATABASE_URL, DATABASE_AUTH_TOKEN: source.DATABASE_AUTH_TOKEN || source.TURSO_AUTH_TOKEN };
+}
+
 let cached: Env | null = null;
 
 /** Parse process.env. Throws a message listing invalid variable NAMES only. */
 export function env(): Env {
   if (cached) return cached;
-  const parsed = schema.safeParse(process.env);
+  const parsed = schema.safeParse(withTursoNames(process.env));
   if (!parsed.success) {
     const names = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`);
     throw new Error(`Invalid server configuration:\n  - ${names.join("\n  - ")}\nRun \`npm run doctor\`.`);
@@ -66,6 +72,6 @@ export function resetEnvForTests() {
 }
 
 export function checkEnv(source: NodeJS.ProcessEnv): string[] {
-  const parsed = schema.safeParse(source);
+  const parsed = schema.safeParse(withTursoNames(source));
   return parsed.success ? [] : parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`);
 }

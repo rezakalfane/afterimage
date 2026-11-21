@@ -19,6 +19,9 @@ const nextConfig: NextConfig = {
   // Only override when asked (e2e build). An explicit distDir made `next dev` reload in a loop.
   ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
   poweredByHeader: false,
+  experimental: {
+    agentUpgrade: "security",
+  },
   async headers() {
     return [
       {

@@ -8,6 +8,8 @@ import { createAmbient, type Ambient } from "./ambient";
 import type { Era } from "./types";
 
 const KEY = "afterimage.ambient";
+/** Switched off for now: the procedural bed is kept until the real sounds are chosen. */
+export const AMBIENT_ENABLED = false;
 
 export function AmbientSound({ era, speaking }: { era: Era; speaking: boolean }) {
   const t = useT().character;

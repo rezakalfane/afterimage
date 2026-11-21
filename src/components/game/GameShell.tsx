@@ -10,7 +10,7 @@ import { useLiveConversation, type TranscriptLine } from "@/components/conversat
 import { useLocale, useT } from "@/i18n/I18nProvider";
 import { closeIntent, confirmsSelectedEnding, lookIntent, showIntent, stopIntent, wantsToWrite, endingFromSpeech, eraFromSpeech, isConfirmation, sameTarget, wantsToDecide, type VoiceTarget } from "./voice";
 import { useIdleNudges } from "./useIdleNudges";
-import { AmbientSound } from "./AmbientSound";
+import { AmbientSound, AMBIENT_ENABLED } from "./AmbientSound";
 import { LanguageChoice, LanguageSwitch, setLocale } from "@/components/ui/LanguageSwitch";
 import { DisplayChoices } from "@/components/ui/DisplayChoices";
 import { Dialog } from "@/components/ui/Dialog";
@@ -588,7 +588,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
         <Link href="/" className="wordmark" aria-label={`AFTERIMAGE, ${t.common.home}`}>AFTERIMAGE</Link>
         <p className="episode"><span>{g.episodeLabel}</span> {g.episode}</p>
         <div className="topbar__right">
-        <AmbientSound era={era} speaking={live.speaking} />
+        {AMBIENT_ENABLED && <AmbientSound era={era} speaking={live.speaking} />}
         <LanguageSwitch onRequest={requestLocale} />
         <nav className="era-switch" aria-label={g.era}>
           {([1996, 2026] as Era[]).map((e) => (

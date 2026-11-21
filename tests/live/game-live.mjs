@@ -1,6 +1,6 @@
 // Live smoke test of the REAL game screen (consumes Napster credits). Dev server in live mode on :3000.
 import { chromium } from "@playwright/test";
-const BASE = "http://localhost:3000";
+const BASE = process.env.BASE ?? "http://localhost:3000";
 const out = {};
 const b = await chromium.launch({ args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream", "--autoplay-policy=no-user-gesture-required"] });
 const ctx = await b.newContext({ permissions: ["microphone"], viewport: { width: 1440, height: 900 } });

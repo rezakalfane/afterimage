@@ -1,7 +1,7 @@
 // Live smoke test of the secret 2056 booth (consumes a few cents of Napster credit). Dev server in
 // live mode on :3000. Malik → "2056" typed (Pixo) → a joke → "stop" → "1996" typed (Jeanne).
 import { chromium } from "@playwright/test";
-const BASE = "http://localhost:3000";
+const BASE = process.env.BASE ?? "http://localhost:3000";
 const b = await chromium.launch({ args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream", "--autoplay-policy=no-user-gesture-required"] });
 const ctx = await b.newContext({ permissions: ["microphone"], viewport: { width: 1440, height: 900 } });
 const p = await ctx.newPage();

@@ -26,3 +26,12 @@ describe("server error texts", () => {
     expect(localizeError(null, "en")).toBeNull();
   });
 });
+
+describe("default error messages", () => {
+  it("never returns an empty message for a code thrown without text", async () => {
+    const { publicErrorMessage } = await import("@/server/security/error-texts");
+    expect(publicErrorMessage("BAD_ORIGIN", undefined, "fr")).toMatch(/adresse/);
+    expect(publicErrorMessage("NOT_FOUND", undefined, "en")).toBe("Not found.");
+    expect(publicErrorMessage("QUOTA_EXCEEDED", "Commande invalide.", "en")).toBe("Invalid command.");
+  });
+});

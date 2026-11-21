@@ -37,7 +37,7 @@ const fr: Texts = {
     key: {
       photo: ["Certains objets racontent deux histoires.", "Regardez le verso de la photo, en 2026."],
       note: ["Cette note parle d’une place qu’on partageait.", "En 1996, parlez à Jeanne de la note de la photo."],
-      row: ["« Notre place habituelle » : Jeanne doit s’en souvenir.", "Demandez à Jeanne quelle était leur place habituelle."],
+      row: ["« Notre place habituelle » : Jeanne pourrait fouiller dans sa mémoire.", "Demandez à Jeanne de fouiller dans sa mémoire : quelle était leur place habituelle ?"],
       programme: ["Alice a peut-être laissé une trace sur un papier de la séance.", "Lisez le programme posé sur le bureau, en 1996."],
       seat: ["Une rangée, un numéro : il reste à les rapprocher.", "Rapprochez la rangée dont parle Jeanne et l’annotation du programme, puis proposez ce siège à Jeanne."],
       search: ["Jeanne peut aller voir sous ce siège.", "Demandez à Jeanne d’aller chercher la clé."],
@@ -169,7 +169,7 @@ const en: Texts = {
     key: {
       photo: ["Some objects tell two stories.", "Look at the back of the photo, in 2026."],
       note: ["That note speaks of a place two people shared.", "In 1996, tell Jeanne about the note on the photo."],
-      row: ["“Our usual place”: Jeanne should remember it.", "Ask Jeanne what their usual place was."],
+      row: ["“Our usual place”: Jeanne could search her memory.", "Ask Jeanne to search her memory: what was their usual place?"],
       programme: ["Alice may have left a trace on a paper from the screening.", "Read the programme on the desk, in 1996."],
       seat: ["A row, a number: they still need to be put together.", "Put together the row Jeanne mentions and the note on the programme, then propose that seat to Jeanne."],
       search: ["Jeanne can go and look under that seat.", "Ask Jeanne to go and look for the key."],

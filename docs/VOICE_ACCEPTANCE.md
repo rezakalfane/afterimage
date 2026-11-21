@@ -83,6 +83,16 @@ Refaites 1, 2, 3, 6, 10, 12 avec : “If I say I confirm, what happens?”, “I
 - Focus : fermez une fenêtre à la souris → pas d'anneau doré sur l'objet ; avec Échap → anneau visible.
 - Une lettre ouverte par la voix reste ouverte tant que vous la lisez.
 
+## Arrêt, silence, coffre
+| # | Dites / faites | Attendu |
+|---|---|---|
+| 16 | Pendant qu'il parle : « Attends » / « Arrête » / « OK, stop » / « Stop please » | la voix s'arrête tout de suite ; au plus un « Je vous écoute » |
+| 17 | Pendant qu'il parle : « Attends, je regarde la photo » | **pas** un arrêt : phrase normale, il répond |
+| 18 | Ne rien dire ~45 s (micro ouvert, aucune fenêtre) | quelques mots drôles, très courts ; 3 fois au plus par conversation |
+| 19 | En 1996, photo vue et note partagée, ne pas trouver la place pendant ~90 s | Jeanne suggère de lui demander de fouiller dans sa mémoire (sans donner la rangée) |
+| 20 | « Regardons le coffre vert » | la fenêtre du coffre (fermé, sans rapport avec l'histoire) ; le personnage le sait inerte |
+| 21 | Confirmer la fin | le personnage termine sa **dernière phrase en entier**, puis l'épilogue |
+
 ## À me renvoyer
 Une capture du panneau `voicedebug` après chaque bloc, et pour chaque ligne : OK / KO (+ ce qui a été transcrit
 si KO). Si une transcription est systématiquement fausse (accent, bruit), je l'ajusterai ; je ne valide rien sur

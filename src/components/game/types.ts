@@ -25,7 +25,7 @@ export interface PublicState {
   endings: { id: string; label: string; consequence: string; confirmation: string }[];
   ending: string | null;
   closing: string | null;
-  hints: { used: number; topic: string | null; levels: Record<string, number> };
+  hints: { used: number; topic: string | null; levels: Record<string, number>; nudge: "memory" | null };
   availableActions: Action[];
 }
 

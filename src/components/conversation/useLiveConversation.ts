@@ -14,7 +14,7 @@ export type LiveStatus = "idle" | "connecting" | "live" | "closing" | "error";
 /** Each line belongs to ONE character: the panel only shows the current era's character. */
 export type TranscriptLine = { role: "user" | "assistant"; text: string; at: number; character: "jeanne" | "malik" };
 
-type Instance = Pick<NapsterCompanionApiInstance, "sendCommand" | "destroy" | "muteMic" | "unmuteMic">;
+type Instance = Pick<NapsterCompanionApiInstance, "sendCommand" | "destroy" | "muteMic" | "unmuteMic" | "stopAvatarTalking" | "isAvatarSpeaking">;
 type ServerEvent = { event?: string; type?: string; data?: Record<string, unknown> & { message?: Record<string, unknown> } };
 
 interface Options {
@@ -35,6 +35,10 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUt
   const leaseRef = useRef<string | null>(null);
   const seen = useRef(new Set<string>());
   const greeted = useRef(false);
+  /** Until this time (ms), any new speech of the character is cut at once ("attends", "stop"). */
+  const quietUntil = useRef(0);
+  /** How many replies of the character have been completed (the farewell waits for its own). */
+  const assistantDone = useRef(0);
   const stopRef = useRef<((opts?: { remote?: boolean }) => Promise<void>) | null>(null);
   /** "idle" | "starting" | "started": a stop while starting must also close what the start opens. */
   const phaseRef = useRef<"idle" | "starting" | "started">("idle");
@@ -106,7 +110,11 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUt
       const ev = raw.event ?? raw.type;
       const data = raw.data ?? {};
       if (ev === "function_implicitly_called") void handleTool(data);
-      else if (ev === "talk_state_changed") setSpeaking(data.state === "started" || data.state === "in_progress");
+      else if (ev === "talk_state_changed") {
+        setSpeaking(data.state === "started" || data.state === "in_progress");
+        // The reply to "stop" itself may start after the interruption: keep it short.
+        if (data.state === "started" && Date.now() < quietUntil.current) instanceRef.current?.stopAvatarTalking();
+      }
       else if (ev === "message_received") {
         const m = data.message;
         if (!m || m.type === "session") return;
@@ -115,9 +123,12 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUt
         if (m.action === "completed" && (m.role === "assistant" || m.role === "user") && String(m.content ?? "").trim()) {
           const line = { role: m.role as "user" | "assistant", text: String(m.content), at: Date.now(), character: characterRef.current };
           setTranscript((t) => [...t.slice(-40), line]);
-          if (m.role === "assistant") setSubtitle(line.text);
+          if (m.role === "assistant") {
+            assistantDone.current += 1;
+            setSubtitle(line.text);
+          }
           // FINAL transcript of the player (action "completed"): never a delta, never the character.
-          else {
+          if (m.role === "user") {
             const itemId = String(m.item_id ?? `t${line.at}`);
             postTurn(line.text, itemId);
             cbs.current.onUserUtterance?.(line.text, { itemId, receivedAt: line.at });
@@ -237,6 +248,20 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUt
     send({ type: "send_message", data: { role: "system", text: contextText, trigger_response: react, delay: true } });
   }, [send]);
 
+  /** The player asked the character to stop: cut the voice now, and the next 2.5 s of it. */
+  const interrupt = useCallback(() => {
+    quietUntil.current = Date.now() + 2500;
+    try {
+      instanceRef.current?.stopAvatarTalking();
+    } catch {
+      /* session already gone */
+    }
+    setSubtitle("");
+  }, []);
+  /** The avatar is really playing audio right now (finer than talk_state, which can lead the sound). */
+  const avatarBusy = useCallback(() => Boolean(instanceRef.current?.isAvatarSpeaking), []);
+  const assistantTurns = useCallback(() => assistantDone.current, []);
+
   const setMicMuted = useCallback((muted: boolean) => {
     if (muted) instanceRef.current?.muteMic();
     else instanceRef.current?.unmuteMic();
@@ -256,5 +281,5 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUt
     };
   }, [runId]);
 
-  return { mountRef, status, character, speaking, videoReady, error, transcript, subtitle, session, start, stop, sendText, pushContext, setMicMuted };
+  return { mountRef, status, character, speaking, videoReady, error, transcript, subtitle, session, start, stop, sendText, pushContext, setMicMuted, interrupt, avatarBusy, assistantTurns };
 }

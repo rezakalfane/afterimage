@@ -202,6 +202,7 @@ const PLACES: [string, RegExp][] = [
   ["programme", /(programme|program)/],
   ["projector", /(projecteur|projector)/],
   ["lamp", /(lampe|lamp)/],
+  ["chest", /(coffre|malle|green chest|green box|the chest|chest|trunk)/],
   ["reels", /(bobines|boites|reels|cans)/],
   ["splicer", /(colleuse|splicer)/],
   ["seats", /(fauteuils|sieges|seats)/],
@@ -219,4 +220,17 @@ export function lookIntent(text: string): string | null {
     return id;
   }
   return null;
+}
+
+/** The player asks the character to stop talking: "attends", "arrête", "ok stop", "stop please",
+ *  "hold on a second". Only a short utterance made of nothing but such words (and fillers) counts:
+ *  "attends, je regarde la photo" is a sentence for the character, not a stop. */
+const STOP_WORD = "(?:attends?|attendez|arrete|arretez|arrete toi|stop|assez|pause|doucement|wait|hold on|hold up|hang on|enough)";
+const STOP_EXTRA = "(?:ok|okay|oui|bon|euh|uh|um|alors|yes|hey|he|hum|jeanne|malik|please|s il (?:te|vous) plait|excuse moi|excusez moi|sorry|pardon|merci|thanks|un instant|un moment|une seconde|une minute|deux secondes|minute|moment|encore|a second|a moment|a sec|just a second|one second|one moment|for a (?:second|moment))";
+const STOP_ALL = new RegExp(`^(?:(?:${STOP_WORD}|${STOP_EXTRA})(?:\\s+|$))+$`);
+export function stopIntent(text: string): boolean {
+  if (/[?¿]/.test(text)) return false;
+  const t = normalizeSpeech(text).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/'/g, " ").replace(/\s+/g, " ").trim();
+  if (!t || t.length > 48) return false;
+  return STOP_ALL.test(t) && new RegExp(`\\b${STOP_WORD}`).test(t);
 }

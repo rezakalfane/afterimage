@@ -262,6 +262,10 @@ export function ObjectInspector({ id, era, view, onClose, act, openComposer }: {
       title = t.inspector.splicerTitle;
       body = <p>{t.inspector.splicer1996}</p>;
       break;
+    case "chest":
+      title = t.inspector.chestTitle;
+      body = <p>{t.inspector.chestDesc}</p>;
+      break;
     case "seats":
       title = t.inspector.seatsTitle;
       body = <p>{t.inspector.seats2026}</p>;

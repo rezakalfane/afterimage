@@ -8,7 +8,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CharacterPanel } from "@/components/conversation/CharacterPanel";
 import { useLiveConversation, type TranscriptLine } from "@/components/conversation/useLiveConversation";
 import { useLocale, useT } from "@/i18n/I18nProvider";
-import { closeIntent, confirmsSelectedEnding, lookIntent, showIntent, wantsToWrite, endingFromSpeech, eraFromSpeech, isConfirmation, sameTarget, wantsToDecide, type VoiceTarget } from "./voice";
+import { closeIntent, confirmsSelectedEnding, lookIntent, showIntent, stopIntent, wantsToWrite, endingFromSpeech, eraFromSpeech, isConfirmation, sameTarget, wantsToDecide, type VoiceTarget } from "./voice";
+import { useIdleNudges } from "./useIdleNudges";
 import { LanguageChoice, LanguageSwitch, setLocale } from "@/components/ui/LanguageSwitch";
 import { DisplayChoices } from "@/components/ui/DisplayChoices";
 import { Dialog } from "@/components/ui/Dialog";
@@ -23,7 +24,7 @@ import { ObjectInspector } from "./ObjectInspector";
 import { SceneViewport } from "./SceneViewport";
 import type { Action, CommandResponse, Era, Mode, PublicState } from "./types";
 
-const HOTSPOT_TO_INSPECT: Record<string, string> = { photo: "photo", waterline: "archiveReport", projector: "projector", cabinet: "cabinet", cache: "cache", programme: "programme", hall: "hall", letter: "letter", shelf: "shelf", reels: "reels", lamp: "lamp", splicer: "splicer", seats: "seats" };
+const HOTSPOT_TO_INSPECT: Record<string, string> = { photo: "photo", waterline: "archiveReport", projector: "projector", cabinet: "cabinet", cache: "cache", programme: "programme", hall: "hall", letter: "letter", shelf: "shelf", reels: "reels", lamp: "lamp", splicer: "splicer", seats: "seats", chest: "chest" };
 
 /** Notebook documents that open automatically when a character reveals them during a live talk. */
 const AUTO_OPEN = new Set(["photo", "archiveReport", "programme", "rowMemory", "letter", "message", "futureLetter"]);
@@ -43,7 +44,7 @@ function focusTarget(action: string, target: string | null, s: PublicState): str
   const cabinet = open ? (era === 1996 ? "letter" : "cache") : "cabinet";
   if (action === "look_at") {
     const looks: Record<string, string> = {
-      hall: "hall", cabinet, projector: "projector", photo: "photo", waterline: "archiveReport", programme: "programme", reels: "reels", lamp: "lamp", splicer: "splicer", seats: "seats",
+      hall: "hall", cabinet, projector: "projector", photo: "photo", waterline: "archiveReport", programme: "programme", reels: "reels", lamp: "lamp", splicer: "splicer", seats: "seats", chest: "chest",
       desk: era === 1996 ? "programme" : "photo",
       letter: era === 1996 ? "letter" : seen("futureLetter") ? "futureLetter" : "cache",
       message: seen("message") ? "message" : "cache",
@@ -61,6 +62,7 @@ function focusTarget(action: string, target: string | null, s: PublicState): str
 /** English labels of the voice debug panel (?voicedebug=1), by French prefix. */
 const VOICE_DEBUG_EN: [string, string][] = [
   ["ignoré : événement répété", "ignored: repeated event"],
+  ["personnage interrompu", "character interrupted"],
   ["fenêtre fermée (rien confirmé)", "window closed (nothing confirmed)"],
   ["fenêtre fermée", "window closed"],
   ["feuille « Vos mots » ouverte", "“Your words” sheet opened"],
@@ -193,6 +195,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
   // Voice confirmation (player's FINAL transcript only). The step on screen is a target bound to
   // its kind, exact content (text or ending), server revision and live session; any change, a
   // closed panel or a new session invalidates it. Old, repeated or out-of-step events are ignored.
+  const nudgesRef = useRef<{ touch: () => void } | null>(null);
   const endingConfirm = useRef<(() => void) | null>(null);
   const endingChoose = useRef<((id: string) => void) | null>(null);
   const [endingSelected, setEndingSelected] = useState<string | null>(null);
@@ -211,6 +214,13 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
   function onPlayerWords(text: string, meta: { itemId: string; receivedAt: number }) {
     if (heard.current.has(meta.itemId)) return trace(text, "ignoré : événement répété");
     heard.current.add(meta.itemId);
+    nudgesRef.current?.touch();
+    // "Attends", "arrête", "ok stop": the character stops talking at once (nothing else happens).
+    if (stopIntent(text)) {
+      trace(text, "personnage interrompu");
+      live.interrupt();
+      return;
+    }
     // "Ok" / "d'accord" / "fermer" closes the window being read. A confirmation step (message sheet,
     // ending) only closes on an explicit "fermer"/"annuler", never on "ok".
     const close = closeIntent(text);
@@ -440,19 +450,21 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
     if (live.status === "live" && r.farewell) {
       skipFarewell.current = false;
       setFarewell(true);
+      // The character may still be finishing its reply to the confirmation: the farewell comes after
+      // it. Wait for the farewell's OWN reply (one more completed turn if one was in flight), then
+      // for the sound to really end plus a short grace, before the call is closed (cap 45 s).
+      const turns0 = live.assistantTurns();
+      const needed = speakingRef.current || live.avatarBusy() ? 2 : 1;
       live.pushContext(r.farewell, true);
       const wait = (ms: number) => new Promise((res) => setTimeout(res, ms));
       const t0 = clock();
-      // The character may first finish its current reply, and talk_state goes "ended" between two
-      // sentences: wait until it has spoken, then for 3 s of continuous silence (cap 45 s).
-      let spoke = false;
       let silentSince = clock();
       while (!skipFarewell.current && clock() - t0 < 45000) {
-        if (speakingRef.current) {
-          spoke = true;
-          silentSince = clock();
-        } else if (spoke && clock() - silentSince > 3000) break;
-        else if (!spoke && clock() - t0 > 10000) break; // nothing came: do not hang
+        const talking = speakingRef.current || live.avatarBusy();
+        if (talking) silentSince = clock();
+        const done = live.assistantTurns() - turns0 >= needed;
+        if (done && !talking && clock() - silentSince > 1800) break; // last sentence fully played
+        if (!done && !talking && clock() - silentSince > 12000) break; // nothing came: do not hang
         await wait(200);
       }
       setFarewell(false);
@@ -460,6 +472,18 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
     await live.stop();
     setView(r.publicState);
   }
+  // Long silence: a few funny words; or, while the usual place is still not found, a push to ask
+  // the character to search her memory. Never over a sheet, the decision, a farewell or a switch.
+  const nudges = useIdleNudges({
+    enabled: mode === "live" && live.status === "live" && !micMuted && !composer && !endingOpen && !farewell && !switching && !view.ending,
+    speaking: live.speaking,
+    activityKey: `${view.revision}|${view.activeEra}|${inspect}|${composer}|${endingOpen}`,
+    memoryStep: view.activeEra === 1996 && view.hints.nudge === "memory",
+    onNudge: (kind) => live.pushContext(kind === "memory" ? t.character.nudgeMemory : t.character.nudgeHumour, true),
+  });
+  useEffect(() => {
+    nudgesRef.current = nudges;
+  });
   const switchEraRef = useRef<((era: Era) => Promise<void>) | null>(null);
   useEffect(() => {
     switchEraRef.current = switchEra;
@@ -583,7 +607,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
           onStart={() => { setMicMuted(false); setReconnecting(false); void live.start(); }}
           reconnecting={reconnecting}
           onStop={() => void live.stop()}
-          onSend={(t) => (mode === "live" ? live.sendText(t) : void rehearse(t))}
+          onSend={(text) => { nudges.touch(); if (mode === "live") live.sendText(text); else void rehearse(text); }}
           suggestion={suggestion && view.availableActions.includes(suggestion.action) ? { label: suggestion.label, onAccept: () => { const s = suggestion; setSuggestion(null); void act(s.action, s.args); } } : null}
           micMuted={micMuted}
           onToggleMic={() => { live.setMicMuted(!micMuted); setMicMuted(!micMuted); }}

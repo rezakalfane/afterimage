@@ -77,7 +77,8 @@ export function playerView(s: WorldState, locale: Locale = "fr") {
     endings: decide ? endings(locale).map((e) => ({ id: e.id, label: e.label, consequence: e.consequence, confirmation: e.confirmation })) : [],
     ending: s.ending,
     closing,
-    hints: { used: s.hintsUsed, topic: s.ending ? null : hintTopic(s), levels: s.hintLevels },
+    // nudge: the one step where silence earns a spoken push (find the usual place); no detail leaves.
+    hints: { used: s.hintsUsed, topic: s.ending ? null : hintTopic(s), levels: s.hintLevels, nudge: !s.ending && hintTopic(s) === "key" && hintStep(s, "key") === "row" ? ("memory" as const) : null },
     availableActions: availableActions(s, { channel: "ui" }),
   };
 }
@@ -104,6 +105,9 @@ const RULES = [
   "Tu agis toi-même avec tes outils : ne dis jamais au joueur de cliquer sur un bouton. Seuls la confirmation du message et le choix de la fin se font à l’écran ou de vive voix, par le joueur.",
   "Quand tu annonces un geste (chercher, ouvrir, ranger…), fais-le tout de suite dans la même réponse avec l’outil correspondant : ne promets jamais un geste sans le faire.",
   "Ne parle jamais d’outils, de fonctions, de ce qui est « disponible » ou « autorisé » : parle seulement de gestes dans la cabine (« je ne peux pas encore », « il manque quelque chose »).",
+  "Si le joueur te donne son prénom, retiens-le et réutilise-le de temps en temps, naturellement (pas à chaque phrase).",
+  "Si le joueur dit « attends », « arrête » ou « stop », tais-toi tout de suite : au plus un très court « Je vous écoute. », puis attends qu’il reprenne.",
+  "Un trait d’humour discret est bienvenu, en une phrase courte. Jamais dans les moments graves (la lettre, la décision), jamais aux dépens du joueur ni d’Alice.",
 ];
 
 /**
@@ -164,7 +168,7 @@ export function characterContext(s: WorldState, character: CharacterId, lastActi
     availableActions: availableActions(s, { channel: "tool", character }),
     lastConfirmedAction: lastAction,
     playerText,
-    rules: en ? [...EN.rules] : RULES,
+    rules: [...(en ? EN.rules : RULES), `${en ? "Your humour: " : "Ton humour : "}${f.humour}`],
   };
 }
 export type CharacterContext = ReturnType<typeof characterContext>;

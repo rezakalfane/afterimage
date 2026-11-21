@@ -173,3 +173,21 @@ describe("looking at a place by voice", () => {
     expect(lookIntent("Ouvre l'armoire")).toBeNull();
   });
 });
+
+import { stopIntent } from "@/components/game/voice";
+describe("asking the character to stop talking", () => {
+  it("short stop commands, in French and English", () => {
+    for (const t of ["Attends", "Attendez !", "Arrête", "Arrêtez, s'il vous plaît", "OK, stop", "Stop please", "stop stop stop", "Attends une seconde", "Hold on", "Wait a second", "Okay stop", "Jeanne, stop"]) expect(stopIntent(t), t).toBe(true);
+  });
+  it("a sentence, a question or a plain acknowledgement is not a stop", () => {
+    for (const t of ["Attends, je regarde la photo", "Ok", "D'accord", "Pourquoi tu t'arrêtes ?", "Stop, what do you mean?", "Je ne veux pas que tu t'arrêtes", "Wait until I read the letter and tell you what it says"]) expect(stopIntent(t), t).toBe(false);
+  });
+});
+
+describe("the green chest by voice", () => {
+  it("names the chest, not the reels", () => {
+    expect(lookIntent("Regardons le coffre vert")).toBe("chest");
+    expect(lookIntent("Let's look at the green chest")).toBe("chest");
+    expect(lookIntent("Regardons les bobines")).toBe("reels");
+  });
+});

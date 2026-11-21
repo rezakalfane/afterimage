@@ -44,9 +44,9 @@ export function characterFacts(character: CharacterId, locale: ContentLocale) {
   const c = CHARACTERS[character];
   // Extra disclosure (not in the kit data): the 2026 key search is split from opening the cabinet.
   const extra = character === "malik" ? [{ when: "future_key_found", fact: "Malik a trouvé une clé au croissant derrière le projecteur ; elle devrait ouvrir l’armoire." }] : [];
-  if (locale !== "en") return { initialKnown: [...c.initialKnown], disclosures: [...c.disclosures.map((d) => ({ when: d.when, fact: d.fact })), ...extra], opening: c.opening };
+  if (locale !== "en") return { initialKnown: [...c.initialKnown], disclosures: [...c.disclosures.map((d) => ({ when: d.when, fact: d.fact })), ...extra], opening: c.opening, humour: c.humour };
   const e = EN.characters[character];
-  return { initialKnown: [...e.initialKnown], disclosures: [...c.disclosures, ...extra].map((d) => ({ when: d.when, fact: e.disclosures[d.when] ?? d.fact })), opening: e.opening };
+  return { initialKnown: [...e.initialKnown], disclosures: [...c.disclosures, ...extra].map((d) => ({ when: d.when, fact: e.disclosures[d.when] ?? d.fact })), opening: e.opening, humour: e.humour };
 }
 export function documentText(key: DocumentKey): string {
   return EPISODE.documents[key];

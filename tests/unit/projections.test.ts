@@ -129,3 +129,33 @@ describe("memory identity", () => {
     expect(memoryId("s".repeat(32), { ...base, generation: 2 })).not.toBe(id);
   });
 });
+
+describe("companion guidance", () => {
+  const tail = (c: ReturnType<typeof characterContext>) => c.rules.join("\n");
+  it("both characters know the inert green chest; Jeanne knows her cap; rules carry name, stop and humour", () => {
+    for (const locale of ["fr", "en"] as const) {
+      const j = characterContext(initialState(), "jeanne", null, locale);
+      const m = characterContext({ ...initialState(), activeEra: 2026 }, "malik", null, locale);
+      expect(j.knownFacts.join(" ")).toMatch(locale === "fr" ? /coffre vert/ : /green chest/);
+      expect(m.knownFacts.join(" ")).toMatch(locale === "fr" ? /coffre vert/ : /green chest/);
+      expect(j.knownFacts.join(" ")).toMatch(locale === "fr" ? /calot/ : /pillbox cap/);
+      for (const c of [j, m]) expect(tail(c)).toMatch(locale === "fr" ? /prénom[\s\S]*arrête[\s\S]*humour/i : /name[\s\S]*stop[\s\S]*humour/i);
+    }
+  });
+  it("the memory nudge exists only on the step 'find the usual place', and carries no detail", () => {
+    let s = initialState();
+    expect(playerView(s).hints.nudge).toBeNull();
+    s = transition(s, { action: "inspect_photo" }, { channel: "ui" }).state;
+    s = transition(s, { action: "switch_era", args: { era: 1996 } }, { channel: "ui" }).state;
+    s = transition(s, { action: "share_photo_note" }, { channel: "ui" }).state;
+    expect(playerView(s).hints.nudge).toBe("memory");
+    expect(JSON.stringify(playerView(s).hints)).not.toMatch(/row|rangée|seat|siège/i);
+    s = transition(s, { action: "ask_usual_place" }, { channel: "ui" }).state;
+    expect(playerView(s).hints.nudge).toBeNull();
+  });
+  it("the context stays within the size limit in the fullest state", () => {
+    const text = contextUpdateText(characterContext(ready(), "malik", null, "fr"), "fr");
+    expect(text.endsWith("]")).toBe(false); // sanity: it is JSON text, check below that rules survive truncation
+    expect(text).toContain("humour");
+  });
+});

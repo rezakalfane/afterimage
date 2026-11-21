@@ -32,6 +32,7 @@ export const HOTSPOTS: Record<Era, Hotspot[]> = {
     { id: "lamp", rect: { x: 0.6, y: 0.33, w: 0.09, h: 0.16 }, inspect: "lamp" },
     { id: "seats", rect: { x: 0.3, y: 0.24, w: 0.28, h: 0.24 }, inspect: "seats" },
     { id: "cabinet", rect: { x: 0.77, y: 0.1, w: 0.2, h: 0.6 }, when: "closed", action: "recover_cache" },
+    { id: "chest", rect: { x: 0.39, y: 0.765, w: 0.09, h: 0.1 }, inspect: "chest" },
     { id: "cache", rect: { x: 0.79, y: 0.13, w: 0.14, h: 0.34 }, when: "open", inspect: "cache" },
   ],
   1996: [
@@ -42,6 +43,7 @@ export const HOTSPOTS: Record<Era, Hotspot[]> = {
     { id: "splicer", rect: { x: 0.29, y: 0.48, w: 0.09, h: 0.1 }, inspect: "splicer" },
     { id: "projector", rect: { x: 0.03, y: 0.32, w: 0.2, h: 0.36 }, inspect: "projector" },
     { id: "cabinet", rect: { x: 0.77, y: 0.1, w: 0.2, h: 0.8 }, when: "closed", action: "open_cabinet" },
+    { id: "chest", rect: { x: 0.39, y: 0.765, w: 0.09, h: 0.1 }, inspect: "chest" },
     { id: "letter", rect: { x: 0.79, y: 0.5, w: 0.14, h: 0.34 }, when: "open", inspect: "letter", action: "read_letter" },
     { id: "shelf", rect: { x: 0.79, y: 0.13, w: 0.14, h: 0.34 }, when: "open", inspect: "shelf" },
   ],
@@ -77,6 +79,7 @@ export const CLOSEUPS: Record<string, { x: number; y: number; w: number; h: numb
   lamp: { x: 0.55, y: 0.26, w: 0.2, h: 0.32 },
   splicer: { x: 0.26, y: 0.42, w: 0.17, h: 0.2 },
   seats: { x: 0.27, y: 0.18, w: 0.46, h: 0.36 },
+  chest: { x: 0.34, y: 0.66, w: 0.19, h: 0.26 },
   cache: { x: 0.74, y: 0.08, w: 0.24, h: 0.46 },
 };
 

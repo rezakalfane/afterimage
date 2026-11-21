@@ -4,15 +4,20 @@
 // Everything stays in the browser: the stream is never recorded or sent anywhere.
 
 const CRUSHER = `
+// Stereo on purpose: each side is crushed with its own phase and depth, so the two ears get
+// slightly different "digital grit" instead of one mono signal copied twice.
 class Crusher extends AudioWorkletProcessor {
-  constructor() { super(); this.hold = 0; this.count = 0; }
+  constructor() { super(); this.hold = [0, 0]; this.count = [0, 3]; }
   process(inputs, outputs) {
-    const i = inputs[0][0], o = outputs[0][0];
-    if (!i || !o) return true;
-    const step = Math.pow(0.5, 5); // 5 bits
-    for (let n = 0; n < i.length; n++) {
-      if (this.count++ % 6 === 0) this.hold = Math.round(i[n] / step) * step; // 48 kHz / 6 = 8 kHz
-      o[n] = this.hold;
+    const i = inputs[0][0], out = outputs[0];
+    if (!i || !out.length) return true;
+    const steps = [Math.pow(0.5, 5), Math.pow(0.5, 6)]; // left 5 bits, right 6 bits
+    for (let c = 0; c < out.length; c++) {
+      const o = out[c];
+      for (let n = 0; n < i.length; n++) {
+        if (this.count[c]++ % 6 === 0) this.hold[c] = Math.round(i[n] / steps[c]) * steps[c]; // 8 kHz
+        o[n] = this.hold[c];
+      }
     }
     return true;
   }
@@ -21,8 +26,8 @@ registerProcessor("crusher", Crusher);
 `;
 
 export interface RobotVoice {
-  /** Current output level, 0..1 (RMS): used by the live test to prove the audio goes through the effect. */
-  level: () => number;
+  /** Current output level of each ear, 0..1 (RMS): the live test proves the audio is stereo and crushed. */
+  levels: () => [number, number];
   destroy: () => void;
 }
 
@@ -58,28 +63,41 @@ export async function robotVoice(stream: MediaStream): Promise<RobotVoice | null
     await ctx.audioWorklet.addModule(url);
     URL.revokeObjectURL(url);
     const src = ctx.createMediaStreamSource(stream);
-    const crusher = new AudioWorkletNode(ctx, "crusher");
+    const crusher = new AudioWorkletNode(ctx, "crusher", { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2], channelCount: 1, channelCountMode: "explicit" });
     const hp = ctx.createBiquadFilter();
     hp.type = "highpass";
     hp.frequency.value = 280;
     const lp = ctx.createBiquadFilter();
     lp.type = "lowpass";
     lp.frequency.value = 3600;
+    // Right ear a hair later (Haas effect, 9 ms): the voice gains width without sounding doubled.
+    const split = ctx.createChannelSplitter(2);
+    const delayR = ctx.createDelay(0.05);
+    delayR.delayTime.value = 0.009;
+    const merge = ctx.createChannelMerger(2);
     const gain = ctx.createGain();
     gain.gain.value = 1.25;
-    const analyser = ctx.createAnalyser();
-    analyser.fftSize = 1024;
-    src.connect(crusher).connect(hp).connect(lp).connect(gain);
-    gain.connect(analyser);
-    gain.connect(ctx.destination);
-    const buf = new Float32Array(analyser.fftSize);
+    src.connect(crusher).connect(hp).connect(lp).connect(split);
+    split.connect(merge, 0, 0);
+    split.connect(delayR, 1).connect(merge, 0, 1);
+    merge.connect(gain).connect(ctx.destination);
+    const analysers = [0, 1].map((ch) => {
+      const a = ctx.createAnalyser();
+      a.fftSize = 1024;
+      const sp = ctx.createChannelSplitter(2);
+      gain.connect(sp);
+      sp.connect(a, ch);
+      return a;
+    });
+    const buf = new Float32Array(1024);
+    const rms = (a: AnalyserNode) => {
+      a.getFloatTimeDomainData(buf);
+      let sum = 0;
+      for (const v of buf) sum += v * v;
+      return Math.sqrt(sum / buf.length);
+    };
     return {
-      level: () => {
-        analyser.getFloatTimeDomainData(buf);
-        let s = 0;
-        for (const v of buf) s += v * v;
-        return Math.sqrt(s / buf.length);
-      },
+      levels: () => [rms(analysers[0]), rms(analysers[1])],
       destroy: () => void ctx.close().catch(() => {}),
     };
   } catch {

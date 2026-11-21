@@ -233,7 +233,7 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUt
           if (!fx || phaseRef.current === "idle") return fx?.destroy();
           voiceFx.current.fx = fx;
           instanceRef.current?.setAudioVolume(0);
-          if (process.env.NODE_ENV !== "production") (window as unknown as { __afterimageVoice?: unknown }).__afterimageVoice = { level: fx.level };
+          if (process.env.NODE_ENV !== "production") (window as unknown as { __afterimageVoice?: unknown }).__afterimageVoice = { levels: fx.levels };
         });
       });
     }

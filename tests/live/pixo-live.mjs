@@ -37,13 +37,17 @@ try {
   log("scene 2056", true);
   await waitLive("Pixo");
   // Prove the voice goes through the bit crusher: the effect's output level while he greets.
-  let peak = 0;
+  let peak = [0, 0];
+  let differ = 0;
   const t0 = Date.now();
   while (Date.now() - t0 < 14000) {
-    peak = Math.max(peak, (await p.evaluate(() => window.__afterimageVoice?.level?.() ?? -1)));
+    const [l, r] = await p.evaluate(() => window.__afterimageVoice?.levels?.() ?? [-1, -1]);
+    peak = [Math.max(peak[0], l), Math.max(peak[1], r)];
+    if (Math.abs(l - r) > 1e-4) differ++;
     await p.waitForTimeout(150);
   }
-  log("crusher output peak (0 = silent, -1 = no effect chain)", peak);
+  log("crusher output peak L/R (0 = silent, -1 = no effect chain)", peak);
+  log("samples where L and R differ (stereo, not mono)", differ);
   log("Pixo greeting", await lines(1000));
   await p.screenshot({ path: "var/screens/after/live-pixo-1440.png" });
   await type("Salut Pixo, moi c'est Reza. Parle-moi de ton public de robots.");

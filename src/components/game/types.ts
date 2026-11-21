@@ -1,5 +1,7 @@
 // Client-side shapes of the server projections (src/server/world/projections.ts). No canon here.
 export type Era = 1996 | 2026;
+/** The secret 2056 booth is outside the story: a place to visit, never a state of the run. */
+export type Stage = Era | 2056;
 export type Action =
   | "inspect_photo" | "share_photo_note" | "ask_usual_place" | "propose_seat" | "share_report" | "claim_future" | "retrieve_key" | "open_cabinet" | "inspect_programme" | "read_letter"
   | "acknowledge_permission" | "inspect_waterline" | "relay_flood_warning" | "write_message" | "confirm_message"

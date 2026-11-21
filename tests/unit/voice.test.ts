@@ -191,3 +191,16 @@ describe("the green chest by voice", () => {
     expect(lookIntent("Regardons les bobines")).toBe("reels");
   });
 });
+
+describe("the secret 2056 by voice", () => {
+  it("2056 opens it from an era; from there, a real era goes back; a mention changes nothing", () => {
+    expect(eraFromSpeech("2056", 2026)).toBe(2056);
+    expect(eraFromSpeech("Allons en 2056", 1996)).toBe(2056);
+    expect(eraFromSpeech("deux mille cinquante-six", 2026)).toBe(2056);
+    expect(eraFromSpeech("2056", 2056)).toBeNull();
+    expect(eraFromSpeech("Retour en 1996", 2056)).toBe(1996);
+    expect(eraFromSpeech("2026", 2056)).toBe(2026);
+    expect(eraFromSpeech("Je viens de 2056", 2026)).toBeNull();
+    expect(eraFromSpeech("2056 ?", 2026)).toBeNull();
+  });
+});

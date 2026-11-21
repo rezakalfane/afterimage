@@ -23,7 +23,7 @@ import { MessageComposer } from "./MessageComposer";
 import { Notebook } from "./Notebook";
 import { ObjectInspector } from "./ObjectInspector";
 import { SceneViewport } from "./SceneViewport";
-import type { Action, CommandResponse, Era, Mode, PublicState } from "./types";
+import type { Action, CommandResponse, Era, Mode, PublicState, Stage } from "./types";
 
 const HOTSPOT_TO_INSPECT: Record<string, string> = { photo: "photo", waterline: "archiveReport", projector: "projector", cabinet: "cabinet", cache: "cache", programme: "programme", hall: "hall", letter: "letter", shelf: "shelf", reels: "reels", lamp: "lamp", splicer: "splicer", seats: "seats", chest: "chest" };
 
@@ -111,7 +111,28 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
   };
   const locale = useLocale();
   const [hint, setHint] = useState<string | null>(null);
-  const [switching, setSwitching] = useState<Era | null>(null);
+  const [switching, setSwitching] = useState<Stage | null>(null);
+  // The secret 2056 booth (Pixo): a visit outside the story, never saved in the run.
+  const [secret, setSecret] = useState(false);
+  const secretRef = useRef(false);
+  // A language switch reloads the page: remember the visit (per run, this tab only) and come back to it.
+  const secretKey = `afterimage.secret.${runId}`;
+  useEffect(() => {
+    try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time restore after hydration
+      if (sessionStorage.getItem(secretKey) === "1" && !viewRef.current.ending) setSecret(true);
+    } catch {
+      /* storage unavailable */
+    }
+  }, [secretKey]);
+  useEffect(() => {
+    try {
+      if (secret) sessionStorage.setItem(secretKey, "1");
+      else sessionStorage.removeItem(secretKey);
+    } catch {
+      /* storage unavailable */
+    }
+  }, [secret, secretKey]);
   const [rLines, setRLines] = useState<TranscriptLine[]>([]);
   const [suggestion, setSuggestion] = useState<{ action: Action; args?: Record<string, unknown>; label: string } | null>(null);
   const [micMuted, setMicMuted] = useState(false);
@@ -170,6 +191,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
     endingOpenRef.current = endingOpen;
     selectedRef.current = endingSelected;
     sessionRef.current = live.session;
+    secretRef.current = secret;
     inspectRef.current = inspect;
     const now = currentTarget();
     if (!now) target.current = null;
@@ -220,6 +242,15 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
     if (stopIntent(text)) {
       trace(text, "personnage interrompu");
       live.interrupt();
+      return;
+    }
+    // The secret booth understands only a way back and "ok" to close a window: Pixo does the rest.
+    if (secretRef.current) {
+      const back = eraFromSpeech(text, 2056);
+      if (back && back !== 2056 && !viewRef.current.ending) {
+        trace(text, `époque → ${back}`);
+        void leaveSecretRef.current?.(back);
+      } else if (closeIntent(text) && inspectRef.current) setInspect(null);
       return;
     }
     // "Ok" / "d'accord" / "fermer" closes the window being read. A confirmation step (message sheet,
@@ -280,11 +311,14 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
         if (id === "photo" && v.availableActions.includes("inspect_photo")) void act("inspect_photo");
       }
     }
-    // "2026" / "1996" (alone or as a short command): change era, as with the switch.
-    const nextEra = eraFromSpeech(text, viewRef.current.activeEra);
+    // "2026" / "1996" (alone or as a short command): change era, as with the switch. "2056" opens
+    // the secret booth; from there, a real era goes back to the story.
+    const nextEra = eraFromSpeech(text, secretRef.current ? 2056 : viewRef.current.activeEra);
     if (nextEra && !viewRef.current.ending) {
       trace(text, `époque → ${nextEra}`);
-      void switchEraRef.current?.(nextEra);
+      if (nextEra === 2056) void enterSecretRef.current?.();
+      else if (secretRef.current) void leaveSecretRef.current?.(nextEra);
+      else void switchEraRef.current?.(nextEra);
       return;
     }
     const now = currentTarget();
@@ -478,7 +512,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
   // Each funny nudge gets an angle not used yet for that character (shuffled, then reused).
   const angles = useRef<Record<string, string[]>>({});
   function humourNudge(): string {
-    const who = viewRef.current.activeEra === 1996 ? "jeanne" : "malik";
+    const who = secretRef.current ? "pixo" : viewRef.current.activeEra === 1996 ? "jeanne" : "malik";
     const all = t.character.nudgeAngles[who] ?? [];
     if (!angles.current[who]?.length) angles.current[who] = [...all].sort(() => Math.random() - 0.5);
     const angle = angles.current[who].pop();
@@ -488,16 +522,58 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
     enabled: mode === "live" && live.status === "live" && !micMuted && !composer && !endingOpen && !farewell && !switching && !view.ending,
     speaking: live.speaking,
     activityKey: `${view.revision}|${view.activeEra}|${inspect}|${composer}|${endingOpen}`,
-    memoryStep: view.activeEra === 1996 && view.hints.nudge === "memory",
+    memoryStep: !secret && view.activeEra === 1996 && view.hints.nudge === "memory",
     onNudge: (kind) => live.pushContext(kind === "memory" ? t.character.nudgeMemory : humourNudge(), true),
   });
   useEffect(() => {
     nudgesRef.current = nudges;
   });
   const switchEraRef = useRef<((era: Era) => Promise<void>) | null>(null);
+  const enterSecretRef = useRef<(() => Promise<void>) | null>(null);
+  const leaveSecretRef = useRef<((era: Era) => Promise<void>) | null>(null);
   useEffect(() => {
     switchEraRef.current = switchEra;
+    enterSecretRef.current = enterSecret;
+    leaveSecretRef.current = leaveSecret;
   });
+  /** 2056: close the current companion, show the secret booth, bring Pixo in (he never knows the story). */
+  async function enterSecret() {
+    if (secretRef.current || busy || view.ending) return;
+    const wasLive = live.status === "live" || live.status === "connecting";
+    setSwitching(2056);
+    if (live.status !== "idle") await live.stop();
+    setSuggestion(null);
+    setInspect(null);
+    setComposer(false);
+    setEndingOpen(false);
+    setSecret(true);
+    secretRef.current = true;
+    setTimeout(() => setSwitching(null), 1400);
+    if (mode !== "live") setRLines((l) => [...l, { role: "assistant", text: t.character.pixoRehearsal, at: Date.now(), character: "pixo" }]);
+    if (wasLive && mode === "live") {
+      setMicMuted(false);
+      setReconnecting(true);
+      void live.start({ secret: true });
+    }
+  }
+  /** Back to the story, in a real era (the voice, or the two era buttons). */
+  async function leaveSecret(target: Era) {
+    if (!secretRef.current || busy) return;
+    const wasLive = live.status === "live" || live.status === "connecting";
+    setSwitching(target);
+    if (live.status !== "idle") await live.stop();
+    setSecret(false);
+    secretRef.current = false;
+    setInspect(null);
+    let ok = true;
+    if (target !== view.activeEra) ok = Boolean((await act("switch_era", { era: target }))?.ok);
+    setTimeout(() => setSwitching(null), 1400);
+    if (wasLive && ok && mode === "live") {
+      setMicMuted(false);
+      setReconnecting(true);
+      void live.start();
+    }
+  }
   async function switchEra(era: Era) {
     if (era === view.activeEra || busy || view.ending) return;
     setSwitching(era);
@@ -553,8 +629,9 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
   }
 
   const era = view.activeEra;
+  const stage: Stage = secret ? 2056 : era;
   // The decision is taken in 2026, with Malik: the button only exists there.
-  const canDecide = view.endings.length > 0 && !view.ending && view.activeEra === 2026;
+  const canDecide = view.endings.length > 0 && !view.ending && view.activeEra === 2026 && !secret;
 
   if (view.ending) {
     const ending = view.ending;
@@ -583,7 +660,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
   }
 
   return (
-    <div className={`game game--${era}${switching ? " is-switching" : ""}`}>
+    <div className={`game game--${stage}${switching ? " is-switching" : ""}`}>
       <header className="topbar">
         <Link href="/" className="wordmark" aria-label={`AFTERIMAGE, ${t.common.home}`}>AFTERIMAGE</Link>
         <p className="episode"><span>{g.episodeLabel}</span> {g.episode}</p>
@@ -592,7 +669,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
         <LanguageSwitch onRequest={requestLocale} />
         <nav className="era-switch" aria-label={g.era}>
           {([1996, 2026] as Era[]).map((e) => (
-            <button key={e} type="button" aria-pressed={era === e} disabled={busy || Boolean(view.ending)} onClick={() => switchEra(e)}>{e}</button>
+            <button key={e} type="button" aria-pressed={!secret && era === e} disabled={busy || Boolean(view.ending)} onClick={() => (secret ? leaveSecret(e) : switchEra(e))}>{e}</button>
           ))}
         </nav>
         </div>
@@ -602,11 +679,11 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
       <main className="stage">
         <div className="stage__inner">
         <div className="stage__scene">
-          <p className="meta"><span className="meta__place">{t.scene.place}</span><span className="meta__short">{t.scene.placeShort}</span><span>{era === 1996 ? t.scene.date1996 : t.scene.date2026}</span></p>
-          <SceneViewport era={era} view={view} onHotspot={(id) => openByPlayer(HOTSPOT_TO_INSPECT[id] ?? id)} />
+          <p className="meta"><span className="meta__place">{stage === 2056 ? t.scene.place2056 : t.scene.place}</span><span className="meta__short">{t.scene.placeShort}</span><span>{stage === 1996 ? t.scene.date1996 : stage === 2056 ? t.scene.date2056 : t.scene.date2026}</span></p>
+          <SceneViewport era={stage} view={view} onHotspot={(id) => openByPlayer(HOTSPOT_TO_INSPECT[id] ?? id)} />
         </div>
         <CharacterPanel
-          era={era}
+          era={stage}
           mode={mode}
           status={live.status}
           videoReady={live.videoReady}
@@ -615,10 +692,20 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
           transcript={mode === "live" ? live.transcript : rLines}
           error={live.error}
           mountRef={liveMountRef}
-          onStart={() => { setMicMuted(false); setReconnecting(false); void live.start(); }}
+          onStart={() => { setMicMuted(false); setReconnecting(false); void live.start(secret ? { secret: true } : undefined); }}
           reconnecting={reconnecting}
           onStop={() => void live.stop()}
-          onSend={(text) => { nudges.touch(); if (mode === "live") live.sendText(text); else void rehearse(text); }}
+          onSend={(text) => {
+            nudges.touch();
+            // Typed like spoken: a year alone is a way in (2056) or out of the secret booth.
+            const year = view.ending ? null : eraFromSpeech(text, secret ? 2056 : view.activeEra);
+            if (year === 2056) return void enterSecret();
+            if (year && secret) return void leaveSecret(year);
+            if (year) return void switchEra(year);
+            if (secret && mode === "live") return live.sendText(text);
+            if (mode === "live") live.sendText(text);
+            else void rehearse(text);
+          }}
           suggestion={suggestion && view.availableActions.includes(suggestion.action) ? { label: suggestion.label, onAccept: () => { const s = suggestion; setSuggestion(null); void act(s.action, s.args); } } : null}
           micMuted={micMuted}
           onToggleMic={() => { live.setMicMuted(!micMuted); setMicMuted(!micMuted); }}
@@ -630,13 +717,14 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
       <footer className="footer">
         <Notebook entries={view.notebook} era={era} onOpen={openByPlayer} />
         <div className="footer__objective">
-          <p className="objective"><span className="eyebrow">{g.objective}</span> {view.objective}</p>
-          {hint && <p className="hint" role="status"><span className="eyebrow">{g.hint}</span> {hint}</p>}
+          <p className="objective"><span className="eyebrow">{g.objective}</span> {secret ? g.secretObjective : view.objective}</p>
+          {secret && <p className="hint" role="note">{g.secretBack}</p>}
+          {!secret && hint && <p className="hint" role="status"><span className="eyebrow">{g.hint}</span> {hint}</p>}
         </div>
         <div className="footer__actions">
-          {era === 1996 && !view.message.sealed && view.availableActions.includes("write_message") && <button type="button" className="btn" onClick={() => setComposer(true)}>{g.words}</button>}
+          {!secret && era === 1996 && !view.message.sealed && view.availableActions.includes("write_message") && <button type="button" className="btn" onClick={() => setComposer(true)}>{g.words}</button>}
           {canDecide && <button type="button" className="btn btn--brass" onClick={() => setEndingOpen(true)}>{g.decide}</button>}
-          {!view.ending && <button type="button" className="btn" onClick={() => act("request_hint")} disabled={busy}>{g.hint}</button>}
+          {!view.ending && !secret && <button type="button" className="btn" onClick={() => act("request_hint")} disabled={busy}>{g.hint}</button>}
           <button type="button" className="btn" onClick={quit} title={g.quitNote}>{g.quit}</button>
           <button type="button" className="btn btn--quiet" onClick={() => setMenuOpen(true)}>{g.menu}</button>
         </div>
@@ -673,7 +761,7 @@ export function GameShell({ runId, mode, initial }: { runId: string; mode: Mode;
         </div>
       </Dialog>
 
-      <ObjectInspector id={inspect} era={era} view={view} onClose={() => setInspect(null)} act={async (a, args) => { const r = await act(a, args); return r; }} openComposer={() => { setInspect(null); setComposer(true); }} />
+      <ObjectInspector id={inspect} era={stage} view={view} onClose={() => setInspect(null)} act={async (a, args) => { const r = await act(a, args); return r; }} openComposer={() => { setInspect(null); setComposer(true); }} />
       <MessageComposer key={view.message.draft ?? "none"} open={composer} onClose={() => setComposer(false)} view={view} act={act} />
       {canDecide && <EndingDialog confirmRef={endingConfirm} chooseRef={endingChoose} onSelection={setEndingSelected} open={endingOpen} onClose={() => setEndingOpen(false)} runId={runId} view={view} onDone={finishWithFarewell} />}
       {farewell && (

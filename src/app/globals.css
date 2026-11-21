@@ -429,3 +429,19 @@ button, input, textarea, select { font: inherit; color: inherit; }
 /* Ambient sound toggle (top bar) */
 .ambient-toggle { display: inline-flex; align-items: center; justify-content: center; min-width: 40px; min-height: 40px; border: 1px solid var(--line); background: transparent; color: var(--ivory); cursor: pointer; }
 .ambient-toggle[aria-pressed="false"] { color: var(--muted); }
+
+/* ---- 2056: the secret, futuristic-fun-absurd booth ---- */
+.game--2056 { --brass: #46e0f5; --brass-hi: #a6f4ff; }
+.game--2056 .scene__img { filter: saturate(1.08) contrast(1.02); }
+.game--2056 .hotspot__dot { background: #46e0f5; box-shadow: 0 0 0 0 rgb(70 224 245 / 0.7); animation: neonPing 2.4s ease-out infinite; }
+.game--2056 .topbar .wordmark { text-shadow: 0 0 12px rgb(70 224 245 / 0.65); }
+.funfact { font-size: 1.12rem; line-height: 1.5; }
+.funfact::before { content: "FUN FACT 2056 · "; letter-spacing: 0.14em; font-size: 0.72rem; color: #46e0f5; font-family: var(--sans); }
+.character--pixo .character__portrait { object-position: 50% 30%; }
+.character__portrait.is-talking { animation: pixoTalk 0.42s ease-in-out infinite alternate; }
+.character--pixo .character__tile { box-shadow: 0 0 0 1px rgb(70 224 245 / 0.35), 0 0 22px rgb(70 224 245 / 0.18); }
+@keyframes neonPing { 0% { box-shadow: 0 0 0 0 rgb(70 224 245 / 0.7); } 80%, 100% { box-shadow: 0 0 0 12px rgb(70 224 245 / 0); } }
+@keyframes pixoTalk { from { transform: scale(1) rotate(-0.4deg); filter: brightness(1); } to { transform: scale(1.025) rotate(0.5deg); filter: brightness(1.18) saturate(1.15); } }
+@media (prefers-reduced-motion: reduce) {
+  .game--2056 .hotspot__dot, .character__portrait.is-talking { animation: none; }
+}

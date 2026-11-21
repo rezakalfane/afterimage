@@ -120,16 +120,16 @@ export function sameTarget(a: VoiceTarget | null, b: VoiceTarget | null): boolea
 const ERA_CMD = new RegExp(
   "^(?:(?:euh|bon|alors|ok|okay|oui|uh|um|well|yes)\\s+)*" +
     "(?:(?:on\\s+)?(?:passe|passer|passons|va|aller|allons|retourne|retourner|retournons|retour|revenir|revenons|bascule|basculer|basculons|direction|go|go back|switch|back|take me|let's go)(?:\\s+(?:en|à|a|vers|to|in))?\\s+|en\\s+|to\\s+)?" +
-    "(1996|2026)" +
+    "(1996|2026|2056)" +
     "(?:\\s+(?:s'il (?:te|vous) pla[iî]t|please|merci|thanks))*$",
 );
 
-export function eraFromSpeech(text: string, current: 1996 | 2026): 1996 | 2026 | null {
+export function eraFromSpeech(text: string, current: 1996 | 2026 | 2056): 1996 | 2026 | 2056 | null {
   if (/[?¿]/.test(text)) return null;
-  const t = normalizeSpeech(text).replace(/\b(?:(?:mille|dix[ -]neuf) )?(?:neuf )?cent quatre[ -]vingt[ -]seize\b|\bnineteen ninety[ -]six\b/g, "1996").replace(/\bdeux mille vingt[ -]six\b|\btwenty twenty[ -]six\b/g, "2026");
+  const t = normalizeSpeech(text).replace(/\b(?:(?:mille|dix[ -]neuf) )?(?:neuf )?cent quatre[ -]vingt[ -]seize\b|\bnineteen ninety[ -]six\b/g, "1996").replace(/\bdeux mille vingt[ -]six\b|\btwenty twenty[ -]six\b/g, "2026").replace(/\bdeux mille cinquante[ -]six\b|\btwenty fifty[ -]six\b/g, "2056");
   const m = ERA_CMD.exec(t);
   if (!m) return null;
-  const era = Number(m[1]) as 1996 | 2026;
+  const era = Number(m[1]) as 1996 | 2026 | 2056;
   return era === current ? null : era;
 }
 

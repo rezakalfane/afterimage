@@ -1,3 +1,4 @@
+import { NUDGE_ANGLES_PIXO } from "./fun2056";
 // Interface strings by locale. French is the complete reference (P0). Other locales are deep-merged
 // over French: a missing key falls back to French until translated and reviewed (P1).
 // No undiscovered canon here (this ships to the browser): documents come from the server.
@@ -31,7 +32,7 @@ const fr = {
     objective: "Objectif", hint: "Aide", words: "Vos mots", decide: "Décider du sort du film", quit: "Quitter",
     deleteRun: "Supprimer ma partie", deleteConfirm: "Effacer définitivement cette partie ?", deleteYes: "Supprimer", deleteFailed: "Suppression impossible pour l’instant ; réessayez.",
     conflict: "La partie a changé entre-temps (autre onglet ?). L’état a été rechargé : vérifiez avant de recommencer.",
-    actionImpossible: "Action impossible.", switching: "Passage vers {era}…",
+    actionImpossible: "Action impossible.", switching: "Passage vers {era}…", secretObjective: "Objectif : aucun. C’est le futur, tout est facultatif.", secretBack: "Pour revenir : dites « 1996 » ou « 2026 », ou cliquez sur une date.",
     epilogue: "Épilogue", facadeAlt: "La façade du Régina, la nuit, sous la pluie", anotherStory: "Rejouer le chapitre",
     wordsCrossed: "Vos mots ont traversé trente ans : « {message} »", hintsUsed: "Aides demandées : {n}. Cette partie est terminée et reste consultable.",
     wordsCaption: "Vos mots, trente ans plus tard", summary: "Bilan de la partie",
@@ -47,6 +48,9 @@ const fr = {
   },
   scene: {
     region: "Décor interactif, cabine de projection, {era}", list: "Éléments à examiner",
+    alt2056: "La même cabine en 2056 : néons, robots spectateurs derrière la vitre, un robot projectionniste à gauche, une vitrine pleine d’objets absurdes à droite",
+    place2056: "Le Régina · cabine de projection (mise à jour 14.2 en attente)",
+    date2056: "15 novembre 2056 · 21 h 10 (heure de Mars)",
     alt1996: "Cabine de projection en 1996, lumière chaude, projecteur à gauche, bureau au centre, armoire au croissant à droite",
     alt2026: "La même cabine en 2026, froide et poussiéreuse, projecteur à gauche, bureau, armoire au croissant à droite",
     hotspots: {
@@ -57,7 +61,7 @@ const fr = {
     placeShort: "Le Régina", place: "Le Régina · cabine de projection", date1996: "15 novembre 1996 · 21 h 10", date2026: "15 novembre 2026 · 21 h 10",
   },
   character: {
-    jeanne: { name: "Jeanne", role: "Projectionniste — 1996" }, malik: { name: "Malik", role: "Archiviste — 2026" },
+    jeanne: { name: "Jeanne", role: "Projectionniste — 1996" }, malik: { name: "Malik", role: "Archiviste — 2026" }, pixo: { name: "Pixo", role: "Robot projectionniste — 2056" },
     portraitAlt: "Portrait de référence de {name}, personnage fictif",
     badgeRehearsal: "Mode répétition · personnage simulé, sans connexion Napster", badgeLive: "En direct", badgeLiveAudio: "En direct · audio", badgeConnecting: "Connexion…", badgeClosing: "Fermeture…", badgeOffline: "Portrait de référence · hors ligne",
     subtitles: "Sous-titres", emptyLive: "Parlez au personnage ou écrivez-lui.", emptyRehearsal: "Écrivez au personnage, ou examinez le décor.",
@@ -71,8 +75,10 @@ const fr = {
     nudgeAngle: "Angle possible (change à chaque fois) : {angle}. Ne répète aucune plaisanterie déjà faite dans cette conversation.",
     nudgeAngles: {
       jeanne: ["son calot, qui tient mieux que ses certitudes", "une bobine têtue qui n’en fait qu’à sa tête", "la poussière qui danse dans le faisceau du projecteur", "la colleuse, qui ne pardonne aucune coupe ratée", "le métier de projectionniste : passer sa vie dans le noir à regarder les autres rire", "le petit coffre vert sous le bureau, aussi bavard que le joueur", "le silence, que même la salle n’ose pas troubler", "l’odeur de pop-corn froid qui monte de la salle"],
+      pixo: NUDGE_ANGLES_PIXO.fr,
       malik: ["la poussière, qu’il classe désormais par ordre d’ancienneté", "ses cartons d’archives, plus nombreux que ses amis", "la cabine froide, où même son café a renoncé", "le petit coffre vert sous le bureau, qui garde ses secrets mieux que lui", "son carnet de notes, trop de flèches et pas assez de réponses", "son métier : retrouver des choses que personne ne cherchait", "le silence, qui fait un bruit d’archives", "le projecteur, qui a plus de souvenirs que lui"],
     } as Record<string, string[]>,
+    pixoRehearsal: "Bip bip ! Un humain ! (Mode répétition : Pixo est une marionnette à réponses écrites d’avance, mais il est quand même très content de vous voir.)",
     nudgeMemory: "Le joueur tarde à retrouver la place habituelle d’Alice. Suggère-lui en une phrase, en personnage, de te demander de fouiller dans ta mémoire à ce sujet. Ne donne ni rangée ni siège et n’utilise aucun outil.",
     prepLabel: "Parler avec le micro",
     prepOnce: "Cette question n’est posée qu’une fois : ensuite, « Parler à… » et les changements d’époque relancent directement la conversation.", prepStrong: "Le micro sert uniquement à parler à {name}.",
@@ -161,7 +167,7 @@ const en: DeepPartial<Messages> = {
     objective: "Objective", hint: "Hint", words: "Your words", decide: "Decide the film's fate", quit: "Leave",
     deleteRun: "Delete my game", deleteConfirm: "Permanently erase this game?", deleteYes: "Delete", deleteFailed: "Deletion is not possible right now; please try again.",
     conflict: "The game changed in the meantime (another tab?). The state was reloaded: check before trying again.",
-    actionImpossible: "Action not possible.", switching: "Moving to {era}…",
+    actionImpossible: "Action not possible.", switching: "Moving to {era}…", secretObjective: "Objective: none. It is the future, everything is optional.", secretBack: "To go back: say “1996” or “2026”, or click a date.",
     epilogue: "Epilogue", facadeAlt: "The façade of Le Régina, at night, in the rain", anotherStory: "Play again",
     wordsCrossed: "Your words crossed thirty years: “{message}”", hintsUsed: "Hints requested: {n}. This game is over and remains viewable.",
     wordsCaption: "Your words, thirty years later", summary: "Game summary",
@@ -177,6 +183,9 @@ const en: DeepPartial<Messages> = {
   },
   scene: {
     region: "Interactive set, projection booth, {era}", list: "Things to examine",
+    alt2056: "The same booth in 2056: neon lights, robot spectators behind the window, a robot projectionist on the left, a display cabinet full of absurd objects on the right",
+    place2056: "Le Régina · projection booth (update 14.2 pending)",
+    date2056: "15 November 2056 · 9:10 pm (Mars time)",
     alt1996: "Projection booth in 1996, warm light, projector on the left, desk in the middle, crescent cabinet on the right",
     alt2026: "The same booth in 2026, cold and dusty, projector on the left, desk, crescent cabinet on the right",
     hotspots: {
@@ -187,7 +196,7 @@ const en: DeepPartial<Messages> = {
     placeShort: "Le Régina", place: "Le Régina · projection booth", date1996: "15 November 1996 · 9:10 pm", date2026: "15 November 2026 · 9:10 pm",
   },
   character: {
-    jeanne: { name: "Jeanne", role: "Projectionist — 1996" }, malik: { name: "Malik", role: "Archivist — 2026" },
+    jeanne: { name: "Jeanne", role: "Projectionist — 1996" }, malik: { name: "Malik", role: "Archivist — 2026" }, pixo: { name: "Pixo", role: "Robot projectionist — 2056" },
     portraitAlt: "Reference portrait of {name}, a fictional character",
     badgeRehearsal: "Rehearsal mode · simulated character, no Napster connection", badgeLive: "Live", badgeLiveAudio: "Live · audio", badgeConnecting: "Connecting…", badgeClosing: "Closing…", badgeOffline: "Reference portrait · offline",
     subtitles: "Subtitles", emptyLive: "Talk to the character or write to them.", emptyRehearsal: "Write to the character, or examine the set.",
@@ -201,8 +210,10 @@ const en: DeepPartial<Messages> = {
     nudgeAngle: "Possible angle (changes each time): {angle}. Repeat no joke already made in this conversation.",
     nudgeAngles: {
       jeanne: ["her cap, which holds better than her certainties", "a stubborn reel with a mind of its own", "the dust dancing in the projector beam", "the splicer, which forgives no botched cut", "the projectionist's trade: spending a life in the dark watching others laugh", "the little green chest under the desk, as talkative as the player", "the silence, which even the hall dares not disturb", "the smell of cold popcorn rising from the hall"],
+      pixo: NUDGE_ANGLES_PIXO.en,
       malik: ["the dust, which he now files by order of age", "his archive boxes, more numerous than his friends", "the cold booth, where even his coffee has given up", "the little green chest under the desk, which keeps secrets better than he does", "his notebook, too many arrows and not enough answers", "his job: finding things nobody was looking for", "the silence, which sounds like archives", "the projector, which has more memories than he does"],
     } as Record<string, string[]>,
+    pixoRehearsal: "Beep beep! A human! (Rehearsal mode: Pixo is a puppet with pre-written answers, but he is still very happy to see you.)",
     nudgeMemory: "The player is slow to find Alice's usual place. In one sentence, in character, suggest they ask you to search your memory about it. Give neither row nor seat and use no tool.",
     prepLabel: "Talk with the microphone", prepStrong: "The microphone is only used to talk to {name}.",
     prepText: "The game records neither your voice nor your camera. The conversation goes through Napster, live; once connected, you can also type. Without a microphone, every action remains possible on screen.",

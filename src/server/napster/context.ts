@@ -5,6 +5,7 @@ import "server-only";
 import { CHARACTERS, type CharacterId } from "@/server/world/content";
 import type { CharacterContext } from "@/server/world/projections";
 import { texts, type Locale } from "@/server/world/texts";
+import { PIXO_OPENING, PIXO_TEXTS } from "@/content/episodes/last-screening/v1/pixo";
 import { toolsForActions } from "./tools";
 
 const MAX_CONTEXT_CHARS = 6000;
@@ -33,4 +34,13 @@ export function openingInstruction(character: CharacterId, resumed: boolean, loc
   if (resumed) return t.resume;
   const line = locale === "en" ? t.openingLines[character] : CHARACTERS[character].opening;
   return t.opening.replace("{line}", line);
+}
+
+/** Pixo (the secret 2056 companion) gets no run data at all: only a note that he knows nothing. */
+export function pixoProfile(locale: Locale = "fr") {
+  return { pixo: { note: PIXO_TEXTS[locale].profileNote } };
+}
+export function pixoOpening(resumed: boolean, locale: Locale = "fr"): string {
+  const t = PIXO_TEXTS[locale];
+  return resumed ? t.resume : t.opening.replace("{line}", PIXO_OPENING[locale]);
 }

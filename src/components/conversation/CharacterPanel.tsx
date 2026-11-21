@@ -9,11 +9,11 @@ import { Dialog } from "@/components/ui/Dialog";
 import { ERA_META } from "@/components/game/scene-config";
 import { useT } from "@/i18n/I18nProvider";
 import { fmt } from "@/i18n/messages";
-import type { Era, Mode } from "@/components/game/types";
+import type { Mode, Stage } from "@/components/game/types";
 import type { LiveStatus, TranscriptLine } from "./useLiveConversation";
 
 export interface PanelProps {
-  era: Era;
+  era: Stage;
   mode: Mode;
   status: LiveStatus;
   videoReady: boolean;
@@ -98,8 +98,8 @@ export function CharacterPanel({ mountRef, ...p }: PanelProps) {
 
         <div className="character__media">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className={`character__portrait${liveUp && p.videoReady ? " is-hidden" : ""}`} src={`${meta.portrait}-600.webp`} srcSet={`${meta.portrait}-600.webp 600w, ${meta.portrait}-1200.webp 1200w`} sizes="(max-width: 900px) 100vw, 30vw" alt={fmt(c.portraitAlt, { name: meta.name })} />
-          <div className={`character__live${liveUp ? " is-on" : ""}`} ref={mountRef} />
+          <img className={`character__portrait${liveUp && p.videoReady && meta.character !== "pixo" ? " is-hidden" : ""}`} src={`${meta.portrait}-600.webp`} srcSet={`${meta.portrait}-600.webp 600w, ${meta.portrait}-1200.webp 1200w`} sizes="(max-width: 900px) 100vw, 30vw" alt={fmt(c.portraitAlt, { name: meta.name })} />
+          <div className={`character__live${liveUp && meta.character !== "pixo" ? " is-on" : ""}`} ref={mountRef} />
         </div>
 
       <div id={drawerId} className="character__drawer" hidden={!writeOpen}>

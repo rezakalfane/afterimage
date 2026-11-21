@@ -29,6 +29,13 @@
       "when": 1794782630107,
       "tag": "0003_lease_per_character",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1794782631107,
+      "tag": "0004_pixo_character",
+      "breakpoints": true
     }
   ]
 }

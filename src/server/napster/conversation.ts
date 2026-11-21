@@ -15,7 +15,7 @@ import { characterForEra, type CharacterId } from "@/server/world/content";
 import { characterContext } from "@/server/world/projections";
 import type { Locale } from "@/server/world/texts";
 import { napster, NapsterError, NapsterUncertain, type ConnectionResponse } from "./api";
-import { connectionProfile, openingInstruction } from "./context";
+import { connectionProfile, openingInstruction, pixoOpening, pixoProfile } from "./context";
 
 export const PROVIDER_SCOPE = "napster:webrtc";
 const RATE_SCOPE = "napster:connections"; // 1 request/s per API key, shared by create AND delete
@@ -42,12 +42,14 @@ async function reserveRateSlot(tx: Transaction, now: number): Promise<number> {
 }
 
 /** Agent for a character in a locale. fr = P0 agents; en = optional *_EN ids (P1, off unless set). */
-function agentFor(character: CharacterId, locale: Locale): string {
+function agentFor(character: CharacterId | "pixo", locale: Locale): string {
   const e = env();
   const id =
-    locale === "en"
-      ? character === "jeanne" ? process.env.NAPSTER_JEANNE_AGENT_ID_EN : process.env.NAPSTER_MALIK_AGENT_ID_EN
-      : character === "jeanne" ? e.NAPSTER_JEANNE_AGENT_ID : e.NAPSTER_MALIK_AGENT_ID;
+    character === "pixo"
+      ? locale === "en" ? e.NAPSTER_PIXO_AGENT_ID_EN : e.NAPSTER_PIXO_AGENT_ID
+      : locale === "en"
+        ? character === "jeanne" ? process.env.NAPSTER_JEANNE_AGENT_ID_EN : process.env.NAPSTER_MALIK_AGENT_ID_EN
+        : character === "jeanne" ? e.NAPSTER_JEANNE_AGENT_ID : e.NAPSTER_MALIK_AGENT_ID;
   if (!id) throw new HttpError("LIVE_DISABLED", "Conversation en direct indisponible dans cette langue.");
   return id;
 }
@@ -55,11 +57,11 @@ function agentFor(character: CharacterId, locale: Locale): string {
 export interface OpenedConversation {
   token: string;
   leaseId: string;
-  character: CharacterId;
+  character: CharacterId | "pixo";
   revision: number;
 }
 
-export async function openConversation(ctx: TenantContext, runId: string, opts: { resumed?: boolean; locale?: Locale; character?: CharacterId; standby?: boolean } = {}): Promise<OpenedConversation> {
+export async function openConversation(ctx: TenantContext, runId: string, opts: { resumed?: boolean; locale?: Locale; character?: CharacterId; standby?: boolean; secret?: boolean } = {}): Promise<OpenedConversation> {
   const locale: Locale = opts.locale ?? "fr";
   const e = env();
   if (e.CONVERSATION_MODE !== "live") throw new HttpError("LIVE_DISABLED", "Conversation en direct désactivée (mode répétition).");
@@ -68,7 +70,9 @@ export async function openConversation(ctx: TenantContext, runId: string, opts: 
   if (run.status !== "active") throw new HttpError("RUN_FINISHED");
   // The era's character by default; the other one may be opened in STANDBY (muted, waiting for an
   // era switch). Its tools are still refused by the engine while it is not the era's character.
-  const character = opts.character ?? characterForEra(run.state.activeEra);
+  // The secret 2056 visit: Pixo, outside the story. He never receives run data and has no tools.
+  const isPixo = opts.secret === true;
+  const character: CharacterId | "pixo" = isPixo ? "pixo" : (opts.character ?? characterForEra(run.state.activeEra));
   const agentId = agentFor(character, locale);
   const now = Date.now();
   const leaseId = newId("lease");
@@ -76,10 +80,15 @@ export async function openConversation(ctx: TenantContext, runId: string, opts: 
   // 0. Take over the caller's own open lease on this run (left behind by a reload, a language
   //    switch during an open, a crashed tab). The newest request wins; one avatar per run holds.
   //    Closing calls Napster, so it happens before (outside) the admission transaction.
-  const own = await sqlClient().execute({ sql: `SELECT id FROM conversation_leases WHERE tenant_id = ? AND run_id = ? AND user_id = ? AND character_id = ? AND status IN ${OPEN}`, args: [ctx.tenantId, runId, ctx.userId, character] });
+  // One avatar per run: Pixo replaces whatever is open, and any open Pixo is closed for the others.
+  const own = await sqlClient().execute({
+    sql: `SELECT id, character_id FROM conversation_leases WHERE tenant_id = ? AND run_id = ? AND user_id = ? AND status IN ${OPEN}${isPixo ? "" : " AND character_id IN (?, 'pixo')"}`,
+    args: [ctx.tenantId, runId, ctx.userId, ...(isPixo ? [] : [character])],
+  });
   if (own.rows[0]) {
     log.info("napster.connection.take_over", { leaseId: String(own.rows[0].id) });
-    await closeConversation(ctx, runId, character);
+    const pixoOpen = own.rows.some((r) => String(r.character_id) === "pixo");
+    await closeConversation(ctx, runId, isPixo || pixoOpen ? undefined : (character as CharacterId));
   }
 
   // 1. Admission + identity, one write transaction.
@@ -112,7 +121,7 @@ export async function openConversation(ctx: TenantContext, runId: string, opts: 
 
   // 2. Provider call, outside any transaction, at our reserved slot.
   if (slot > Date.now()) await sleep(slot - Date.now());
-  const context = characterContext(run.state, character, null, locale);
+  const context = isPixo ? null : characterContext(run.state, character as CharacterId, null, locale);
   let conn: ConnectionResponse;
   const create = () =>
     napster<ConnectionResponse>(`/public/agents/${agentId}/connections`, {
@@ -120,9 +129,9 @@ export async function openConversation(ctx: TenantContext, runId: string, opts: 
       body: {
         channelType: "webrtc",
         externalClientId,
-        externalClientProfile: connectionProfile(context, locale),
+        externalClientProfile: context ? connectionProfile(context, locale) : pixoProfile(locale),
         // A standby character does not open the conversation: it greets when the player turns to it.
-        ...(opts.standby ? {} : { initialSpeech: openingInstruction(character, opts.resumed ?? resumed, locale) }),
+        ...(opts.standby ? {} : { initialSpeech: isPixo ? pixoOpening(opts.resumed ?? resumed, locale) : openingInstruction(character as CharacterId, opts.resumed ?? resumed, locale) }),
         tags: { app: "afterimage", env: e.APP_ENV, lease: leaseId },
       },
     });
@@ -167,7 +176,7 @@ export async function openConversation(ctx: TenantContext, runId: string, opts: 
 }
 
 /** Close the caller's open conversation for this run. Idempotent. */
-export async function closeConversation(ctx: TenantContext, runId: string, character?: CharacterId): Promise<{ closed: boolean }> {
+export async function closeConversation(ctx: TenantContext, runId: string, character?: CharacterId | "pixo"): Promise<{ closed: boolean }> {
   // No getRun here: the run may already be a 'deleting' tombstone. Every statement below is
   // scoped by tenant + run + user, so a foreign run simply matches nothing.
   const r = await sqlClient().execute({

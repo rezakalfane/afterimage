@@ -168,7 +168,7 @@ export const napsterBindings = sqliteTable(
   },
   (t) => [
     primaryKey({ columns: [t.tenantId, t.runId, t.characterId, t.generation] }),
-    check("bindings_character", sql`${t.characterId} IN ('jeanne','malik')`),
+    check("bindings_character", sql`${t.characterId} IN ('jeanne','malik','pixo')`),
     check("bindings_ecid_len", sql`length(${t.externalClientId}) BETWEEN 1 AND 32`),
     runFk(t),
   ],
@@ -195,7 +195,7 @@ export const conversationLeases = sqliteTable(
     updatedAt: ms("updated_at"),
   },
   (t) => [
-    check("leases_character", sql`${t.characterId} IN ('jeanne','malik')`),
+    check("leases_character", sql`${t.characterId} IN ('jeanne','malik','pixo')`),
     check("leases_status", sql`${t.status} IN ('reserved','active','closing','uncertain','closed','failed')`),
     check("leases_locale", sql`${t.locale} IN ('fr','en')`),
     runFk(t),

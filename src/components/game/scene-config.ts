@@ -2,12 +2,12 @@
 // the four 1672×941 cabin variants of the kit (they share the same framing). The viewport keeps the
 // image's exact aspect ratio, so percentages map 1:1 to image pixels (no "cover" reprojection).
 // Hotspots carry no secret: they only name places; what happens is decided by the server.
-import type { Action, Era } from "./types";
+import type { Action, Stage } from "./types";
 
 export const SCENE_RATIO = 1672 / 941;
 
-export function sceneImage(era: Era, open: boolean): string {
-  return `/assets/afterimage/scenes/scene-${era}-${open ? "open" : "closed"}`;
+export function sceneImage(era: Stage, open: boolean): string {
+  return `/assets/afterimage/scenes/scene-${era}-${era !== 2056 && open ? "open" : "closed"}`;
 }
 export const objectImage = (asset: string, w: 240 | 640 = 240) => `/assets/afterimage/objects/${asset}-${w}.webp`;
 
@@ -23,7 +23,29 @@ export interface Hotspot {
   when?: "open" | "closed";
 }
 
-export const HOTSPOTS: Record<Era, Hotspot[]> = {
+// 2056: things to examine, in normalized coordinates of scene-2056-closed. All pure comedy.
+const F = (id: string, x: number, y: number, w: number, h: number): Hotspot => ({ id, rect: { x, y, w, h }, inspect: id });
+export const HOTSPOTS: Record<Stage, Hotspot[]> = {
+  2056: [
+    F("fun_pixo", 0.0, 0.13, 0.23, 0.82),
+    F("fun_audience", 0.3, 0.33, 0.39, 0.15),
+    F("fun_film", 0.48, 0.21, 0.15, 0.15),
+    F("fun_globe", 0.265, 0.5, 0.05, 0.11),
+    F("fun_scissors", 0.328, 0.535, 0.035, 0.065),
+    F("fun_mug", 0.37, 0.54, 0.045, 0.06),
+    F("fun_tablet", 0.415, 0.575, 0.165, 0.05),
+    F("fun_minirobot", 0.675, 0.5, 0.036, 0.09),
+    F("fun_cans", 0.295, 0.71, 0.09, 0.14),
+    F("fun_chest", 0.39, 0.73, 0.09, 0.11),
+    F("fun_rocket", 0.86, 0.15, 0.035, 0.1),
+    F("fun_cityglobe", 0.9, 0.16, 0.05, 0.09),
+    F("fun_bot", 0.86, 0.275, 0.04, 0.095),
+    F("fun_invader", 0.917, 0.295, 0.033, 0.057),
+    F("fun_planet", 0.875, 0.395, 0.04, 0.06),
+    F("fun_terrarium", 0.86, 0.5, 0.044, 0.1),
+    F("fun_crystal", 0.917, 0.51, 0.038, 0.09),
+    F("fun_atom", 0.87, 0.66, 0.047, 0.08),
+  ],
   2026: [
     { id: "photo", rect: { x: 0.36, y: 0.56, w: 0.1, h: 0.1 }, inspect: "photo", action: "inspect_photo" },
     { id: "waterline", rect: { x: 0.79, y: 0.74, w: 0.17, h: 0.11 }, inspect: "archiveReport", action: "inspect_waterline" },
@@ -84,7 +106,25 @@ export const CLOSEUPS: Record<string, { x: number; y: number; w: number; h: numb
 };
 
 /** Names, roles and dates: dictionary (character.*, scene.date1996/2026). */
-export const ERA_META: Record<Era, { character: "jeanne" | "malik"; portrait: string }> = {
+export const ERA_META: Record<Stage, { character: "jeanne" | "malik" | "pixo"; portrait: string }> = {
+  2056: { character: "pixo", portrait: "/assets/afterimage/characters/pixo-reference" },
   1996: { character: "jeanne", portrait: "/assets/afterimage/characters/jeanne-reference" },
   2026: { character: "malik", portrait: "/assets/afterimage/characters/malik-reference" },
 };
+
+/** Close-up window around a 2056 object: its hotspot, widened to roughly 4:3 in image pixels. */
+export function funCloseup(id: string): { x: number; y: number; w: number; h: number } | null {
+  const spot = HOTSPOTS[2056].find((s) => s.id === id);
+  if (!spot) return null;
+  const ratio = (1672 * 3) / (941 * 4); // h = w * ratio gives 4:3
+  let w = Math.max(spot.rect.w * 2.2, 0.16);
+  let h = w * ratio;
+  if (h < spot.rect.h * 1.2) {
+    h = Math.min(1, spot.rect.h * 1.2);
+    w = Math.min(1, h / ratio);
+  }
+  h = Math.min(h, 1);
+  const cx = spot.rect.x + spot.rect.w / 2;
+  const cy = spot.rect.y + spot.rect.h / 2;
+  return { x: Math.min(Math.max(0, cx - w / 2), 1 - w), y: Math.min(Math.max(0, cy - h / 2), 1 - h), w, h };
+}

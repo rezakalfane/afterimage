@@ -22,6 +22,8 @@ const schema = z
     NAPSTER_API_KEY: z.string().optional(),
     NAPSTER_JEANNE_AGENT_ID: z.string().optional(),
     NAPSTER_MALIK_AGENT_ID: z.string().optional(),
+    NAPSTER_PIXO_AGENT_ID: z.string().optional(),
+    NAPSTER_PIXO_AGENT_ID_EN: z.string().optional(),
     NAPSTER_MAX_ACTIVE: z.coerce.number().int().min(0).max(20).default(4),
     NAPSTER_RECORDINGS_ENABLED: bool,
     NAPSTER_PHONE_ENABLED: bool,

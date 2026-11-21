@@ -5,16 +5,19 @@ import { useState } from "react";
 import { useT } from "@/i18n/I18nProvider";
 import { fmt } from "@/i18n/messages";
 import { HOTSPOTS, OVERLAYS, SCENE_RATIO, objectImage, sceneImage, type Overlay } from "./scene-config";
-import type { Era, PublicState } from "./types";
+import { FUN_EN, FUN_FR } from "@/i18n/fun2056";
+import { useLocale } from "@/i18n/I18nProvider";
+import type { PublicState, Stage } from "./types";
 
 function pct(n: number) {
   return `${(n * 100).toFixed(2)}%`;
 }
 
-export function SceneViewport({ era, view, onHotspot }: { era: Era; view: PublicState; onHotspot: (id: string) => void }) {
+export function SceneViewport({ era, view, onHotspot }: { era: Stage; view: PublicState; onHotspot: (id: string) => void }) {
   const t = useT().scene;
-  const label = (id: string) => t.hotspots[id] ?? id;
-  const open = era === 1996 ? view.scene.cabinetOpen1996 : view.scene.cabinetOpen2026;
+  const locale = useLocale();
+  const label = (id: string) => t.hotspots[id] ?? (locale === "en" ? FUN_EN : FUN_FR)[id]?.title ?? id;
+  const open = era === 2056 ? false : era === 1996 ? view.scene.cabinetOpen1996 : view.scene.cabinetOpen2026;
   const src = sceneImage(era, open);
   // Cross-fade: remember the image shown before (derived during render, cleared when its fade ends).
   const [shown, setShown] = useState(src);
@@ -39,7 +42,7 @@ export function SceneViewport({ era, view, onHotspot }: { era: Era; view: Public
       <div className="scene__frame" style={{ aspectRatio: String(SCENE_RATIO) }}>
         <picture>
           <source media="(max-width: 900px)" srcSet={`${src}-960.webp`} />
-          <img key={src} className="scene__img scene__img--now" src={`${src}-1672.webp`} alt={era === 1996 ? t.alt1996 : t.alt2026} />
+          <img key={src} className="scene__img scene__img--now" src={`${src}-1672.webp`} alt={era === 1996 ? t.alt1996 : era === 2056 ? t.alt2056 : t.alt2026} />
         </picture>
         {prev && (
           // eslint-disable-next-line @next/next/no-img-element

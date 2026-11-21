@@ -30,6 +30,12 @@
       "source": "https://raw.githubusercontent.com/rezakalfane/afterimage/main/assets-src/afterimage/characters/malik-reference.png",
       "fallbackStock": "49a2b67d-1e38-4344-b41b-d94818949043",
       "note": "Created 2026-11-15 from the kit portrait (fictional, generated). Kept as the fallback: detached 2026-11-16 when V2 was adopted."
+    },
+    "pixo": {
+      "id": "5bab3d65-9b90-4985-9e69-66416b62b4d4",
+      "kind": "custom-v1",
+      "source": "https://raw.githubusercontent.com/rezakalfane/afterimage/main/assets-src/afterimage/characters/malik-reference.png",
+      "note": "Secret 2056 companion Pixo, own companion record (own persona, no sharing with Malik/Jeanne). Napster rejects robot faces, so it is generated from a human portrait used only to pass face detection; its video is never shown (the app shows the Pixo portrait and a bit-crushed voice)."
     }
   },
   "agents": {
@@ -40,6 +46,10 @@
     "malik": {
       "fr": "41ff2adc-9698-48b7-9735-5a2fe921722d",
       "en": "3c823040-212a-4522-90c8-d2160218aa6e"
+    },
+    "pixo": {
+      "fr": "7c162a17-aab1-43f8-9b41-8b4729423db0",
+      "en": "b99d38b6-e67c-466b-bcfd-1d76aeba6d25"
     }
   },
   "roles": {

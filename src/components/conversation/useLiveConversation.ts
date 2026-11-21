@@ -9,12 +9,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { NapsterCompanionApiConfig, NapsterCompanionApiInstance } from "@touchcastllc/napster-companion-api";
 import { api } from "@/components/game/api";
 import { useT } from "@/i18n/I18nProvider";
+import { robotVoice, tapRemoteAudio, type RobotVoice } from "./robot-voice";
 
 export type LiveStatus = "idle" | "connecting" | "live" | "closing" | "error";
 /** Each line belongs to ONE character: the panel only shows the current era's character. */
-export type TranscriptLine = { role: "user" | "assistant"; text: string; at: number; character: "jeanne" | "malik" };
+export type TranscriptLine = { role: "user" | "assistant"; text: string; at: number; character: "jeanne" | "malik" | "pixo" };
 
-type Instance = Pick<NapsterCompanionApiInstance, "sendCommand" | "destroy" | "muteMic" | "unmuteMic" | "stopAvatarTalking" | "isAvatarSpeaking">;
+type Instance = Pick<NapsterCompanionApiInstance, "sendCommand" | "destroy" | "muteMic" | "unmuteMic" | "stopAvatarTalking" | "isAvatarSpeaking" | "setAudioVolume">;
 type ServerEvent = { event?: string; type?: string; data?: Record<string, unknown> & { message?: Record<string, unknown> } };
 
 interface Options {
@@ -42,10 +43,12 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUt
   const stopRef = useRef<((opts?: { remote?: boolean }) => Promise<void>) | null>(null);
   /** "idle" | "starting" | "started": a stop while starting must also close what the start opens. */
   const phaseRef = useRef<"idle" | "starting" | "started">("idle");
+  /** Pixo's robot voice (bit crusher) and the undo of the remote-audio tap. */
+  const voiceFx = useRef<{ fx: RobotVoice | null; untap: (() => void) | null }>({ fx: null, untap: null });
   const heartbeatTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const [status, setStatus] = useState<LiveStatus>("idle");
-  const [character, setCharacter] = useState<"jeanne" | "malik" | null>(null);
-  const characterRef = useRef<"jeanne" | "malik">("malik");
+  const [character, setCharacter] = useState<"jeanne" | "malik" | "pixo" | null>(null);
+  const characterRef = useRef<"jeanne" | "malik" | "pixo">("malik");
   const [speaking, setSpeaking] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
   const [error, setError] = useState<{ code: string; message: string } | null>(null);
@@ -112,6 +115,8 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUt
       if (ev === "function_implicitly_called") void handleTool(data);
       else if (ev === "talk_state_changed") {
         setSpeaking(data.state === "started" || data.state === "in_progress");
+        // Pixo: keep the SDK's clean audio at 0 (the crushed copy plays instead).
+        if (voiceFx.current.fx) instanceRef.current?.setAudioVolume(0);
         // The reply to "stop" itself may start after the interruption: keep it short.
         if (data.state === "started" && Date.now() < quietUntil.current) instanceRef.current?.stopAvatarTalking();
       }
@@ -149,6 +154,9 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUt
     heartbeatTimer.current = null;
     const wasActive = phaseRef.current !== "idle";
     phaseRef.current = "idle";
+    voiceFx.current.untap?.();
+    voiceFx.current.fx?.destroy();
+    voiceFx.current = { fx: null, untap: null };
     const inst = instanceRef.current;
     instanceRef.current = null;
     leaseRef.current = null;
@@ -170,15 +178,15 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUt
     stopRef.current = stop;
   }, [stop]);
 
-  const start = useCallback(async () => {
+  const start = useCallback(async (opts: { secret?: boolean } = {}) => {
     if (phaseRef.current !== "idle" || !mountRef.current) return;
     phaseRef.current = "starting";
     setError(null);
     setStatus("connecting");
     greeted.current = false;
-    let opened: { token: string; leaseId: string; character: "jeanne" | "malik" };
+    let opened: { token: string; leaseId: string; character: "jeanne" | "malik" | "pixo" };
     try {
-      opened = await api(`/api/runs/${runId}/conversation`, { method: "POST" });
+      opened = await api(`/api/runs/${runId}/conversation`, { method: "POST", ...(opts.secret ? { body: { secret: true } } : {}) });
     } catch (e) {
       const err = e as { code?: string; message?: string };
       if (phaseRef.current === "starting") {
@@ -217,9 +225,22 @@ export function useLiveConversation({ runId, onPublicState, onRawEvent, onUserUt
       },
       onError: (e) => console.warn("[sdk]", e.message),
     };
+    // Pixo only: his voice goes through a bit crusher. The tap is installed BEFORE the SDK opens its
+    // peer connection; once the effect chain is up, the SDK's own (clean) audio is set to 0.
+    if (opened.character === "pixo") {
+      voiceFx.current.untap = tapRemoteAudio((stream) => {
+        void robotVoice(stream).then((fx) => {
+          if (!fx || phaseRef.current === "idle") return fx?.destroy();
+          voiceFx.current.fx = fx;
+          instanceRef.current?.setAudioVolume(0);
+          if (process.env.NODE_ENV !== "production") (window as unknown as { __afterimageVoice?: unknown }).__afterimageVoice = { level: fx.level };
+        });
+      });
+    }
     try {
       // The token is handed to the SDK through a function, as required by SDK 2.x.
       instanceRef.current = await NapsterCompanionApiSdk.init(async () => opened.token, config);
+      if (voiceFx.current.fx) instanceRef.current.setAudioVolume(0);
     } catch (e) {
       setError({ code: "SDK_INIT", message: t.sdkFailed });
       await stop();

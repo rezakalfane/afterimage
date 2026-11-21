@@ -7,8 +7,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Dialog } from "@/components/ui/Dialog";
 import { useT } from "@/i18n/I18nProvider";
-import { CLOSEUPS, objectImage, sceneImage } from "./scene-config";
-import type { Action, Era, PublicState } from "./types";
+import { FUN_EN, FUN_FR } from "@/i18n/fun2056";
+import { useLocale } from "@/i18n/I18nProvider";
+import { CLOSEUPS, funCloseup, objectImage, sceneImage } from "./scene-config";
+import type { Action, PublicState, Stage } from "./types";
 
 type Act = (action: Action, args?: Record<string, unknown>) => Promise<unknown>;
 
@@ -17,8 +19,8 @@ const LOCATION_IDS = ["drawer", "desk", "lower_cabinet", "upper_cabinet", "floor
 /** Readings that run when their document is opened (pure reads, no consequence to confirm). */
 const AUTO_READ: Partial<Record<string, Action>> = { archiveReport: "inspect_waterline", programme: "inspect_programme", letter: "read_letter" };
 
-function Closeup({ id, era, open }: { id: string; era: Era; open: boolean }) {
-  const c = CLOSEUPS[id];
+function Closeup({ id, era, open }: { id: string; era: Stage; open: boolean }) {
+  const c = CLOSEUPS[id] ?? funCloseup(id);
   if (!c) return null;
   const pos = (v: number, size: number) => (size >= 1 ? "0%" : `${((v / (1 - size)) * 100).toFixed(2)}%`);
   return (
@@ -44,8 +46,9 @@ function ActionButton({ action, args, children, can, act }: { action: Action; ar
   );
 }
 
-export function ObjectInspector({ id, era, view, onClose, act, openComposer }: { id: string | null; era: Era; view: PublicState; onClose: () => void; act: Act; openComposer: () => void }) {
+export function ObjectInspector({ id, era, view, onClose, act, openComposer }: { id: string | null; era: Stage; view: PublicState; onClose: () => void; act: Act; openComposer: () => void }) {
   const t = useT();
+  const locale = useLocale();
   const [location, setLocation] = useState("drawer");
   const [seat, setSeat] = useState("");
   const fired = useRef<string | null>(null);
@@ -286,6 +289,14 @@ export function ObjectInspector({ id, era, view, onClose, act, openComposer }: {
       asset = "sealed-envelope";
       body = <p>{t.inspector.envelopeDesc}</p>;
       break;
+    default: {
+      // The secret 2056 booth: a title and an absurd fun fact, nothing else.
+      const fun = (locale === "en" ? FUN_EN : FUN_FR)[id];
+      if (fun) {
+        title = fun.title;
+        body = <p className="funfact">{fun.text}</p>;
+      }
+    }
   }
 
   if (!title) return <Dialog open={false} title="" onClose={onClose}>{null}</Dialog>;
@@ -293,7 +304,7 @@ export function ObjectInspector({ id, era, view, onClose, act, openComposer }: {
   const visual = asset ? (
     // eslint-disable-next-line @next/next/no-img-element
     <img className="inspect__img" src={objectImage(asset, 640)} alt="" aria-hidden="true" />
-  ) : CLOSEUPS[id] ? (
+  ) : CLOSEUPS[id] || funCloseup(id) ? (
     <Closeup id={id} era={id === "archiveReport" ? 2026 : era} open={id === "archiveReport" ? false : openNow} />
   ) : null;
   return (

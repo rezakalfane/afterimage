@@ -92,3 +92,25 @@ test("after an era switch the panel shows only the new character's lines", async
   await page.getByRole("navigation", { name: "Époque" }).getByRole("button", { name: "2026" }).click();
   await expect(page.locator(".character__subtitles")).not.toContainText("Vous m’entendez");
 });
+
+test("secret 2056 booth: typing the year opens it, both dates unselected, a fun fact, and the way back", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Commencer" }).click();
+  await page.waitForURL(/\/play\/run_/);
+  await page.getByRole("button", { name: /Écrire à Malik/ }).click();
+  await page.locator("#say").fill("2056");
+  await page.locator("#say").press("Enter");
+  await expect(page.locator(".game--2056")).toBeVisible();
+  const nav = page.getByRole("navigation", { name: "Époque" });
+  await expect(nav.getByRole("button", { name: "1996" })).toHaveAttribute("aria-pressed", "false");
+  await expect(nav.getByRole("button", { name: "2026" })).toHaveAttribute("aria-pressed", "false");
+  await expect(page.locator(".character__id h2")).toHaveText("Pixo");
+  await hotspot(page, /^Fusée$/);
+  await expect(page.getByRole("dialog").getByText(/Mars en 2041/)).toBeVisible();
+  await closeDialog(page);
+  // No story button in the secret booth.
+  await expect(page.getByRole("button", { name: "Aide" })).toHaveCount(0);
+  await nav.getByRole("button", { name: "1996" }).click();
+  await expect(page.locator(".game--1996")).toBeVisible();
+  await expect(page.locator(".character__id h2")).toHaveText("Jeanne");
+});

@@ -1,5 +1,8 @@
 # Recette vocale — vrai micro (≈ 20 min, ≈ 1 à 2 $ de crédits)
 
+> [!WARNING]
+> **Alerte spoiler :** Cette procédure de recette détaille les étapes de l'enquête, les choix finaux et certains éléments cachés du jeu. Jouez d'abord si vous ne souhaitez pas vous gâcher la découverte !
+
 Ce qui est déjà prouvé sans vous : la reconnaissance des phrases (tests unitaires `tests/unit/voice.test.ts`),
 la liaison de la confirmation à l'étape affichée, les trois fins, la fermeture des sessions. Ce qui ne peut
 être prouvé qu'avec **votre voix et un vrai micro** : la transcription réelle (accent, bruit, voix de

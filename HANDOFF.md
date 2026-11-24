@@ -1,5 +1,8 @@
 # HANDOFF
 
+> [!WARNING]
+> **Spoiler alert:** This handoff document mentions internal game mechanics and puzzle details from *AFTERIMAGE*. Play the game first if you want to avoid spoilers!
+
 ## Where we are (2026-11-15)
 
 | Lot (kit §19) | State |

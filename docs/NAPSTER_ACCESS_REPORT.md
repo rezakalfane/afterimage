@@ -1,5 +1,8 @@
 # Napster access report (sanitized)
 
+> [!WARNING]
+> **Spoiler alert:** The live test evidence below quotes in-game clues and character revelations from *AFTERIMAGE*. Play the game first if you want to avoid spoilers!
+
 No key, token, session token or private URL in this file. "Documented" ≠ "tested": only rows marked **tested** were exercised on this account.
 
 - **Account**: one organization and one project (IDs in `config/napster-resources.json`). Credits: $150 at start. The user's budget for this work is $150 max, with a warning at $100 and about $30 kept for the final run.

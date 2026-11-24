@@ -9,7 +9,7 @@ A conversational mystery for the **Napster API Ignite 2026 hackathon**, live at 
 | ![AFTERIMAGE projection booth in 2026 with Malik](docs/screenshots/booth-2026.jpg) | ![AFTERIMAGE projection booth in 1996 with Jeanne](docs/screenshots/booth-1996.jpg) |
 | *Le Régina, 15 November 2026 — cold, dusty booth with Malik in live video PiP* | *Le Régina, 15 November 1996 — warm amber booth with Jeanne in live video PiP* |
 
-Built from the production kit `afterimage-kit-v1` (bible, data, art). The kit's master document is in `docs/kit/`.
+Built from the production kit `afterimage-kit-v1` (bible, data, art). The kit's master document is in `docs/kit/` *(spoiler warning: play first before reading the kit or technical docs!)*.
 
 ## What works today (honestly)
 

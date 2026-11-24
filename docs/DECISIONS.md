@@ -1,5 +1,8 @@
 # Decisions and deviations from the kit
 
+> [!WARNING]
+> **Spoiler alert:** This engineering log discusses puzzle mechanics, clue locations, and story rules from *AFTERIMAGE*. Play the game first if you want to avoid spoilers!
+
 ## Engine changes vs `docs/kit/world-engine.mjs` (canon preserved)
 1. **Wrong hiding place**: `preserve_cache` accepts `upper_cabinet | lower_cabinet | desk | floor`. A wrong place returns `WRONG_LOCATION` with the place, which the controller turns into a precise reason and a suggestion. The kit returned `INVALID_ARGUMENT` (kit §4: "refusé avec une raison précise").
 2. **Hints per puzzle**: `hintLevels {key, cache, promise}` (three levels each, kit §7 table) plus a total `hintsUsed`. The kit had a single counter capped at 3.

@@ -1,5 +1,8 @@
 # Game logic — La dernière séance (chapter v2, brief v3)
 
+> [!WARNING]
+> **Spoiler alert:** This document reveals the entire story, all three puzzle solutions, character secrets, and all endings of *AFTERIMAGE — La dernière séance*. Play the game first if you don't want it spoiled!
+
 > v3 (2026-11-16): G7 is split between three clues, the report no longer names the hiding place, characters only learn what the player shares (claims backed by the player's own turns), hotspots are unmarked by default. Runs of chapter v1 are retired (readable, not playable).
 
 How the episode works, generated from the code (`src/server/world/engine.ts`,

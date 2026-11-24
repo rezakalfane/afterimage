@@ -42,8 +42,8 @@ vercel env add NAPSTER_JEANNE_AGENT_ID production   # see config/napster-resourc
 vercel env add NAPSTER_MALIK_AGENT_ID production
 vercel env add NAPSTER_JEANNE_AGENT_ID_EN production
 vercel env add NAPSTER_MALIK_AGENT_ID_EN production
-vercel env add NAPSTER_PIXO_AGENT_ID production     # optional secret 2056 booth
-vercel env add NAPSTER_PIXO_AGENT_ID_EN production
+vercel env add NAPSTER_PIXO_AGENT_ID production     # optional
+vercel env add NAPSTER_PIXO_AGENT_ID_EN production  # optional
 vercel env add NAPSTER_MAX_ACTIVE production  # 1 on staging, 3 on production
 ```
 

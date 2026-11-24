@@ -1,5 +1,8 @@
 # AFTERIMAGE — La dernière séance
 
+> [!WARNING]
+> **Alerte spoiler :** Ce dossier de production dévoile l'intégralité de l'histoire, les solutions des énigmes et les trois fins du jeu. Jouez d'abord si vous ne souhaitez pas vous gâcher la découverte !
+
 ## Dossier de production et d’implémentation
 
 Version 1.0 • 15 novembre 2026 • Langue de jeu : français • Cible : navigateur, desktop d’abord, mobile utilisable.

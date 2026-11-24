@@ -64,7 +64,7 @@ Next.js 16 (App Router, Node runtime) · TypeScript strict · Drizzle + `@libsql
 
 ## Deploy
 
-Production is deployed on **Vercel** (`https://afterimage-vert.vercel.app`) backed by **Turso Cloud** (`libSQL`, via the Vercel Marketplace integration). See `docs/OPERATIONS.md` for environment variables, release migrations, backup/restore, rollback and remaining acceptance checks. Security evidence: `docs/SECURITY_CHECKLIST.md`. Demo: `docs/DEMO.md`.
+Production is deployed on **Vercel** (`https://afterimage-vert.vercel.app`) backed by **Turso Cloud** (`libSQL`, via the Vercel Marketplace integration). See `docs/OPERATIONS.md` for environment variables, release migrations, backup/restore, rollback and remaining acceptance checks. Security evidence: `docs/SECURITY_CHECKLIST.md`.
 
 ## AI assistance
 

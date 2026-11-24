@@ -10,4 +10,3 @@
 | [SECURITY_CHECKLIST.md](SECURITY_CHECKLIST.md) | Threats, measures, evidence |
 | [OPERATIONS.md](OPERATIONS.md) | Accesses needed, deploy (Vercel + Turso), release migrations, backup/restore, rollback |
 | [VOICE_ACCEPTANCE.md](VOICE_ACCEPTANCE.md) | Real-microphone acceptance of voice confirmation (procedure + expected results) |
-| [DEMO.md](DEMO.md) | Three-minute jury demo |

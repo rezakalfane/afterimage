@@ -16,7 +16,7 @@
 | 9 Finition | 🟡 finishing pass done (brief v2: layout, identity, objects, inspections, message, epilogue, menu); captures in var/screens/before|after (`SCREENS_DIR=… npx playwright test --project=capture`); not done: ambient sound, VoiceOver pass, 3-person playtest |
 | 10 Release | 🟡 production live at https://afterimage-vert.vercel.app (Vercel + Turso Cloud, one project, no staging); remaining: GitHub link, full acceptance, CSP review |
 | 11 Bonus | ⛔ off (Recordings 403; phone untested). Companion V2: ✅ adopted on the 4 agents (V1 kept as fallback in `companionsV1`) |
-| 12 Soumission | 🟡 README, demo script; the video is still to record |
+| 12 Soumission | 🟡 README; the video is still to record |
 
 ## Verified at handoff
 - `npm run verify` → lint ✓, typecheck ✓, unit 30/30, integration 22/22, build ✓, bundle check ✓.

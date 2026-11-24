@@ -56,8 +56,8 @@ Raw proof logs (local, gitignored): `var/proof/live-proof-*.json`. Script: `test
 |---|---|---|---|
 | `5f23083f…` afterimage-jeanne-fr | Jeanne, French | **P0**. Kit prompt + technical appendix, tools `jeanne_*` + `world_request_hint`, web search off | shared by local, staging, production |
 | `41ff2adc…` afterimage-malik-fr | Malik, French | **P0**. Kit prompt + technical appendix, tools `malik_*` + `world_request_hint`, web search off | shared by local, staging, production |
-| `5ef3814f…` afterimage-jeanne-en | Jeanne, English | P1. **100% English**: kit prompt translated (to be reviewed), English technical appendix, tools `en_jeanne_*` + `en_world_request_hint` (English descriptions, prompts and enum values). Not used by the app until the English content pass | — |
-| `3c823040…` afterimage-malik-en | Malik, English | P1. **100% English**: same as above with `en_malik_*` tools | — |
+| `5ef3814f…` afterimage-jeanne-en | Jeanne, English | Active (`en` locale). **100% English**: kit prompt translated (to be reviewed), English technical appendix, tools `en_jeanne_*` + `en_world_request_hint` (English descriptions, prompts and enum values) | shared by local, production |
+| `3c823040…` afterimage-malik-en | Malik, English | Active (`en` locale). Same as above with `en_malik_*` tools | shared by local, production |
 
 Rules:
 - Global instructions are **never** changed with player data. Run data goes only through `externalClientProfile` at connection time, through tool outputs, and through silent `send_message` system updates from the player's own browser.
@@ -66,4 +66,5 @@ Rules:
 - Capacity: the org limit (5 concurrent WebRTC sessions) is shared by every environment. The per-environment `NAPSTER_MAX_ACTIVE` values must sum to 5 or less. Recommended: production 3, staging 1, local 1.
 - Prototype functions (`cacher_bobine`, `laisser_message`, `fouiller`) were detached and **deleted**. The account now holds 14 functions: 7 fr + 7 en.
 - Language check (2026-11-15): fr agents have 0 English markers in their instructions or tools. en agents have 0 French markers in their tools, and only the proper nouns « Le Régina » and « Les lumières du Régina » in their instructions.
-- Remaining for a 100% English game: the per-run context (facts, documents) and the game texts are French until the English content pass.
+- English is now active end to end (UI, episode documents, per-run context, tools and `en` agents); English copy still awaits a native review and a live smoke pass on production.
+- Production live smoke tests (`tests/live/game-live.mjs` and `tests/live/pixo-live.mjs`) passed against `https://afterimage-vert.vercel.app` (2026-11-21; cumulative spend $21.80 of $150).

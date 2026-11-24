@@ -2,7 +2,12 @@
 
 > Deux personnes. Le même cinéma. Trente ans d’écart. Parlez-leur, gagnez leur confiance et faites traverser le temps à ce qui mérite d’être sauvé.
 
-A conversational mystery for the **Napster API Ignite 2026 hackathon**. You talk by video and voice (or by keyboard) to **Jeanne**, a projectionist in 1996, and **Malik**, an archivist in the same projection booth in 2026. They never meet: you are their only link. A clue found in 2026 lets Jeanne act in 1996. What she preserves in 1996 is found in 2026, including **a sentence you wrote yourself**, recovered word for word. Then you decide how to honour the filmmaker's promise (3 endings).
+A conversational mystery for the **Napster API Ignite 2026 hackathon**, live at **[afterimage-vert.vercel.app](https://afterimage-vert.vercel.app)**. You talk by video and voice (or by keyboard) to **Jeanne**, a projectionist in 1996, and **Malik**, an archivist in the same projection booth in 2026. They never meet: you are their only link. A clue found in 2026 lets Jeanne act in 1996. What she preserves in 1996 is found in 2026, including **a sentence you wrote yourself**, recovered word for word. Then you decide how to honour the filmmaker's promise (3 endings).
+
+| **2026 — Malik (Archivist)** | **1996 — Jeanne (Projectionist)** |
+|---|---|
+| ![AFTERIMAGE projection booth in 2026 with Malik](docs/screenshots/booth-2026.jpg) | ![AFTERIMAGE projection booth in 1996 with Jeanne](docs/screenshots/booth-1996.jpg) |
+| *Le Régina, 15 November 2026 — cold, dusty booth with Malik in live video PiP* | *Le Régina, 15 November 1996 — warm amber booth with Jeanne in live video PiP* |
 
 Built from the production kit `afterimage-kit-v1` (bible, data, art). The kit's master document is in `docs/kit/`.
 
@@ -10,16 +15,17 @@ Built from the production kit `afterimage-kit-v1` (bible, data, art). The kit's 
 
 | Area | Status |
 |---|---|
+| Production deployment (Vercel + Turso Cloud libSQL) | ✅ live at [afterimage-vert.vercel.app](https://afterimage-vert.vercel.app) (single production project, `NAPSTER_MAX_ACTIVE=3`, HTTPS & live smoke verified; remaining: GitHub auto-deploy link, full multi-ending/Safari acceptance, CSP review) |
 | Full chapter (3 puzzles, 3 endings, exact personal message, hints, resume) | ✅ in rehearsal mode and live; e2e-tested in a browser (rehearsal) |
-| **Live Napster conversation** (WebRTC video + voice, per-run context, implicit tools → server-validated mutations → character reaction) | ✅ tested on the real account (see `docs/NAPSTER_ACCESS_REPORT.md`) |
-| Rehearsal mode without any key or network call | ✅ labelled everywhere as « Mode répétition » |
+| **Live Napster conversation** (WebRTC video + voice, per-run context, implicit tools → server-validated mutations → character reaction) | ✅ tested locally and on production (see `docs/NAPSTER_ACCESS_REPORT.md`) |
+| **Custom Companion V2 avatars** | ✅ active on all 4 story agents (generated from the kit portraits; V1 kept as fallback) |
+| Rehearsal mode without any key or network call | ✅ labelled everywhere as « Mode répétition » / « Rehearsal mode » |
 | Auth (guests, invitation-only accounts), tenant/owner isolation, transactional engine, idempotency, distributed capacity | ✅ unit + integration tests |
 | Admin (members, invitations, capacity/sessions, version) | ✅ minimal |
-| French | ✅ complete. **English**: agents are 100% English (prompts, tools); game texts/UI translation = P1 |
-| VHS recording, phone epilogue, v2 avatars | ⛔ disabled: Recordings not enabled on the account (403), phone not tested, v2 not tested |
-| Staging / production deployment | ⏳ prepared (Vercel + Turso libSQL), **not deployed**: needs the accesses listed in `docs/OPERATIONS.md` |
+| French & English | ✅ both active end to end (UI, episode documents, hints, tools and 100% locale-matched agents; admin/privacy pages stay French; English copy pending native review) |
+| VHS recording, phone epilogue | ⛔ disabled: Recordings not enabled on the account (403), phone not tested |
 
-The kit portraits are artwork used as **fallbacks**; the live video avatars are Napster catalog companions standing in for Jeanne and Malik.
+The kit portraits are used both as static fallbacks and as the source artwork for the live Napster Companion V2 video avatars of Jeanne and Malik.
 
 ## Install (local)
 
@@ -58,7 +64,7 @@ Next.js 16 (App Router, Node runtime) · TypeScript strict · Drizzle + `@libsql
 
 ## Deploy
 
-See `docs/OPERATIONS.md` (staging then production on Vercel, separate Turso databases and secrets, release migrations, backup/restore, rollback). Security evidence: `docs/SECURITY_CHECKLIST.md`. Demo: `docs/DEMO.md`.
+Production is deployed on **Vercel** (`https://afterimage-vert.vercel.app`) backed by **Turso Cloud** (`libSQL`, via the Vercel Marketplace integration). See `docs/OPERATIONS.md` for environment variables, release migrations, backup/restore, rollback and remaining acceptance checks. Security evidence: `docs/SECURITY_CHECKLIST.md`. Demo: `docs/DEMO.md`.
 
 ## AI assistance
 

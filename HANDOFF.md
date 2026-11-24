@@ -35,9 +35,9 @@ npm run dev
 ```
 
 ## Next steps (in order)
-1. Accesses from docs/OPERATIONS.md §0 (Turso, Vercel projects), then staging: release migration, owner bootstrap, deploy, acceptance on HTTPS, CSP observation, then production.
-2. A live check of an English session and of Malik's new key step (a few cents).
-3. Optional polish: ambient sound with a mute button, more scene transitions, a demo video.
+1. Production follow-ups on [afterimage-vert.vercel.app](https://afterimage-vert.vercel.app): link GitHub repo on Vercel (needs GitHub Login Connection), full HTTPS acceptance (English live, 3 endings live, two tabs / two players, Safari), CSP report review, DB restore rehearsal.
+2. Live check of an English session on production (a few cents).
+3. Optional polish: ambient sound levels / echo check, more scene transitions, a demo video.
 4. Bonuses only after enablement: Recordings (VHS) and the phone epilogue.
 
 ## Things to know

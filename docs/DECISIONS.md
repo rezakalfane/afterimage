@@ -41,4 +41,4 @@
 - **Multilingual**: French and English are both active. UI strings live in `src/i18n/messages.ts`; the episode's English content is in `src/content/episodes/last-screening/v1/i18n.en.ts`; server texts, prompts, tools and rehearsal replies are keyed by locale. The player picks the language in Settings (home) or with the FR|EN switch (top bar); the choice is a cookie and the page reloads; the run state is language-free, so the game continues where it was. Leases store the session locale, so a live session keeps its agent's language. Still French only: the admin and privacy pages. The English texts need a native review.
 - The `en` prompts are my translation of the kit and need a native review.
 - CSP is report-only until the Napster media/signalling domains are observed on staging (kit §18.9).
-- Turso concurrency, backups and restores are untested: no Turso access yet.
+- Turso Cloud (`afterimage-db`, Vercel Marketplace) is live in production (`https://afterimage-vert.vercel.app`) with migrations, owner bootstrap and live smoke tests verified; high-concurrency tests, backups and restore rehearsals remain to be run.

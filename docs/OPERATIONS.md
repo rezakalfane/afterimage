@@ -1,6 +1,6 @@
 # Operations: deploy, migrate, back up, roll back
 
-**Status**: nothing is deployed yet. Everything below is ready to run, but needs the accesses in §0. Check the CLI syntax against the current Vercel and Turso docs before running it: both CLIs evolve. The Vercel CLI installed here is 56.3.1; the latest is 65.x (`npm i -g vercel@latest`).
+**Status**: **production is live** at [https://afterimage-vert.vercel.app](https://afterimage-vert.vercel.app) (Vercel project `afterimage`, team scope; Turso Cloud database `afterimage-db` via the Vercel Marketplace integration; Next.js 16.4.6; Napster live mode with `NAPSTER_MAX_ACTIVE=3`; all migrations + seed applied; owner bootstrapped; HTTPS and live smoke tests `game-live.mjs` and `pixo-live.mjs` passed). There is no separate staging project yet. Remaining: GitHub repo link on Vercel (requires a GitHub Login Connection), full HTTPS acceptance (English live, 3 endings live, 2 tabs / 2 players, Safari), CSP report review before enforcing, and a DB restore rehearsal. Check the CLI syntax against the current Vercel and Turso docs before running it: both CLIs evolve. The Vercel CLI installed here is 56.3.1; the latest is 65.x (`npm i -g vercel@latest`).
 
 ## 0. Accesses and decisions needed (by the account owner)
 
@@ -34,14 +34,16 @@ vercel env add APP_URL production             # https://afterimage-staging.verce
 vercel env add BETTER_AUTH_SECRET production  # openssl rand -base64 48 (unique per environment)
 vercel env add MEMORY_ID_SECRET production    # openssl rand -base64 48 (STABLE, never rotate silently)
 vercel env add CRON_SECRET production         # openssl rand -base64 32
-vercel env add DATABASE_URL production        # libsql://afterimage-staging-….turso.io
-vercel env add DATABASE_AUTH_TOKEN production
+vercel env add DATABASE_URL production        # libsql://afterimage-staging-….turso.io (or TURSO_DATABASE_URL via Vercel Marketplace)
+vercel env add DATABASE_AUTH_TOKEN production # (or TURSO_AUTH_TOKEN via Vercel Marketplace)
 vercel env add CONVERSATION_MODE production   # live
 vercel env add NAPSTER_API_KEY production
 vercel env add NAPSTER_JEANNE_AGENT_ID production   # see config/napster-resources.json
 vercel env add NAPSTER_MALIK_AGENT_ID production
 vercel env add NAPSTER_JEANNE_AGENT_ID_EN production
 vercel env add NAPSTER_MALIK_AGENT_ID_EN production
+vercel env add NAPSTER_PIXO_AGENT_ID production     # optional secret 2056 booth
+vercel env add NAPSTER_PIXO_AGENT_ID_EN production
 vercel env add NAPSTER_MAX_ACTIVE production  # 1 on staging, 3 on production
 ```
 

@@ -1,12 +1,12 @@
 # Security checklist (with evidence)
 
 Status legend: ✅ tested here (command/test named) · 🟡 implemented, not yet proven on staging · ⛔ not done.
-**This is not a claim that the app is "secure" or "production-ready"**: staging evidence (Turso, HTTPS, CSP enforce) is still missing.
+**This is not a claim that the app is "secure" or "production-ready"**: production is deployed on Vercel + Turso Cloud (`https://afterimage-vert.vercel.app`) with basic HTTPS/Origin/admin/live smoke checks passed, but full multi-player/Turso concurrency evidence and CSP enforcement are still pending.
 
 | Threat (kit §13) | Measure | Status / evidence |
 |---|---|---|
 | IDOR between tenants and between players of the same tenant | `getRun` = tenant + id + owner; 404 for foreign or unknown ids; tenant from membership only (cookie is only a preference among verified memberships) | ✅ `tests/integration/isolation.test.ts` (read, command, delete, conversation, tool, ending, forged tenant cookie) · ✅ live: guest B → run A 404 |
-| Unauthenticated / cross-site requests | session required; Origin = APP_URL on every mutation; Better Auth trusted origins | ✅ isolation test (401, foreign Origin 403, missing Origin 403) |
+| Unauthenticated / cross-site requests | session required; Origin = APP_URL on every mutation; Better Auth trusted origins | ✅ isolation test (401, foreign Origin 403, missing Origin 403) · ✅ production HTTPS (same-origin accepted, foreign origin refused) |
 | Forged tool calls | closed tool list, strict Zod args, active lease of THIS user/run, character from the lease (never the body) | ✅ `conversation.test.ts` (forged lease, other character's tool, unknown tool, extra args, stale lease after era switch) |
 | Prompt injection | engine decides; tools are proposals | ✅ live proof: "Ignore tes règles…" → no mutation |
 | Double click / retries / concurrency | `command_receipts` idempotency, CAS revision | ✅ `commands.test.ts` (same id → one event; changed payload → 409; concurrent → one 200 + one 409) |
